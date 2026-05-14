@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 import isaaclab.sim as sim_utils
@@ -5,6 +6,7 @@ from isaaclab.actuators import ImplicitActuatorCfg
 from isaaclab.assets.articulation import ArticulationCfg
 
 from whole_body_tracking.assets import ASSET_DIR
+from whole_body_tracking.robots.actuator import DelayedImplicitActuatorCfg
 
 # T800 motor/inertia parameters aligned with the original T800 setup.
 ARMATURE_Q300H_L = 0.2427264
@@ -333,6 +335,28 @@ T800_CFG = ArticulationCfg(
         ),
     },
 )
+
+
+def _to_delayed_actuator_cfg(cfg: ImplicitActuatorCfg, min_delay: int, max_delay: int) -> DelayedImplicitActuatorCfg:
+    return DelayedImplicitActuatorCfg(
+        joint_names_expr=copy.deepcopy(cfg.joint_names_expr),
+        effort_limit_sim=copy.deepcopy(cfg.effort_limit_sim),
+        velocity_limit_sim=copy.deepcopy(cfg.velocity_limit_sim),
+        stiffness=copy.deepcopy(cfg.stiffness),
+        damping=copy.deepcopy(cfg.damping),
+        armature=copy.deepcopy(cfg.armature),
+        friction=copy.deepcopy(cfg.friction),
+        dynamic_friction=copy.deepcopy(cfg.dynamic_friction),
+        viscous_friction=copy.deepcopy(cfg.viscous_friction),
+        min_delay=min_delay,
+        max_delay=max_delay,
+    )
+
+
+T800_DELAYED_CFG = copy.deepcopy(T800_CFG)
+T800_DELAYED_CFG.actuators = {
+    name: _to_delayed_actuator_cfg(cfg, min_delay=1, max_delay=2) for name, cfg in T800_CFG.actuators.items()
+}
 
 
 T800_ACTION_SCALE = {

@@ -25,7 +25,7 @@ def main() -> int:
     parser.add_argument("--logger", type=str, default="wandb", help="Logger backend, e.g. wandb or tensorboard.")
     parser.add_argument(
         "--task_variant",
-        choices=("default", "low_freq", "wo_state_estimation"),
+        choices=("default", "clean", "noise", "delay", "push", "low_freq", "wo_state_estimation"),
         default="default",
         help="Which registered T800 task variant to launch.",
     )
@@ -43,6 +43,10 @@ def main() -> int:
 
     task_map = {
         "default": "Tracking-Flat-T800-v0",
+        "clean": "Tracking-Flat-T800-Clean-v0",
+        "noise": "Tracking-Flat-T800-Noise-v0",
+        "delay": "Tracking-Flat-T800-Delay-v0",
+        "push": "Tracking-Flat-T800-Push-v0",
         "low_freq": "Tracking-Flat-T800-Low-Freq-v0",
         "wo_state_estimation": "Tracking-Flat-T800-Wo-State-Estimation-v0",
     }

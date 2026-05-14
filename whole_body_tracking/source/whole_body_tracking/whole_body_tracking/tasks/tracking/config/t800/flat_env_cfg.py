@@ -1,11 +1,14 @@
 from pathlib import Path
 
 from isaaclab.utils import configclass
+from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
+from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 
 from . import t800_mdp
-from whole_body_tracking.robots.t800 import T800_ACTION_SCALE, T800_CFG
+from whole_body_tracking.robots.t800 import T800_ACTION_SCALE, T800_CFG, T800_DELAYED_CFG
 from whole_body_tracking.tasks.tracking.config.t800.agents.rsl_rl_ppo_cfg import LOW_FREQ_SCALE
+from whole_body_tracking.tasks.tracking import mdp
 from whole_body_tracking.tasks.tracking.tracking_env_cfg import TrackingEnvCfg
 
 
@@ -95,6 +98,61 @@ class T800FlatEnvCfg(TrackingEnvCfg):
         ]
         self.terminations.anchor_pos.params["threshold"] = 0.35
         self.terminations.ee_body_pos.params["threshold"] = 0.4
+
+
+@configclass
+class T800FlatCleanEnvCfg(T800FlatEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.observations.policy.enable_corruption = False
+        self.commands.motion.pose_range = {key: (0.0, 0.0) for key in self.commands.motion.pose_range}
+        self.commands.motion.velocity_range = {key: (0.0, 0.0) for key in self.commands.motion.velocity_range}
+        self.commands.motion.joint_position_range = (0.0, 0.0)
+        self.events.physics_material = None
+        self.events.add_joint_default_pos = None
+        self.events.base_com = None
+        self.events.push_robot = None
+
+
+@configclass
+class T800FlatNoiseEnvCfg(T800FlatCleanEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.observations.policy.enable_corruption = True
+        self.observations.policy.motion_anchor_pos_b.noise = Unoise(n_min=-0.05, n_max=0.05)
+        self.observations.policy.motion_anchor_ori_b.noise = Unoise(n_min=-0.02, n_max=0.02)
+        self.observations.policy.base_lin_vel.noise = Unoise(n_min=-0.1, n_max=0.1)
+        self.observations.policy.base_ang_vel.noise = Unoise(n_min=-0.05, n_max=0.05)
+        self.observations.policy.joint_pos.noise = Unoise(n_min=-0.005, n_max=0.005)
+        self.observations.policy.joint_vel.noise = Unoise(n_min=-0.1, n_max=0.1)
+
+
+@configclass
+class T800FlatDelayEnvCfg(T800FlatNoiseEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.scene.robot = T800_DELAYED_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+
+
+@configclass
+class T800FlatPushEnvCfg(T800FlatDelayEnvCfg):
+    def __post_init__(self):
+        super().__post_init__()
+        self.events.push_robot = EventTerm(
+            func=mdp.push_by_setting_velocity,
+            mode="interval",
+            interval_range_s=(2.5, 4.0),
+            params={
+                "velocity_range": {
+                    "x": (-0.2, 0.2),
+                    "y": (-0.2, 0.2),
+                    "z": (-0.05, 0.05),
+                    "roll": (-0.2, 0.2),
+                    "pitch": (-0.2, 0.2),
+                    "yaw": (-0.3, 0.3),
+                }
+            },
+        )
 
 @configclass
 class T800FlatWoStateEstimationEnvCfg(T800FlatEnvCfg):
