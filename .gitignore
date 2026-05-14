@@ -1,0 +1,12 @@
+**/__pycache__/
+**/*.pyc
+**/.pytest_cache/
+**/logs/
+**/wandb/
+**/outputs/
+**/output/
+**/artifacts/
+**/videos/
+**/*.pt
+**/*.ckpt
+**/*.pkl

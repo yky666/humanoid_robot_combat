@@ -1,0 +1,174 @@
+{
+  "motions": [
+    {
+      "name": "punch_swing_l",
+      "group": "legacy_local",
+      "input_file": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/Punch_Swing_L.npy",
+      "input_format": "legacy_npy",
+      "input_fps": 50,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/Punch_Swing_L_tracking.npz",
+      "smoke_run_name": "smoke_punch_swing_l",
+      "formal_run_name": "punch_swing_l_t800_v1_from29999"
+    },
+    {
+      "name": "riot_combo",
+      "group": "legacy_local",
+      "input_file": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/riot_combo.npy",
+      "input_format": "legacy_npy",
+      "input_fps": 50,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/riot_combo_tracking.npz",
+      "smoke_run_name": "smoke_riot_combo",
+      "formal_run_name": "riot_combo_t800_v1_from29999"
+    },
+    {
+      "name": "new_data_540huixuantitui",
+      "group": "new_data",
+      "input_file": "/data2/yangky/test/GMR/output/csv/new_data_540huixuantitui.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/new_data/new_data_540huixuantitui_tracking.npz",
+      "smoke_run_name": "smoke_new_data_540",
+      "formal_run_name": "new_data_540huixuantitui_tuned_stage2"
+    },
+    {
+      "name": "new_data_zhiquan_quanji",
+      "group": "new_data",
+      "input_file": "/data2/yangky/test/GMR/output/csv/new_data_zhiquan_quanji.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/new_data/new_data_zhiquan_quanji_tracking.npz",
+      "smoke_run_name": "smoke_new_data_zhiquan",
+      "formal_run_name": "new_data_zhiquan_quanji_t800_v1_from29999"
+    },
+    {
+      "name": "cmu13_17",
+      "group": "cmu_boxing_batch",
+      "input_file": "/data2/yangky/test/GMR/output/cmu_boxing_batch/csv/cmu13_17_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/cmu_boxing_batch/cmu13_17_t800_tracking.npz",
+      "smoke_run_name": "smoke_cmu13_17_batch_v3",
+      "formal_run_name": "cmu13_17_t800_v1_from29999"
+    },
+    {
+      "name": "cmu13_18",
+      "group": "cmu_boxing_batch",
+      "input_file": "/data2/yangky/test/GMR/output/cmu_boxing_batch/csv/cmu13_18_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/cmu_boxing_batch/cmu13_18_t800_tracking.npz",
+      "smoke_run_name": "smoke_cmu13_18_batch_v3",
+      "formal_run_name": "cmu13_18_t800_v3_resume29999"
+    },
+    {
+      "name": "cmu15_13",
+      "group": "cmu_boxing_batch",
+      "input_file": "/data2/yangky/test/GMR/output/cmu_boxing_batch/csv/cmu15_13_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/cmu_boxing_batch/cmu15_13_t800_tracking.npz",
+      "smoke_run_name": "smoke_cmu15_13_batch_v3",
+      "formal_run_name": "cmu15_13_t800_v1_from29999"
+    },
+    {
+      "name": "cmu17_10",
+      "group": "cmu_boxing_batch",
+      "input_file": "/data2/yangky/test/GMR/output/cmu_boxing_batch/csv/cmu17_10_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/cmu_boxing_batch/cmu17_10_t800_tracking.npz",
+      "smoke_run_name": "smoke_cmu17_10_batch_v3",
+      "formal_run_name": "cmu17_10_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e1_jab_left",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e1_jab_left_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e1_jab_left_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e1_jab_left",
+      "formal_run_name": "accad_e1_jab_left_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e2_jab_right",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e2_jab_right_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e2_jab_right_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e2_jab_right",
+      "formal_run_name": "accad_e2_jab_right_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e5_hook_left",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e5_hook_left_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e5_hook_left_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e5_hook_left",
+      "formal_run_name": "accad_e5_hook_left_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e6_hook_right",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e6_hook_right_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e6_hook_right_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e6_hook_right",
+      "formal_run_name": "accad_e6_hook_right_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e7_uppercut_left",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e7_uppercut_left_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e7_uppercut_left_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e7_uppercut_left",
+      "formal_run_name": "accad_e7_uppercut_left_t800_v1_from29999"
+    },
+    {
+      "name": "accad_e8_uppercut_right",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_e8_uppercut_right_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_e8_uppercut_right_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_e8_uppercut_right",
+      "formal_run_name": "accad_e8_uppercut_right_t800_v1_from29999"
+    },
+    {
+      "name": "accad_g3_front_kick",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_g3_front_kick_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_g3_front_kick_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_g3_front_kick",
+      "formal_run_name": "accad_g3_front_kick_t800_v1_from29999"
+    },
+    {
+      "name": "accad_g8_roundhouse_left",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_g8_roundhouse_left_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_g8_roundhouse_left_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_g8_roundhouse_left",
+      "formal_run_name": "accad_g8_roundhouse_left_t800_v1_from29999"
+    },
+    {
+      "name": "accad_g17_push_kick_left",
+      "group": "accad_combat_batch",
+      "input_file": "/data2/yangky/test/GMR/output/accad_combat_batch/csv/accad_g17_push_kick_left_t800.csv",
+      "input_format": "csv",
+      "input_fps": 120,
+      "output_path": "/data2/yangky/test/whole_body_tracking/artifacts/boxing_T800/accad_combat_batch/accad_g17_push_kick_left_t800_tracking.npz",
+      "smoke_run_name": "smoke_accad_g17_push_kick_left",
+      "formal_run_name": "accad_g17_push_kick_left_t800_v1_from29999"
+    }
+  ]
+}
