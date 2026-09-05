@@ -152,6 +152,33 @@ index 3cf143d..5f77aa7 100644
    int num_actions;
  };
  
+diff --git a/src/executor/main.cc b/src/executor/main.cc
+index daf1378..4a7bf2f 100644
+--- a/src/executor/main.cc
++++ b/src/executor/main.cc
+@@ -1,4 +1,5 @@
+ #include <csignal>
++#include <cstdlib>
+ #include <exception>
+ #include <filesystem>
+ #include <map>
+@@ -23,7 +24,15 @@ bool InitializeCrashpad() {
+ 
+   base::FilePath db = base::FilePath(coredump_dir.c_str());
+   base::FilePath metrics = db;
+-  base::FilePath handler = base::FilePath("/opt/engineai_robotics_third_party/bin/handler");
++  const char* third_party_env = std::getenv("ENGINEAI_ROBOTICS_THIRD_PARTY");
++  std::filesystem::path third_party =
++      third_party_env != nullptr && third_party_env[0] != '\0' ? third_party_env : "/opt/engineai_robotics_third_party";
++  std::filesystem::path handler_path = third_party / "bin" / "handler";
++  if (!std::filesystem::is_regular_file(handler_path)) {
++    LOG(ERROR) << "Crashpad handler not found: " << handler_path;
++    return false;
++  }
++  base::FilePath handler = base::FilePath(handler_path.c_str());
+   std::string url = "";
+ 
+   std::map<std::string, std::string> annotations;
 diff --git a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h b/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
 index 8367eb7..4ad2713 100644
 --- a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h

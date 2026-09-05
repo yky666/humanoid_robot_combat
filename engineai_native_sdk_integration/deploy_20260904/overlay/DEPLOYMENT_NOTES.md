@@ -53,3 +53,14 @@ from the package root before a test with:
 ```bash
 sha256sum -c DEPLOYMENT_MANIFEST.sha256
 ```
+
+## Runtime Launcher
+
+The Nezha vendor service runs as root. Use `run_custom_robot_root.sh` after the
+official service is deliberately stopped. The launcher checks that no other
+`src_executor` exists, sources ROS 2 Humble, sets all independent package paths,
+and then replaces itself with the custom executor.
+
+The first controlled initialization succeeded on 2026-09-05. RC02, IMU,
+MotorRunner, the 25-joint transform, and ROS 2 initialized without fatal or
+error log entries during the observation window. No policy motion was triggered.
