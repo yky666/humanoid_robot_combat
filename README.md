@@ -54,8 +54,10 @@ The first `_pdprep` hardware smoke run completed with IMU firmware
 `V01.02.06b`, but a post-run provenance audit found that its left-jab trajectory
 was paired with an older six-motion joint actor instead of the accepted
 per-motion jab actor. That executor was stopped. The corrected package uses one
-accepted actor per active motion and has passed a fresh startup in persistent
-`idle`; no corrected policy action has run on hardware yet.
+accepted actor per active motion. A later corrected straight-punch hardware run
+exposed an unsafe return-interface issue: its final shoulder pose exceeded the
+official `pd_stand` entry guard, so the action-to-stand transition requires
+redesign before further unrestricted trials.
 
 ## Repository Map
 
@@ -107,6 +109,10 @@ For Native SDK reconstruction, policy conversion, ARM64 compilation, and T800
 deployment, follow the
 [SDK integration guide](engineai_native_sdk_integration/README.md) and the
 [real-robot runbook](docs/REAL_ROBOT_DEPLOYMENT.md).
+
+For the vendor boxing-ready investigation, formal rollout evidence, and the
+accepted ONNX-to-MNN mapping audit, see
+[T800 Boxing-Ready and Policy Audit](docs/T800_BOXING_READY_AND_POLICY_AUDIT.md).
 
 ## Development Environments
 

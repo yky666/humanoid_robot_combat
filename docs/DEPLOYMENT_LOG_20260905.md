@@ -273,3 +273,29 @@ was inactive. Its log is `runtime_logs/custom_20260905_163723.log`. After more
 than three minutes of observation, severe, power, motor-offline, motor-bus, and
 RC02 timeout/framing fault counts remained zero. Walking and combat actions
 were not triggered during this deployment check.
+
+## Boxing-Ready And Runtime Policy Audit
+
+A later operator test entered the corrected straight-punch policy. At
+16:53:08 its automatic return to `pd_stand` was rejected repeatedly because
+`J13_SHOULDER_PITCH_L` differed from the stand target by `1.43219 rad`, above
+the configured `1.2 rad` guard. The operator selected `passive`, then re-entered
+`pd_stand` successfully. At 16:54:04 the official walking policy entered and
+remained active until a deliberate return to `pd_stand` at 16:54:33. A direct
+walking-to-punch request was correctly rejected by the restricted graph.
+
+Read-only inspection of the untouched vendor package found private
+`rl_mimic_boxing` and `rl_mimic_boxing_classic` runners with dedicated
+`switch_to_boxing_idle` and `switch_to_stance_idle` paths. Their packed assets
+are stored in `/apps/engineai_robotics/assets/config/t800.bson`. Resolving the
+vendor boxing plugin against the custom runtime produced an undefined
+`data::RlMimicBoxingParam` symbol, so the private runner is not ABI-compatible
+as a drop-in plugin and was not copied or loaded.
+
+The four reachable per-motion MNNs were independently compared again with
+their archived accepted ONNX exports using five deterministic inputs each. All
+20 comparisons passed at the `0.001` threshold. The four MNN hashes on Nezha
+matched the repository overlay. A metadata audit also passed the observation,
+action, gains, scaling, history, and semantic 25-joint mapping for every active
+motion. Full results and the recommended boxing-ready integration route are in
+`docs/T800_BOXING_READY_AND_POLICY_AUDIT.md`.
