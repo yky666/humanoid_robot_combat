@@ -69,6 +69,15 @@ The only warning in the observation window was the idle runner reporting a null
 parameter and resetting output to zero. The controller remained at motion code
 0 during the captured startup log.
 
+## Extended Observation
+
+At `10:44:30.503 +08:00`, the RC02 parser emitted one burst of 24
+`skipping unexpected byte` warnings. The last log modification time, file size,
+and warning count did not change during subsequent checks. The executor stayed
+alive, the hardware and motion ROS 2 topics remained present, and the fatal/error
+count remained zero. Treat any renewed or sustained RC02 framing warnings as a
+reason to stop and inspect the serial link before sending a motion command.
+
 ## State at Handoff
 
 At the end of the recorded observation window:
@@ -76,6 +85,7 @@ At the end of the recorded observation window:
 - the custom executor was running;
 - `robotics.service` was intentionally inactive;
 - no motion command had been sent;
+- the executor had remained active for more than seven minutes;
 - rollback remained available through the saved process group and vendor service.
 
 Runtime logs remain on the controller and are deliberately excluded from Git and
