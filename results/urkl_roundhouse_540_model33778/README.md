@@ -44,3 +44,19 @@ Corrected formal report:
 The imported checkpoint and render remain a useful baseline. Continuation of the
 main project uses the already-audited canonical spinning-kick r9 checkpoint,
 which was much closer to the stability gate, and resumes it as r10 on GPU1.
+
+## Single-Kick Branch
+
+Kinematic inspection found three right-foot kick peaks at source frames 391,
+936, and 1374. The middle cycle has the best standalone boundary conditions:
+frames 849 through 1297 return to nearly the same pose, with 0.112 rad endpoint
+joint distance and 0.147 m net root displacement.
+
+`roundhouse_540_single_middle_f0849_f1297_hold20_runtime30.npz` contains that
+single cycle, rebased to zero initial XY and heading. Twenty zero-velocity frames
+(0.4 seconds) were added at each end, producing 489 frames / 9.78 seconds. Its
+joint order and finite-value checks pass `t800_policy_v1`.
+
+The imported policy visibly executes one airborne kick in the single-cycle
+MuJoCo render. This is only a prepared continuation candidate; it has not yet
+run the 320-rollout IsaacLab gate and is not accepted or staged to the SDK.

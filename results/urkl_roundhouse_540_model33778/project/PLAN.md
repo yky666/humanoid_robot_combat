@@ -41,6 +41,9 @@
   `ee_body_pos` and four from `anchor_pos`. It was not promoted to `best/`.
 - The approved canonical spinning-kick policy is substantially closer to the
   gate, so training resumed from r9 `model_44991.pt` as r10 on physical GPU1.
+- A separate single-kick branch was prepared from source frames 849:1298 with
+  20 zero-velocity hold frames on each side. It remains pending IsaacLab
+  evaluation and must not preempt or replace the canonical r10 run.
 
 ## Main Risks
 

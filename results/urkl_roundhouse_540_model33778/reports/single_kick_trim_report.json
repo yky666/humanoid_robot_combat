@@ -1,0 +1,24 @@
+{
+  "input": "/mnt/data/yangky/test/engineai_URKL/worktrees/canonical_motion/540huixuantitui_model33778_t800_runtime30.npz",
+  "output": "/mnt/data/yangky/test/engineai_URKL/worktrees/single_kick_540_model33778/roundhouse_540_single_middle_f0849_f1297_hold20_runtime30.npz",
+  "source_frames": 1633,
+  "window": {
+    "start_inclusive": 849,
+    "end_exclusive": 1298
+  },
+  "core_frames": 449,
+  "hold_frames": {
+    "before": 20,
+    "after": 20
+  },
+  "output_frames": 489,
+  "duration_seconds": 9.78,
+  "source_origin_xy": [
+    0.2579941749572754,
+    2.300110340118408
+  ],
+  "source_initial_yaw_radians": -2.518481650370828,
+  "first_joint_speed": 0.0,
+  "last_joint_speed": 0.0,
+  "endpoint_joint_distance": 0.11196723580360413
+}

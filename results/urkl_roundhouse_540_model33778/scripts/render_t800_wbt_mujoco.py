@@ -28,6 +28,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runner", type=Path, required=True)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--policy-dir", type=Path)
+    parser.add_argument("--motion-file", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--width", type=int, default=1280)
     parser.add_argument("--height", type=int, default=720)
@@ -36,7 +38,11 @@ def main() -> int:
     args = parser.parse_args()
 
     runner = load_runner(args.runner.resolve())
-    cfg = runner.load_config(args.config.resolve(), None, None)
+    cfg = runner.load_config(
+        args.config.resolve(),
+        str(args.policy_dir.resolve()) if args.policy_dir else None,
+        str(args.motion_file.resolve()) if args.motion_file else None,
+    )
     runner.validate_config(cfg)
 
     session = runner._load_onnx_session(cfg.paths.policy_onnx)
