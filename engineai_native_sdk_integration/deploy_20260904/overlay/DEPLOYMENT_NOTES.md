@@ -6,6 +6,7 @@
 - SDK upstream commit: `335c60e88772c26c7852d0abd6b3c7439037dd8f`
 - Target: T800 Nezha controller, ARM64, ROS 2 Humble
 - Official package: `/apps/engineai_robotics` (not modified)
+- Verified IMU firmware: `V01.02.06b` (`engineai-imu-update` package `1.0.3`)
 
 ## Policy Interface
 
@@ -41,6 +42,17 @@ an interchangeable input.
 
 Official bindings reserve `LB+X` and `LB+Y` for the two PD poses. The custom
 hook punch and left jab therefore use `LB+B` and `RB+B`, respectively.
+
+## Keyboard Control
+
+`tools/virtual_gamepad/t800_keyboard_control` is an optional ARM64 terminal
+publisher for the same LCM override consumed by the robot-mode input arbiter.
+It must receive a live `task_state` before it accepts input and requires an
+explicit `--arm` flag. Run it through an interactive SSH session from the
+Windows workstation; no LCM or GUI dependency is required on Windows.
+
+The tool enforces the restricted transition graph and intentionally omits the
+spinning kick because that policy did not pass its qualification gate.
 
 ## Safety Boundary
 

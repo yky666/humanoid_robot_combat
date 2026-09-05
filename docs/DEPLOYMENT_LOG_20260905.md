@@ -116,3 +116,64 @@ The original custom process group was stopped at 11:08:30. Verification showed
 zero `src_executor` processes, while `robotics.service` was deliberately left
 inactive. Inspect RC02 cabling/data integrity, motor power, and emergency-stop
 state before starting either the vendor controller or the staged candidate.
+
+## IMU Upgrade And Input Diagnostics
+
+The confidential `engineai-imu-update_1.0.3_2k_arm64.deb` was found on both ARM
+hosts with matching SHA-256. It was installed only on Nezha (`163`), where the
+YESENSE IMU is physically present; it was not installed on Orin (`162`). The
+package upgraded the IMU from `V01.02.06a.1K` to `V01.02.06b`, and the package
+status is `engineai-imu-update 1.0.3`. Neither the package nor firmware payload
+is committed or copied into the deployment bundle.
+
+After reboot, the vendor controller initialized the new IMU successfully. The
+EtherCAT slave reached OP, but the monitor reported `Power board enable status
+false`; the controller then repeatedly reported `Motor bus not ready` and all
+motors offline. Motion input remains blocked pending physical emergency-stop
+and joint-power activation.
+
+A guarded ARM64 keyboard publisher was built on Orin and staged under
+`tools/virtual_gamepad/` in the `_pdprep` package. It requires a live custom
+`task_state`, an explicit `--arm`, and a state-graph-valid transition. Its test
+against the running vendor stack correctly refused input because no custom
+`task_state` was present. The final candidate manifest contains 2,447 files;
+its manifest-file SHA-256 is
+`3685903d0055987ff4a6617c07069be5edf45a8f76bca4d2d1dedecfb4995e01`.
+
+## Initial Hardware Motion Smoke Test
+
+At 11:54:55 the power board changed to enabled, and at 11:54:57 the monitor
+reported motors 0 through 24 online. The last `Motor bus not ready` warning was
+at 11:54:59. The vendor service was then stopped, its executor was confirmed
+absent, and the `_pdprep` package was started as the sole controller:
+
+```text
+PID/PGID/SID: 2862/2862/2862
+Executable:   /home/user/projects/engineai_robotics_qualifier_20260905_pdprep/_install/bin/src_executor
+Log:          runtime_logs/custom_pdprep_20260905_115733.log
+```
+
+The custom executor initialized RC02 version 9, virtual-gamepad LCM, the
+upgraded IMU, motor runner, 25-joint transform, and ROS 2 without severe, RC02,
+power, or motor-readiness warnings. The keyboard publisher first verified the
+live `idle` task state without arming, then performed:
+
+1. `idle -> passive`
+2. `passive -> pd_stand`
+3. `pd_stand -> qualifier_jab_left -> pd_stand`
+4. `pd_stand -> passive`
+
+The left-jab runner loaded `obs_dim=140`, `actions=25`, and 165 reference
+frames. Its initial-pose error was `0.876165`; the configured guard accepted the
+pose, the trajectory finished normally after about 6.3 seconds including the
+startup blend, and the configured automatic return entered `pd_stand`.
+
+At final verification, PID 2862 remained alive in `passive`,
+`robotics.service` was inactive, and the log contained zero severe entries,
+zero RC02 framing/timeout warnings, and zero power or motor-readiness warnings.
+
+At 12:02:50 the same guarded sequence was repeated from `passive`. The second
+left-jab trajectory finished normally at 12:03:02, returned automatically to
+`pd_stand`, and was placed back in `passive` at 12:03:08. A post-run audit again
+found zero severe entries, zero RC02 framing/timeout warnings, and zero power or
+motor-readiness warnings. No kick or recovery policy was requested.

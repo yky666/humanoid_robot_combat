@@ -59,6 +59,11 @@ The deployment graph additionally carries EngineAI's official `pd_stand_x`
 independent from the custom recovery trajectory; see the real-robot runbook for
 the binding map and compatibility boundary.
 
+`tools/virtual_gamepad/t800_keyboard_control.cc` provides a guarded ARM64
+terminal publisher for keyboard control through SSH. Build it on the ARM64 host
+with `tools/virtual_gamepad/build_t800_keyboard_control.sh`; binaries remain
+deployment artifacts and are not committed.
+
 The accepted official recovery policy is archived separately under
 `results/t800_canonical_v1_20260902/recovery_official/`.
 

@@ -17,18 +17,19 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
-| Last controller state | Both custom executor and vendor service stopped, pending RC02/power inspection |
+| IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
+| Last controller state | Custom PID `2862` running in `passive`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
-libraries, transferred over the robot LAN, and verified with a 2,441-file
+libraries, transferred over the robot LAN, and verified with a 2,447-file
 SHA-256 manifest. The vendor package was not modified.
 
 See the [2026-09-05 deployment log](DEPLOYMENT_LOG_20260905.md) for the first
 controlled startup and rollback record.
 
-The `_pdprep` package is statically staged and manifest-verified but has not
-been started. Do not start either controller until the RC02 framing/timeout and
-motor-power warnings in the deployment log have been inspected on the robot.
+The `_pdprep` package is manifest-verified and completed two guarded hardware
+smoke cycles after all 25 motors reported online. The custom executor was left in
+`passive`; continue to verify motor readiness before every later motion test.
 
 ## Network Topology
 
@@ -207,6 +208,37 @@ connection.
 The spinning kick did not pass the final acceptance gate and must not be treated
 as an approved hardware action. Test accepted motions individually, beginning
 with the least energetic motion and the exact required initial pose.
+
+## Keyboard Control From Windows
+
+The custom input arbiter accepts `virtual_gamepad/gamepad_keys` over LCM in
+robot mode. The deployment includes an ARM64 terminal publisher so the Windows
+workstation can use its keyboard through the existing SSH connection without
+installing LCM or PyQt locally:
+
+```powershell
+ssh -t user@192.168.0.163 `
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_pdprep && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+```
+
+Run without `--arm` first to verify that `task_state` is received. The tool
+refuses input if the custom executor is absent, the state feed is stale, or the
+requested transition is not allowed from the current state. Press `?` for its
+map and `q` to exit. Its single-key map is:
+
+| Key | Request |
+| --- | --- |
+| `p` | `passive` |
+| `t` | `pd_stand` |
+| `x` / `y` | official prone / supine PD preparation |
+| `j` / `h` | left jab / hook punch |
+| `c` / `f` | straight punch / front kick |
+| `r` | custom supine recovery |
+| `i` | `idle` |
+
+The spinning kick has no keyboard shortcut because it failed the qualification
+gate. This keyboard path is an override for controlled debugging, not a bypass
+for motor readiness, emergency stop, or the physical exclusion zone.
 
 ## Monitoring
 

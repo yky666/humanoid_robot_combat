@@ -44,9 +44,11 @@ The independent ARM64 package staged on the T800 controller is an integration
 candidate. Successful compilation, model conversion, or executor startup does
 not promote a policy to accepted status.
 
-The latest `_pdprep` candidate is staged but not running. Both controllers were
-left stopped after renewed RC02 framing/timeouts and a motor-power warning; see
-the [deployment log](docs/DEPLOYMENT_LOG_20260905.md) before the next startup.
+The `_pdprep` candidate is running on Nezha with IMU firmware `V01.02.06b`.
+Motor readiness, `idle -> passive -> pd_stand`, and two guarded left-jab policy
+cycles have passed the initial hardware smoke tests; the controller was returned
+to `passive`. See the [deployment log](docs/DEPLOYMENT_LOG_20260905.md) before
+additional motion tests.
 
 ## Repository Map
 
