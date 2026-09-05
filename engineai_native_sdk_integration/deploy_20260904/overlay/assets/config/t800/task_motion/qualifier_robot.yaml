@@ -17,7 +17,7 @@ tasks:
     runner:
       - name: passive_runner
         enabled: true
-    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y]
+    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y, supine_to_stance]
     key: [LB, RB]
 
   - motion: pd_stand
@@ -65,6 +65,18 @@ tasks:
         param_tag: pd_stand_y
     manual_transition: [passive, pd_stand, pd_stand_x]
     key: [LB, Y]
+
+  # Official public supine recovery. Entry remains restricted to passive so a
+  # rejected or interrupted recovery always has the standard damping fallback.
+  - motion: supine_to_stance
+    period: 0.01
+    runner:
+      - name: rl_mimic_trajectory_runner
+        enabled: true
+        param_tag: rl_supine_to_stance
+    manual_transition: [passive]
+    auto_transition: walk
+    key: [START, CROSS_X_UP]
 
   - motion: qualifier_front_kick
     period: 0.02

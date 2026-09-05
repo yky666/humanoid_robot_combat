@@ -11,13 +11,14 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Controller | Nezha, ARM64 Ubuntu 22.04, ROS 2 Humble |
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
-| Corrected candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio` |
+| Currently running candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio` |
+| Supine-recovery candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_recovery` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Walking/audio custom PID `12233` running in `idle`; vendor service inactive |
+| Last controller state | Walking/audio custom PID `12233` running; last observed task `pd_stand_y`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
 libraries, transferred over the robot LAN, and verified with a 2,455-file
@@ -106,7 +107,7 @@ file build/aarch64/_install/lib/libsrc_runner_rl_dance_example.so
 The independent runtime directory contains:
 
 ```text
-engineai_robotics_qualifier_20260905_walking_audio/
+engineai_robotics_qualifier_20260905_recovery/
   _install/                         ARM64 binaries and runtime dependencies
   assets/config/t800/               base T800 and custom motion configuration
   assets/resource/                 T800 model XML, meshes, and environment
@@ -139,7 +140,7 @@ Complete every item before stopping the vendor controller:
 Run the static checks on Nezha:
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+cd /home/user/projects/engineai_robotics_qualifier_20260905_recovery
 sha256sum -c DEPLOYMENT_MANIFEST.sha256
 
 source /opt/ros/humble/setup.bash
@@ -159,7 +160,7 @@ Executor startup is intentionally separate from motion triggering. Start the
 custom executor only after the physical preflight is complete.
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+cd /home/user/projects/engineai_robotics_qualifier_20260905_recovery
 mkdir -p runtime_logs
 
 sudo systemctl stop robotics.service
@@ -194,16 +195,16 @@ The complete compatibility table is in [T800 Control Mapping](T800_CONTROL_MAPPI
 | `pd_stand` | `passive` | `LB+A` | none |
 | `pd_stand_x` (prone preparation) | `passive` or `pd_stand` | `LB+X` | none |
 | `pd_stand_y` (supine preparation) | `passive` or `pd_stand` | `LB+Y` | none |
+| `supine_to_stance` | `passive` only | `START+D-pad up` | `walk` |
 | `walk` (official SDK policy) | `pd_stand` | `RB+X` | none |
 | `qualifier_front_kick` | `pd_stand` | `RB+A` | `pd_stand` |
 | `qualifier_straight_punch` | `pd_stand` | `RB+Y` | `pd_stand` |
 | `qualifier_hook_punch` | `pd_stand` | `LB+B` | `pd_stand` |
 | `qualifier_jab_left` | `pd_stand` | `RB+B` | `pd_stand` |
 `pd_stand_x` and `pd_stand_y` are the official competition preparation poses.
-EngineAI's accepted `rl_supine_to_stance` recovery returns to `walk` in its
-qualified graph. Although walking is exposed independently, neither the
-official recovery nor the older shared-policy custom recovery is reachable
-until its complete transition chain is separately validated.
+EngineAI's accepted `rl_supine_to_stance` recovery is exposed in the staged
+`_recovery` package and returns to `walk`. The older shared-policy recovery and
+all prone recovery candidates remain unreachable.
 
 The spinning kick did not pass the final acceptance gate and has no reachable
 state or key. Test accepted motions individually, beginning with the least
@@ -218,7 +219,7 @@ installing LCM or PyQt locally:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_recovery && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 Run without `--arm` first to verify that `task_state` is received. The tool
@@ -232,6 +233,7 @@ map and `q` to exit. Its single-key map is:
 | `t` | `pd_stand` |
 | `w` | official `walk` mode |
 | `x` / `y` | official prone / supine PD preparation |
+| `u` | official `supine_to_stance`, from `passive` only |
 | `j` / `h` | left jab / hook punch |
 | `c` / `f` | straight punch / front kick |
 | `i` | `idle` |
@@ -267,7 +269,7 @@ journalctl -u t800-audio-feedback.service -n 100 --no-pager
 ## Monitoring
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+target=/home/user/projects/engineai_robotics_qualifier_20260905_recovery
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -0 "$pid" && echo running
@@ -284,7 +286,7 @@ unexpected movement, repeated state transitions, or emergency-stop request.
 Stop the saved custom process group before restarting the vendor service:
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+target=/home/user/projects/engineai_robotics_qualifier_20260905_recovery
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -- "-$pid"

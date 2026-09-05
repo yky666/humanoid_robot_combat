@@ -2,7 +2,7 @@
 
 ## Identity
 
-- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio`
+- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905_recovery`
 - SDK upstream commit: `335c60e88772c26c7852d0abd6b3c7439037dd8f`
 - Target: T800 Nezha controller, ARM64, ROS 2 Humble
 - Official package: `/apps/engineai_robotics` (not modified)
@@ -23,6 +23,7 @@ and previous action. The runner rejects invalid dimensions and non-finite data.
 
 - `pd_stand_x` (official prone recovery preparation pose)
 - `pd_stand_y` (official supine recovery preparation pose)
+- `supine_to_stance` (official public MNN residual recovery, staged for guarded hardware testing)
 - `walk` (official Native SDK T800 walking policy)
 - `qualifier_front_kick`
 - `qualifier_straight_punch`
@@ -35,14 +36,14 @@ motions can only be entered from `pd_stand`; standing motions return to
 
 The two PD poses come from EngineAI's `urkl_exams` branch at commit
 `0d759376cba552b480f267042d5d069ad5d96b50`. They are independent preparation
-states. EngineAI's accepted `rl_supine_to_stance` policy returns to `walk` in
-its qualified graph. Walking is now available independently, but both recovery
-entries remain unreachable until their complete transitions are validated.
+states. EngineAI's accepted `rl_supine_to_stance` policy is reachable only from
+`passive` with `START+D-pad up` and returns automatically to zero-command
+`walk`. No prone recovery is exposed.
 
 Official bindings reserve `LB+X` and `LB+Y` for the two PD poses. The custom
 hook punch and left jab therefore use `LB+B` and `RB+B`, respectively.
-The failed spinning kick and both recovery implementations have no reachable
-state or binding in this restricted graph.
+The failed spinning kick, the older custom recovery, and prone recovery have no
+reachable state or binding in this restricted graph.
 
 Walking reuses the official `rl_walking_example` runner and model and is bound
 to `RB+X`, the combination vacated by the rejected spinning kick.

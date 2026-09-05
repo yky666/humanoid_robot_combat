@@ -174,7 +174,8 @@ The deployed candidate is isolated from the vendor installation:
 
 ```text
 Official: /apps/engineai_robotics
-Custom:   /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+Active:   /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+Staged:   /home/user/projects/engineai_robotics_qualifier_20260905_recovery
 ```
 
 Only one `src_executor` may run. Never bypass the process guard in

@@ -18,13 +18,15 @@ the policy's exact semantic joint order.
 Real-robot guards are configured per motion: action clipping, joint-limit margin, initial-pose rejection and a
 startup blend that holds reference frame zero until interpolation completes.
 Standing motions are reachable only from `pd_stand` and automatically return to
-it. Spinning kick and both recovery policies are deliberately unreachable. See
+it. Spinning kick, the older custom recovery, and prone recovery are deliberately
+unreachable. The official public `supine_to_stance` policy is reachable from
+`passive` and returns automatically to `walk`. See
 `task_motion/qualifier_robot.yaml` for the restricted state graph.
 
 The state graph starts and remains in `idle`; `passive` is a damping state, not
 the default. It also includes EngineAI's official `pd_stand_x` and `pd_stand_y`
-fall-recovery preparation poses. These PD states remain separate from recovery
-policies because no complete qualified return-to-stand chain is integrated yet.
+fall-recovery preparation poses. These PD states remain separate from the
+supine recovery task; `LB+X` and `LB+Y` do not themselves execute recovery.
 
 Do not start this controller until the official controller has been stopped deliberately and the robot is secured
 on its stand/harness, the area is clear, the battery is adequate, and an operator is holding the emergency stop.

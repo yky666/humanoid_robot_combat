@@ -27,7 +27,7 @@ STANDING_MOTIONS = {
     "qualifier_hook_punch",
     "qualifier_jab_left",
 }
-DISABLED_MOTIONS = {"qualifier_spinning_kick", "qualifier_recovery_supine", "supine_to_stance"}
+DISABLED_MOTIONS = {"qualifier_spinning_kick", "qualifier_recovery_supine"}
 RECOVERY_PREP = {"pd_stand_x", "pd_stand_y"}
 ACTION_POLICIES = {
     "qualifier_front_kick": "front_kick_policy.mnn",
@@ -66,6 +66,7 @@ EXPECTED_KEYS = {
     "pd_stand": ("LB", "A"),
     "pd_stand_x": ("LB", "X"),
     "pd_stand_y": ("LB", "Y"),
+    "supine_to_stance": ("START", "CROSS_X_UP"),
     "walk": ("RB", "X"),
     "qualifier_front_kick": ("RB", "A"),
     "qualifier_straight_punch": ("RB", "Y"),
@@ -99,7 +100,7 @@ def validate_state_graph() -> None:
         {"name": "rl_walking_example_runner", "enabled": True, "param_tag": "rl_walking_example"}
     ]
     assert set(motions["walk"]["manual_transition"]) == {"passive", "pd_stand"}
-    assert RECOVERY_PREP <= set(motions["passive"]["manual_transition"])
+    assert RECOVERY_PREP | {"supine_to_stance"} <= set(motions["passive"]["manual_transition"])
     for name in RECOVERY_PREP:
         other = (RECOVERY_PREP - {name}).pop()
         assert motions[name]["runner"] == [
@@ -107,6 +108,11 @@ def validate_state_graph() -> None:
         ]
         assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand", other}
         assert DISABLED_MOTIONS.isdisjoint(motions[name]["manual_transition"])
+    assert motions["supine_to_stance"]["runner"] == [
+        {"name": "rl_mimic_trajectory_runner", "enabled": True, "param_tag": "rl_supine_to_stance"}
+    ]
+    assert set(motions["supine_to_stance"]["manual_transition"]) == {"passive"}
+    assert motions["supine_to_stance"]["auto_transition"] == "walk"
     for name in STANDING_MOTIONS:
         assert motions[name]["auto_transition"] == "pd_stand"
         assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand"}
@@ -118,6 +124,17 @@ def validate_state_graph() -> None:
     if walking_policy.exists():
         assert hashlib.sha256(walking_policy.read_bytes()).hexdigest() == (
             "cbcb90f86dbb2fde39bdc5a25c8d0530d5c79c7a8f84b1f90863d8c9065b6427"
+        )
+
+    recovery_policy = CONFIG / "rl_supine_to_stance/policy/T800_supine_to_stance.mnn"
+    recovery_trajectory = CONFIG / "rl_supine_to_stance/trajectory/T800_supine_to_stance.npy"
+    assert recovery_policy.is_file() == recovery_trajectory.is_file()
+    if recovery_policy.is_file():
+        assert hashlib.sha256(recovery_policy.read_bytes()).hexdigest() == (
+            "deb9974b1f4f4a7e77801f8c9c6e77f599caab0ca4dd7709fe0bae55870e0e86"
+        )
+        assert hashlib.sha256(recovery_trajectory.read_bytes()).hexdigest() == (
+            "c2f19c164093701311634024eb27999fed4631a00d38d507f8aa306ee138c161"
         )
 
 

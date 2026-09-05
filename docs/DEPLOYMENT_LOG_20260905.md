@@ -334,3 +334,32 @@ guard. Direct pose comparison gives maximum differences of 2.185 rad from
 `pd_stand_y` and 2.590 rad from `pd_stand_x` to upright stand. The guard remains
 enabled because the upright PD runner assumes both feet, and no arms, are in
 contact. No configuration or live process was changed.
+
+## Supine Recovery State Staging
+
+The official public `supine_to_stance` task was added to a new independent
+deployment candidate. It is reachable only from `passive` with the official
+`START+D-pad up` binding, permits `LB+RB` interruption, and automatically
+returns to zero-command `walk`. The SSH keyboard publisher adds `u`; the Orin
+audio service was updated and restarted successfully for request/state tones.
+
+The recovery trajectory frame 90 is close to upright `pd_stand` in joint space
+(maximum difference 0.687 rad), confirming the operator's recollection. Its
+base is nevertheless supine at approximately 0.14 m height. The official
+`stance_to_supine` terminal pose is a better match (maximum joint difference
+0.362 rad), while `pd_stand_y` differs by 2.320 rad. The global 1.2-rad upright
+PD bias guard was not weakened or bypassed.
+
+The candidate was staged at:
+
+```text
+/home/user/projects/engineai_robotics_qualifier_20260905_recovery
+```
+
+Static bundle validation passed. The rebuilt keyboard tool is ARM64, resolves
+its packaged LCM library, and completed a no-command state subscription. Its
+SHA-256 is `f35b8a829e1197cc50dd70609edb2a00606cb7ad219e9733ef263a9c271fa610`;
+the 2,455-file manifest passed with manifest SHA-256
+`a218ebff59a49293f0a5179b910e5e970b51365907af6d86ea9ab3afadadffa6`.
+The existing PID 12233 remained on the `_walking_audio` package, so the new
+state is staged but not active. No motion command was sent.

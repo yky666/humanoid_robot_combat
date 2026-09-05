@@ -56,9 +56,9 @@ the four accepted standing-action actors are reachable. ARM64 build products
 are not committed because they depend on the matching controller SDK libraries.
 
 The deployment graph additionally carries EngineAI's official `pd_stand_x`
-(prone) and `pd_stand_y` (supine) recovery preparation poses. The accepted
-`rl_supine_to_stance` artifacts remain archived but unreachable until their
-qualified `walk` return state is integrated. See the
+(prone) and `pd_stand_y` (supine) recovery preparation poses. The staged
+recovery package exposes the accepted public `supine_to_stance` task from
+`passive`, using `START+D-pad up`, and automatically returns to `walk`. See the
 [control mapping](../docs/T800_CONTROL_MAPPING.md) for physical and keyboard
 bindings and the legacy-controller compatibility boundary.
 

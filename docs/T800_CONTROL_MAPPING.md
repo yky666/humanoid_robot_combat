@@ -15,7 +15,7 @@ controller before using a combination.
 | Walking | `walk` | Official Native SDK walking policy; stick commands are active. |
 | Prone PD preparation | `pd_stand_x` | Official URKL prone recovery preparation pose. |
 | Supine PD preparation | `pd_stand_y` | Official URKL supine recovery preparation pose. |
-| Supine recovery | `supine_to_stance` | Public reference trajectory plus MNN residual policy; not reachable in the current custom graph. |
+| Supine recovery | `supine_to_stance` | Public reference trajectory plus MNN residual policy; staged in the recovery package. |
 
 The vendor UI label `stance` belongs to the vendor/legacy controller workflow.
 The open Native SDK describes its corresponding states as `idle`, `passive`,
@@ -34,6 +34,7 @@ the independent custom executor is running.
 | `LB+A` | `pd_stand` | damping or recovery PD poses | stays in PD stand |
 | `LB+X` | `pd_stand_x`, prone preparation | damping, PD stand, supine preparation | stays in pose |
 | `LB+Y` | `pd_stand_y`, supine preparation | damping, PD stand, prone preparation | stays in pose |
+| `START+D-pad up` | official supine recovery | damping only | zero-command walking |
 | `RB+X` | official walking mode | PD stand | stays in walking mode |
 | `RB+A` | front kick | PD stand | PD stand |
 | `RB+Y` | straight punch | PD stand | PD stand |
@@ -42,9 +43,9 @@ the independent custom executor is running.
 
 `RB+X` replaces the rejected spinning-kick binding. There is no spinning-kick
 binding because that policy failed its acceptance gate. The earlier custom
-shared-policy recovery binding is also disabled; the
-official recovery is archived but remains unreachable until its complete
-return chain is separately validated on this graph.
+shared-policy recovery binding remains disabled. The official public supine
+recovery is exposed only in the staged `_recovery` package; it has not yet had
+a hardware execution from the competition PD preparation pose.
 
 `LB+X` and `LB+Y` do not execute recovery. In the public `urkl_exams` graph,
 back recovery is a separate `START+D-pad up` command allowed from `passive`,
@@ -59,7 +60,7 @@ Start the guarded ARM64 publisher from Windows:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_recovery && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 | Keyboard | Publishes | Result |
@@ -69,6 +70,7 @@ ssh -t user@192.168.0.163 `
 | `t` | `LB+A` | PD stand |
 | `w` | `RB+X` | official walking mode |
 | `x` / `y` | `LB+X` / `LB+Y` | prone / supine PD preparation |
+| `u` | `START+D-pad up` | official supine recovery, accepted only from damping |
 | `f` | `RB+A` | front kick |
 | `c` | `RB+Y` | straight punch |
 | `h` | `LB+B` | hook punch |

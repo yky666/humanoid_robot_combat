@@ -14,7 +14,7 @@ not published in the open Native SDK.
 | Fall orientation | Preparation pose | Public stand-up action | Installed vendor release | Current custom graph |
 | --- | --- | --- | --- | --- |
 | Prone, face down | `pd_stand_x`, `LB+X` | None | Private prone recovery runner and assets are present | Preparation only; no stand-up action |
-| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Public artifacts staged but deliberately unreachable |
+| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Exposed in the staged `_recovery` package, not the currently running package |
 
 The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 "stand up." They only command the corresponding three-second PD pose.
@@ -22,16 +22,18 @@ The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 ## Current Custom Integration
 
 The recovery configuration and public supine MNN/trajectory are present in the
-deployed package, and `mode.yaml` maps the `rl_supine_to_stance` parameter tag.
-That is asset-level integration only. The active
-`task_motion/qualifier_robot.yaml` does not contain a `supine_to_stance` task,
-does not allow a transition to it, and assigns it no gamepad key. The ARM64
-keyboard publisher likewise has no recovery command. It therefore cannot be
-triggered by the physical gamepad or keyboard in the current custom executor.
+deployment, and `mode.yaml` maps the `rl_supine_to_stance` parameter tag. The
+staged `_recovery` package adds the task to
+`task_motion/qualifier_robot.yaml`, allows entry only from `passive`,
+binds the physical gamepad to `START+D-pad up`, and adds keyboard key `u`.
 
 At the latest read-only check, the vendor service was inactive, the custom
 executor was PID 12233, and the last recorded state transition at 18:20:05 was
 to `pd_stand_y`. No command was sent during the check.
+
+The staged package is `/home/user/projects/engineai_robotics_qualifier_20260905_recovery`.
+It has not replaced the running `_walking_audio` executor and no recovery has
+been executed on hardware.
 
 ## Public Supine Chain
 
@@ -58,6 +60,12 @@ The trajectory is a 197 x 34 float16 array. The runner selects frames 90 through
 plus the clipped MNN policy output, rather than an open-loop trajectory replay.
 Entry from the measured joint state is linearly blended for 0.3 seconds. At
 trajectory completion, the FSM requests the automatic transition to `walk`.
+
+Unlike `PdStandRunner`, `RlMimicTrajectoryRunner::Enter()` performs no upright
+joint-bias rejection. It records the measured joints and uses them as the start
+of that 0.3-second blend; torque limiting remains enabled. Entering the official
+recovery from `passive` therefore already provides the requested bias-independent
+floor path without disabling `strict_motion_check` for upright PD states.
 
 This architecture is consistent with a fast kinematic get-up followed by RL
 correction and a locomotion controller holding the final stance. Source and
@@ -87,6 +95,14 @@ the maximum per-joint difference is about 2.32 rad. The runner's 0.3-second
 blend reduces discontinuity but does not prove that this alternate entry is
 physically safe.
 
+The upright `pd_stand` joint target is much closer to recovery frame 90: its
+maximum per-joint difference is 0.687 rad, with no joint over the 1.2-rad stand
+guard. This is joint-space similarity only. At frame 90 the reference base is
+about 0.14 m above the floor and its quaternion represents a supine body; the
+same limb angles in upright `pd_stand` have a different base orientation and
+contact state. The official `stance_to_supine` terminal joints are closer
+again, with a maximum difference of 0.362 rad.
+
 No equivalent accepted result exists for prone recovery in this repository.
 The local `recovery_prone_male1_to_ready` media is a candidate created by
 reversing a fall fragment and appending a ready transition. It has not been
@@ -112,7 +128,7 @@ or back are on the floor. Increasing/removing the bias threshold would only
 permit a smooth joint-space interpolation under an invalid contact model; it
 would not turn PD stand into a dynamically balanced get-up controller.
 
-Do not implement either of these shortcuts:
+Do not implement either of these upright-PD shortcuts:
 
 - `pd_stand_y -> pd_stand` with the bias check bypassed;
 - `pd_stand_x -> pd_stand` followed by a standing punch policy used against
@@ -167,8 +183,8 @@ open custom executor. The supported choices are:
 
 ## Safe Integration Gate
 
-Keep both recovery actions unreachable in the current real-robot graph until
-all of the following have passed:
+Do not activate the staged supine task or add prone recovery until all of the
+following have passed:
 
 - a separate recovery-lab FSM, with no combat actions and `LB+RB` fallback;
 - simulation of the exact PD-preparation-to-recovery chain, not only the
@@ -180,8 +196,10 @@ all of the following have passed:
 - first hardware execution while suspended over mats, with an emergency-stop
   operator and exclusion zone.
 
-The currently running custom controller remains unchanged: both PD preparation
-poses are available, while no high-dynamic recovery action is reachable.
+The currently running custom controller remains unchanged. The independently
+staged package exposes only the accepted public supine recovery; it must be
+started deliberately after the running controller is safely returned to
+`passive` and stopped.
 
 ## References
 
