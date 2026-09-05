@@ -324,3 +324,13 @@ runner ABI and protected assets were not copied into the custom deployment or
 the public repository. PID 12233 and the custom graph were left unchanged; no
 recovery or other motion command was sent. The full findings and integration
 gates are in `docs/T800_FALL_RECOVERY_AUDIT.md`.
+
+A subsequent read-only check confirmed that `rl_supine_to_stance` is mapped in
+the deployed parameter registry but absent from the active task graph and both
+input maps. It is therefore not controllable in the current custom executor.
+The last logged state at 18:20:05 was `pd_stand_y`; repeated earlier requests
+from floor poses to upright `pd_stand` were rejected by its 1.2-rad joint-bias
+guard. Direct pose comparison gives maximum differences of 2.185 rad from
+`pd_stand_y` and 2.590 rad from `pd_stand_x` to upright stand. The guard remains
+enabled because the upright PD runner assumes both feet, and no arms, are in
+contact. No configuration or live process was changed.

@@ -19,6 +19,20 @@ not published in the open Native SDK.
 The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 "stand up." They only command the corresponding three-second PD pose.
 
+## Current Custom Integration
+
+The recovery configuration and public supine MNN/trajectory are present in the
+deployed package, and `mode.yaml` maps the `rl_supine_to_stance` parameter tag.
+That is asset-level integration only. The active
+`task_motion/qualifier_robot.yaml` does not contain a `supine_to_stance` task,
+does not allow a transition to it, and assigns it no gamepad key. The ARM64
+keyboard publisher likewise has no recovery command. It therefore cannot be
+triggered by the physical gamepad or keyboard in the current custom executor.
+
+At the latest read-only check, the vendor service was inactive, the custom
+executor was PID 12233, and the last recorded state transition at 18:20:05 was
+to `pd_stand_y`. No command was sent during the check.
+
 ## Public Supine Chain
 
 The public T800 state graph defines this sequence:
@@ -78,6 +92,60 @@ The local `recovery_prone_male1_to_ready` media is a candidate created by
 reversing a fall fragment and appending a ready transition. It has not been
 promoted to an accepted policy and must not be deployed as a real-robot action.
 
+## Why The PD Bias Guard Must Remain
+
+`PdStandRunner::Enter()` rejects a transition when any measured joint differs
+from the target by more than the configured threshold. The real-robot upright
+`pd_stand` threshold is 1.2 rad. Only after this check succeeds does the runner
+interpolate from measured joints to the upright target over three seconds.
+
+The open runner has a force-start path when `strict_motion_check` is disabled
+and the operator holds LT. The deployed release configuration deliberately has
+`strict_motion_check: true`, so that override is unavailable. It must not be
+enabled for floor recovery.
+
+From the exact competition poses, the largest target difference is 2.185 rad
+for `pd_stand_y -> pd_stand` and 2.590 rad for `pd_stand_x -> pd_stand`. More
+importantly, the PD runner declares both feet in contact and both arms out of
+contact throughout execution. That assumption is false while the torso, arms,
+or back are on the floor. Increasing/removing the bias threshold would only
+permit a smooth joint-space interpolation under an invalid contact model; it
+would not turn PD stand into a dynamically balanced get-up controller.
+
+Do not implement either of these shortcuts:
+
+- `pd_stand_y -> pd_stand` with the bias check bypassed;
+- `pd_stand_x -> pd_stand` followed by a standing punch policy used against
+  the floor.
+
+The second route also applies a policy outside its trained base orientation,
+contact set, observation distribution, and terminal state. Arm-ground impact
+must be modeled explicitly if it is part of a recovery maneuver.
+
+## Recommended Two-Orientation Design
+
+The public supine policy can be evaluated in an isolated recovery graph using:
+
+```text
+pd_stand_y -> passive -> guarded supine_to_stance -> walk(zero command)
+             -> stable-upright confirmation -> boxing-ready
+```
+
+The prone fallback may reuse the accepted supine get-up only after a dedicated,
+contact-aware roll-over action has safely reached its required supine state:
+
+```text
+pd_stand_x -> passive -> prone_to_supine
+             -> settled-supine confirmation -> supine_to_stance
+             -> walk(zero command) -> stable-upright confirmation
+             -> boxing-ready
+```
+
+`prone_to_supine` may use an arm push/ground strike as one phase, but it must be
+trained or authored as a recovery action with arm contacts, torque/impact
+limits, base-orientation checks, and a verified terminal supine pose. It must
+not invoke the upright `pd_stand` state in the middle of the maneuver.
+
 ## Installed Vendor Release
 
 Read-only inspection of `/apps/engineai_robotics` found private prone, supine,
@@ -122,4 +190,3 @@ poses are available, while no high-dynamic recovery action is reachable.
 - [Public supine recovery configuration](https://github.com/engineai-robotics/engineai_robotics_native_sdk/blob/urkl_exams/assets/config/t800/rl_supine_to_stance/default.yaml)
 - [EngineAI T800 developer documentation](https://engineai.com.cn/open/docs/t800-developer/03?product=t800)
 - [URKL competition rules](https://www.engineai.com.cn/tournament-rule-detailed.html)
-
