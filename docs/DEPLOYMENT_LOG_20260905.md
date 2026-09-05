@@ -363,3 +363,32 @@ the 2,455-file manifest passed with manifest SHA-256
 `a218ebff59a49293f0a5179b910e5e970b51365907af6d86ea9ab3afadadffa6`.
 The existing PID 12233 remained on the `_walking_audio` package, so the new
 state is staged but not active. No motion command was sent.
+
+## Motor-Bus Incident And Force-PD Lab
+
+After a controller restart, the `_recovery` executor started as PID 2071 while
+all motors were offline. The EtherCAT master and its `foe` slave were in `OP`,
+but the SDK repeatedly reported `Motor bus not ready (self-check)`. A recovery
+request was accepted at the FSM level while the bus was unavailable and
+produced out-of-range policy targets. After motor communication returned, a
+second recovery run still produced targets above 8 rad before automatically
+entering `walk`. Further public supine-recovery trials were stopped.
+
+At 21:51:34 the motor monitor cleared its offline state. Subsequent
+`passive -> pd_stand` requests were correctly rejected by the 1.2-rad guard;
+the largest observed mismatch was about 3.18 rad. Recovery requests made from
+`walk` or `pd_stand_x` were also correctly rejected by the state graph. The
+executor was returned to `passive` through the guarded virtual gamepad.
+
+An opt-in package was then staged at:
+
+```text
+/home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab
+```
+
+It contains only the five idle/passive/PD states and uses the SDK's existing
+`strict_motion_check: false` plus held-LT force confirmation. Its 2,458-file
+manifest passed with SHA-256
+`e2d1a37865b6582fc10fc3dbb91916f6d5006bdcb77ed9da0b9fe73683c7b99f`.
+It was staged but not activated because replacing the root-owned PID 2071
+requires a deliberate local sudo operation. No force-PD motion was triggered.

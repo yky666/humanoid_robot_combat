@@ -14,7 +14,7 @@ not published in the open Native SDK.
 | Fall orientation | Preparation pose | Public stand-up action | Installed vendor release | Current custom graph |
 | --- | --- | --- | --- | --- |
 | Prone, face down | `pd_stand_x`, `LB+X` | None | Private prone recovery runner and assets are present | Preparation only; no stand-up action |
-| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Exposed in the staged `_recovery` package, not the currently running package |
+| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Exposed in the active `_recovery` package; further execution suspended after hardware warnings |
 
 The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 "stand up." They only command the corresponding three-second PD pose.
@@ -27,13 +27,10 @@ staged `_recovery` package adds the task to
 `task_motion/qualifier_robot.yaml`, allows entry only from `passive`,
 binds the physical gamepad to `START+D-pad up`, and adds keyboard key `u`.
 
-At the latest read-only check, the vendor service was inactive, the custom
-executor was PID 12233, and the last recorded state transition at 18:20:05 was
-to `pd_stand_y`. No command was sent during the check.
-
-The staged package is `/home/user/projects/engineai_robotics_qualifier_20260905_recovery`.
-It has not replaced the running `_walking_audio` executor and no recovery has
-been executed on hardware.
+At the latest read-only check, the vendor service was inactive and PID 2071 was
+running the `_recovery` package in `passive`. Hardware recovery attempts
+produced out-of-range policy targets, including a value above 8 rad, so further
+execution is suspended pending runner guards and renewed simulation.
 
 ## Public Supine Chain
 
@@ -183,7 +180,7 @@ open custom executor. The supported choices are:
 
 ## Safe Integration Gate
 
-Do not activate the staged supine task or add prone recovery until all of the
+Do not reactivate the supine task or add prone recovery until all of the
 following have passed:
 
 - a separate recovery-lab FSM, with no combat actions and `LB+RB` fallback;
@@ -196,10 +193,10 @@ following have passed:
 - first hardware execution while suspended over mats, with an emergency-stop
   operator and exclusion zone.
 
-The currently running custom controller remains unchanged. The independently
-staged package exposes only the accepted public supine recovery; it must be
-started deliberately after the running controller is safely returned to
-`passive` and stopped.
+The current controller has been returned to `passive`. The independent
+force-PD lab package excludes both recovery directions and all dynamic actions;
+its held-`LT` override must be treated as a harnessed joint-alignment test, not
+as a stand-up controller.
 
 ## References
 

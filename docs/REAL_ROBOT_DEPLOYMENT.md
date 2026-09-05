@@ -11,14 +11,14 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Controller | Nezha, ARM64 Ubuntu 22.04, ROS 2 Humble |
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
-| Currently running candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio` |
-| Supine-recovery candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_recovery` |
+| Currently running candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_recovery` |
+| Force-PD lab candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Walking/audio custom PID `12233` running; last observed task `pd_stand_y`; vendor service inactive |
+| Last controller state | Recovery custom PID `2071` in `passive`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
 libraries, transferred over the robot LAN, and verified with a 2,455-file
@@ -209,6 +209,25 @@ all prone recovery candidates remain unreachable.
 The spinning kick did not pass the final acceptance gate and has no reachable
 state or key. Test accepted motions individually, beginning with the least
 energetic motion and the exact required initial pose.
+
+## Opt-In Force-PD Lab
+
+The isolated force-PD configuration is for a harnessed joint-alignment test,
+not dynamic floor recovery. It exposes only `idle`, `passive`, `pd_stand`,
+`pd_stand_x`, and `pd_stand_y`; walking, combat, and `supine_to_stance` are
+unreachable. Validate it with:
+
+```bash
+cd /home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab
+python3 tools/validate_force_pd_lab.py
+sha256sum -c DEPLOYMENT_MANIFEST.sha256
+```
+
+This package sets `strict_motion_check: false`, but a failed PD bias check is
+overridden only while `LT` is held above 0.8. From `passive`, hold `LT`, then
+hold `LB+A` to request forced `pd_stand`. A normal `LB+A` request retains the
+bias rejection. The three-second quintic interpolation and configured PD gains
+remain active; this does not add a contact-aware stand-up controller.
 
 ## Keyboard Control From Windows
 

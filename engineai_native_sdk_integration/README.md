@@ -62,6 +62,12 @@ recovery package exposes the accepted public `supine_to_stance` task from
 [control mapping](../docs/T800_CONTROL_MAPPING.md) for physical and keyboard
 bindings and the legacy-controller compatibility boundary.
 
+For an explicitly confirmed harness test, the overlay also contains an
+isolated `force_pd_lab.yaml` state graph and `global_options/force_pd_lab.yaml`.
+That graph removes walking, recovery, and combat actions. It uses the SDK's
+held-`LT` force-start mechanism instead of permanently removing the PD runner's
+bias check. Validate it with `python tools/validate_force_pd_lab.py`.
+
 `tools/virtual_gamepad/t800_keyboard_control.cc` provides a guarded ARM64
 terminal publisher for keyboard control through SSH. Build it on the ARM64 host
 with `tools/virtual_gamepad/build_t800_keyboard_control.sh`; binaries remain

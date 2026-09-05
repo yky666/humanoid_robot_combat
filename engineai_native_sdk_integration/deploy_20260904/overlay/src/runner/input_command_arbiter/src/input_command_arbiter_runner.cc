@@ -20,7 +20,7 @@ namespace runner {
 namespace {
 
 constexpr uint16_t kDefaultAudioFeedbackPort = 45800;
-constexpr std::array<int, 10> kAudioFeedbackKeys = {3, 5, 6, 9, 10, 17, 18, 33, 34, 129};
+constexpr std::array<int, 11> kAudioFeedbackKeys = {3, 5, 6, 9, 10, 17, 18, 33, 34, 129, 384};
 
 bool IsFeedbackKey(int value) {
   for (const int key : kAudioFeedbackKeys) {
