@@ -14,7 +14,7 @@ not published in the open Native SDK.
 | Fall orientation | Preparation pose | Public stand-up action | Installed vendor release | Current custom graph |
 | --- | --- | --- | --- | --- |
 | Prone, face down | `pd_stand_x`, `LB+X` | None | Private prone recovery runner and assets are present | Preparation only; no stand-up action |
-| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Exposed in the active `_recovery` package; further execution suspended after hardware warnings |
+| Supine, face up | `pd_stand_y`, `LB+Y` | `supine_to_stance` | Private supine and general recovery runners/assets are present | Definition retained; incoming transition quarantined after hardware warnings |
 
 The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 "stand up." They only command the corresponding three-second PD pose.
@@ -23,14 +23,18 @@ The current custom executor therefore must not interpret `LB+X` or `LB+Y` as
 
 The recovery configuration and public supine MNN/trajectory are present in the
 deployment, and `mode.yaml` maps the `rl_supine_to_stance` parameter tag. The
-staged `_recovery` package adds the task to
-`task_motion/qualifier_robot.yaml`, allows entry only from `passive`,
-binds the physical gamepad to `START+D-pad up`, and adds keyboard key `u`.
+staged `_recovery` package retains the task in
+`task_motion/qualifier_robot.yaml`, its physical `START+D-pad up` key record,
+and keyboard key `u`. No state currently has an incoming transition to it, so
+both hardware and keyboard requests are rejected by the FSM.
 
-At the latest read-only check, the vendor service was inactive and PID 2071 was
-running the `_recovery` package in `passive`. Hardware recovery attempts
-produced out-of-range policy targets, including a value above 8 rad, so further
-execution is suspended pending runner guards and renewed simulation.
+At the latest read-only check at 22:29 CST, the vendor service was inactive and
+no custom `src_executor` process was running. PID 2071 had stopped; a 22:16
+attempt to launch the force-PD copy exited immediately with
+`Catch Exception: bad optional access`. Hardware recovery attempts earlier in
+the evening produced out-of-range policy targets, including a value above 8
+rad, so further execution is suspended pending runner guards and renewed
+simulation.
 
 ## Public Supine Chain
 
@@ -193,10 +197,13 @@ following have passed:
 - first hardware execution while suspended over mats, with an emergency-stop
   operator and exclusion zone.
 
-The current controller has been returned to `passive`. The independent
-force-PD lab package excludes both recovery directions and all dynamic actions;
-its held-`LT` override must be treated as a harnessed joint-alignment test, not
-as a stand-up controller.
+No controller was running at the latest check. The independent force-PD lab is
+specified to exclude both recovery directions and all dynamic actions; its
+held-`LT` override must be treated as a harnessed joint-alignment test, not as a
+stand-up controller. The staged copy was found to still select the full
+`qualifier_robot` task scope. Its robot-mode scopes were corrected at 22:29 to
+select `force_pd_lab`; static validation and its regenerated 2,458-file
+manifest pass, but it has not been relaunched.
 
 ## References
 

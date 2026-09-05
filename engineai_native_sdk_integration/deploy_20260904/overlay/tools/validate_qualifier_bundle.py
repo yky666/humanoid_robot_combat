@@ -100,7 +100,8 @@ def validate_state_graph() -> None:
         {"name": "rl_walking_example_runner", "enabled": True, "param_tag": "rl_walking_example"}
     ]
     assert set(motions["walk"]["manual_transition"]) == {"passive", "pd_stand"}
-    assert RECOVERY_PREP | {"supine_to_stance"} <= set(motions["passive"]["manual_transition"])
+    assert RECOVERY_PREP <= set(motions["passive"]["manual_transition"])
+    assert "supine_to_stance" not in motions["passive"]["manual_transition"]
     for name in RECOVERY_PREP:
         other = (RECOVERY_PREP - {name}).pop()
         assert motions[name]["runner"] == [

@@ -1,4 +1,8 @@
-initial_motion: idle
+# Isolated hardware-lab graph. The independent staged package must map its
+# motion_task scope to this file; the normal qualifier graph remains untouched.
+cpu:
+  number: 3
+  priority: 10
 
 tasks:
   - motion: idle

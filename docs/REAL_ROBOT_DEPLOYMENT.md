@@ -11,14 +11,14 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Controller | Nezha, ARM64 Ubuntu 22.04, ROS 2 Humble |
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
-| Currently running candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_recovery` |
+| Primary full candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_recovery` (stopped) |
 | Force-PD lab candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Recovery custom PID `2071` in `passive`; vendor service inactive |
+| Last controller state | No `src_executor` running at 22:29 CST; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
 libraries, transferred over the robot LAN, and verified with a 2,455-file
@@ -188,6 +188,21 @@ repeated fault before any motion test.
 These are the only reachable bindings in the corrected integration candidate.
 The complete compatibility table is in [T800 Control Mapping](T800_CONTROL_MAPPING.md).
 
+The full candidate retains official walking, both competition PD preparation
+poses, the public supine-recovery definition, and all four accepted combat
+policies. The force-PD lab is a separate package and is never a replacement for
+this graph. The state paths are intentionally different:
+
+```text
+upright: idle -> passive -> pd_stand -> walk or combat -> pd_stand
+supine:  pd_stand_y -> passive -> supine_to_stance -> walk -> pd_stand
+prone:   pd_stand_x -> passive -> [public prone recovery unavailable]
+```
+
+Do not insert `pd_stand` before `supine_to_stance`: the former assumes an
+upright base and two foot contacts, while the latter accepts entry from
+`passive` with a supine base/contact state.
+
 | State | Entry state | Gamepad | Automatic return |
 | --- | --- | --- | --- |
 | `idle` | initial, or `passive` | `LB+START` | none |
@@ -195,16 +210,22 @@ The complete compatibility table is in [T800 Control Mapping](T800_CONTROL_MAPPI
 | `pd_stand` | `passive` | `LB+A` | none |
 | `pd_stand_x` (prone preparation) | `passive` or `pd_stand` | `LB+X` | none |
 | `pd_stand_y` (supine preparation) | `passive` or `pd_stand` | `LB+Y` | none |
-| `supine_to_stance` | `passive` only | `START+D-pad up` | `walk` |
+| `supine_to_stance` | quarantined; intended from `passive` | `START+D-pad up` | `walk` if requalified |
 | `walk` (official SDK policy) | `pd_stand` | `RB+X` | none |
 | `qualifier_front_kick` | `pd_stand` | `RB+A` | `pd_stand` |
 | `qualifier_straight_punch` | `pd_stand` | `RB+Y` | `pd_stand` |
 | `qualifier_hook_punch` | `pd_stand` | `LB+B` | `pd_stand` |
 | `qualifier_jab_left` | `pd_stand` | `RB+B` | `pd_stand` |
 `pd_stand_x` and `pd_stand_y` are the official competition preparation poses.
-EngineAI's accepted `rl_supine_to_stance` recovery is exposed in the staged
-`_recovery` package and returns to `walk`. The older shared-policy recovery and
-all prone recovery candidates remain unreachable.
+EngineAI's accepted `rl_supine_to_stance` definition remains staged in the
+`_recovery` package and returns to `walk`, but its incoming FSM edge is
+quarantined. The older shared-policy recovery and all prone recovery candidates
+remain unreachable.
+
+The state and assets are retained for reproducibility, but do not trigger
+`supine_to_stance` on hardware until the observed greater-than-8-rad desired
+targets have been explained and hard joint/output guards have passed renewed
+simulation.
 
 The spinning kick did not pass the final acceptance gate and has no reachable
 state or key. Test accepted motions individually, beginning with the least
@@ -228,6 +249,17 @@ overridden only while `LT` is held above 0.8. From `passive`, hold `LT`, then
 hold `LB+A` to request forced `pd_stand`. A normal `LB+A` request retains the
 bias rejection. The three-second quintic interpolation and configured PD gains
 remain active; this does not add a contact-aware stand-up controller.
+
+Before launch, verify that the independent copy actually selects the lab files:
+
+```bash
+grep -A4 -n 'tag: motion_task' assets/config/t800/mode.yaml
+grep -A4 -n 'tag: global_options' assets/config/t800/mode.yaml
+```
+
+The expected scopes are `task_motion/force_pd_lab` and
+`global_options/force_pd_lab`. A package selecting `qualifier_robot` is not the
+isolated lab and must not be launched as one.
 
 ## Keyboard Control From Windows
 
@@ -295,6 +327,17 @@ sudo kill -0 "$pid" && echo running
 pgrep -af src_executor
 tail -f "$target"/runtime_logs/custom_*.log
 ```
+
+For a read-only one-shot summary, copy the packaged helper to Nezha and run:
+
+```bash
+./check_t800_status.sh
+```
+
+It reports the vendor service, exact custom executable/cwd, last entered FSM
+state from that process's log, and EtherCAT slave state. When no executor is
+running, the FSM state is correctly reported as unavailable rather than
+`passive` or `idle`.
 
 Stop immediately on non-finite-value faults, model or trajectory shape errors,
 joint-limit warnings, initial-pose rejection, loss of IMU/motor traffic,

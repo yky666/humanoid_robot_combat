@@ -27,7 +27,8 @@ def main() -> None:
     assert options == {"strict_motion_check": False}
 
     task = load_yaml(CONFIG / "task_motion/force_pd_lab.yaml")
-    assert task["initial_motion"] == "idle"
+    assert task["cpu"] == {"number": 3, "priority": 10}
+    assert set(task) == {"cpu", "tasks"}
     motions = {entry["motion"]: entry for entry in task["tasks"]}
     assert set(motions) == set(EXPECTED_KEYS)
     assert {name: tuple(motions[name]["key"]) for name in motions} == EXPECTED_KEYS

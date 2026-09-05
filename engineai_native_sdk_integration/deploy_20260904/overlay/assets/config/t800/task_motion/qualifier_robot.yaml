@@ -17,7 +17,7 @@ tasks:
     runner:
       - name: passive_runner
         enabled: true
-    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y, supine_to_stance]
+    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y]
     key: [LB, RB]
 
   - motion: pd_stand
@@ -66,8 +66,9 @@ tasks:
     manual_transition: [passive, pd_stand, pd_stand_x]
     key: [LB, Y]
 
-  # Official public supine recovery. Entry remains restricted to passive so a
-  # rejected or interrupted recovery always has the standard damping fallback.
+  # Official public supine recovery definition retained for reproducibility.
+  # It is currently quarantined: no state has a transition into it after the
+  # 2026-09-05 hardware run produced out-of-range desired joint targets.
   - motion: supine_to_stance
     period: 0.01
     runner:

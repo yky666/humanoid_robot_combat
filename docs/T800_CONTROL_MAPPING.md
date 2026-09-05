@@ -21,6 +21,31 @@ The vendor UI label `stance` belongs to the vendor/legacy controller workflow.
 The open Native SDK describes its corresponding states as `idle`, `passive`,
 and `pd_stand`; the custom controller does not invent a `stance` alias.
 
+## State-Machine Paths
+
+There is no single chain that passes every posture through `pd_stand`.
+`pd_stand` is an upright, both-feet-contact controller, while
+`supine_to_stance` starts with the base on the floor. The intended paths are:
+
+```text
+Normal upright operation:
+idle -> passive -> pd_stand -> walk
+                         \-> accepted combat action -> pd_stand
+
+Supine recovery:
+pd_stand_y -> passive -> supine_to_stance -> walk(zero command)
+                                      -> stable-upright check -> pd_stand
+
+Prone recovery target design:
+pd_stand_x -> passive -> prone_to_supine -> supine_to_stance -> walk
+```
+
+The open SDK does not publish `prone_to_supine`, so the third path currently
+ends at `passive`. Inserting upright `pd_stand` between a floor pose and
+`supine_to_stance` would apply the wrong contact assumptions and would also
+make the public recovery transition illegal, because it accepts entry from
+`passive` only.
+
 ## Restricted Qualifier Gamepad
 
 Use a Logitech F710 in XInput/Xbox mode. The bindings below are read directly
@@ -34,7 +59,7 @@ the independent custom executor is running.
 | `LB+A` | `pd_stand` | damping or recovery PD poses | stays in PD stand |
 | `LB+X` | `pd_stand_x`, prone preparation | damping, PD stand, supine preparation | stays in pose |
 | `LB+Y` | `pd_stand_y`, supine preparation | damping, PD stand, prone preparation | stays in pose |
-| `START+D-pad up` | official supine recovery | damping only | zero-command walking |
+| `START+D-pad up` | retained official supine recovery | quarantined; no allowed entry | zero-command walking if requalified |
 | `RB+X` | official walking mode | PD stand | stays in walking mode |
 | `RB+A` | front kick | PD stand | PD stand |
 | `RB+Y` | straight punch | PD stand | PD stand |
@@ -44,12 +69,14 @@ the independent custom executor is running.
 `RB+X` replaces the rejected spinning-kick binding. There is no spinning-kick
 binding because that policy failed its acceptance gate. The earlier custom
 shared-policy recovery binding remains disabled. The official public supine
-recovery is exposed only in the staged `_recovery` package; it has not yet had
-a hardware execution from the competition PD preparation pose.
+recovery definition remains in the `_recovery` package, but further hardware
+triggering is suspended: the 2026-09-05 hardware run produced desired joint
+targets above 8 rad even after motor communication had recovered.
 
 `LB+X` and `LB+Y` do not execute recovery. In the public `urkl_exams` graph,
 back recovery is a separate `START+D-pad up` command allowed from `passive`,
-then automatically transitions to `walk`. A typical public sequence is
+then automatically transitions to `walk`. That transition is quarantined in
+the current custom graph after the hardware warning. The intended sequence is
 `pd_stand_y -> passive -> supine_to_stance -> walk`. The public repository has
 no corresponding prone stand-up action; see the
 [fall-recovery audit](T800_FALL_RECOVERY_AUDIT.md).
@@ -70,7 +97,7 @@ ssh -t user@192.168.0.163 `
 | `t` | `LB+A` | PD stand |
 | `w` | `RB+X` | official walking mode |
 | `x` / `y` | `LB+X` / `LB+Y` | prone / supine PD preparation |
-| `u` | `START+D-pad up` | official supine recovery, accepted only from damping |
+| `u` | `START+D-pad up` | publisher mapping retained; FSM currently rejects the quarantined transition |
 | `f` | `RB+A` | front kick |
 | `c` | `RB+Y` | straight punch |
 | `h` | `LB+B` | hook punch |

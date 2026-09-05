@@ -174,8 +174,8 @@ The deployed candidate is isolated from the vendor installation:
 
 ```text
 Official: /apps/engineai_robotics
-Active:   /home/user/projects/engineai_robotics_qualifier_20260905_recovery
-PD lab:   /home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab (staged)
+Primary:  /home/user/projects/engineai_robotics_qualifier_20260905_recovery (stopped)
+PD lab:   /home/user/projects/engineai_robotics_qualifier_20260905_force_pd_lab (staged, stopped)
 ```
 
 Only one `src_executor` may run. Never bypass the process guard in

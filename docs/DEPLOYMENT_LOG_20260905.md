@@ -392,3 +392,47 @@ manifest passed with SHA-256
 `e2d1a37865b6582fc10fc3dbb91916f6d5006bdcb77ed9da0b9fe73683c7b99f`.
 It was staged but not activated because replacing the root-owned PID 2071
 requires a deliberate local sudo operation. No force-PD motion was triggered.
+
+## 22:19 Controller And FSM Reconciliation
+
+A read-only status check found `robotics.service` inactive and no custom
+`src_executor` process. EtherCAT master 0 remained active in `Operation`; the
+single `foe` slave was `OP`, the Ethernet link was up, and the master reported
+zero lost frames. This is a healthy transport reading, not proof that the
+downstream motors are enabled, because no SDK motor runner was alive to publish
+motor readiness.
+
+The recovery PID 2071 had stopped. A later attempt at 22:16:45 to start the
+`_force_pd_lab` copy reached resident-task initialization, then exited with
+`Catch Exception: bad optional access`. Inspection also found that this staged
+copy still selected `task_motion/qualifier_robot`, despite the separate
+`force_pd_lab.yaml` file. It therefore was not an isolated five-state graph and
+must not be restarted under the lab name until the selected mode scopes and
+startup behavior are corrected.
+
+The primary `_recovery` graph itself remains intact: it contains `idle`,
+`passive`, `pd_stand`, official walking, `pd_stand_x`, `pd_stand_y`, the public
+`supine_to_stance` definition, and the four accepted combat policies. These are
+separate control paths, not one serial chain. Upright operation uses
+`passive -> pd_stand -> walk/combat`; supine recovery uses
+`pd_stand_y -> passive -> supine_to_stance -> walk`. The open SDK has no public
+prone stand-up action after `pd_stand_x -> passive`. An upright `pd_stand`
+insertion while the robot is on the floor is rejected as an unsafe contact-model
+mismatch, not treated as a missing FSM edge.
+
+The independent lab copy was then corrected without starting an executor. Its
+robot-mode scopes now select `task_motion/force_pd_lab` and
+`global_options/force_pd_lab`; the lab graph was aligned with the SDK's
+`cpu + tasks` schema. Static validation passed, and the regenerated 2,458-file
+manifest passed with manifest SHA-256
+`59de372eb97c9eabc758bee708045cd4686c64c503102283403731c832095097`.
+A final 22:29 status check still showed both controllers stopped and the
+EtherCAT `foe` slave in `OP`. No motion command was sent.
+
+The primary graph was then hardened while stopped. The
+`supine_to_stance` task, official policy, trajectory, key metadata, and
+automatic `walk` return remain in the package, but its incoming transition from
+`passive` was removed. This makes live requests fail closed while preserving
+the integration for guard implementation and renewed qualification. Walking,
+both PD preparation poses, and all four accepted combat actions remain
+reachable through their existing edges.

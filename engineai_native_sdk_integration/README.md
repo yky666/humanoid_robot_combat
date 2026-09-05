@@ -66,7 +66,10 @@ For an explicitly confirmed harness test, the overlay also contains an
 isolated `force_pd_lab.yaml` state graph and `global_options/force_pd_lab.yaml`.
 That graph removes walking, recovery, and combat actions. It uses the SDK's
 held-`LT` force-start mechanism instead of permanently removing the PD runner's
-bias check. Validate it with `python tools/validate_force_pd_lab.py`.
+bias check. In an independent lab copy, `mode.yaml` must select
+`task_motion/force_pd_lab` and `global_options/force_pd_lab`; the primary
+qualifier package continues to select `qualifier_robot` and `release`.
+Validate the graph with `python tools/validate_force_pd_lab.py`.
 
 `tools/virtual_gamepad/t800_keyboard_control.cc` provides a guarded ARM64
 terminal publisher for keyboard control through SSH. Build it on the ARM64 host
