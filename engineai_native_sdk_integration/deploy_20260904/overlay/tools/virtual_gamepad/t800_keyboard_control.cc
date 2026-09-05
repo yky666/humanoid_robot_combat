@@ -47,8 +47,7 @@ const std::map<char, Action> kActions = {
     {'i', {"idle", {kLb, kStart}, {"passive"}}},
     {'p', {"passive", {kLb, kRb}, {"idle", "pd_stand", "pd_stand_x", "pd_stand_y",
                                       "qualifier_front_kick", "qualifier_straight_punch",
-                                      "qualifier_hook_punch", "qualifier_jab_left",
-                                      "qualifier_recovery_supine"}}},
+                                      "qualifier_hook_punch", "qualifier_jab_left"}}},
     {'t', {"pd_stand", {kLb, kA}, {"passive", "pd_stand_x", "pd_stand_y",
                                       "qualifier_front_kick", "qualifier_straight_punch",
                                       "qualifier_hook_punch", "qualifier_jab_left"}}},
@@ -58,7 +57,6 @@ const std::map<char, Action> kActions = {
     {'c', {"qualifier_straight_punch", {kRb, kY}, {"pd_stand"}}},
     {'h', {"qualifier_hook_punch", {kLb, kB}, {"pd_stand"}}},
     {'j', {"qualifier_jab_left", {kRb, kB}, {"pd_stand"}}},
-    {'r', {"qualifier_recovery_supine", {kBack, kA}, {"passive"}}},
 };
 
 class TerminalMode {
@@ -144,9 +142,9 @@ bool ReadCharacter(char* value, int timeout_ms) {
 }
 
 void PrintHelp() {
-  std::cout << "Keys: p=passive t=pd_stand x=prone-PD y=supine-PD "
-               "j=jab h=hook c=straight-punch f=front-kick r=recovery "
-               "i=idle ?=help q=quit\n"
+  std::cout << "Keys: i=idle p=passive-damping t=pd_stand x=prone-PD y=supine-PD "
+               "j=jab h=hook c=straight-punch f=front-kick "
+               "?=help q=quit\n"
                "Spinning kick is intentionally unavailable (qualification gate failed).\n";
 }
 

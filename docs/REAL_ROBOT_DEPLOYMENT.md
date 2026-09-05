@@ -11,25 +11,26 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Controller | Nezha, ARM64 Ubuntu 22.04, ROS 2 Humble |
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
-| Custom package | `/home/user/projects/engineai_robotics_qualifier_20260905` |
-| PD-prep candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_pdprep` |
+| Corrected candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_per_motion` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Custom PID `2862` running in `passive`; vendor service inactive |
+| Last controller state | Corrected custom PID `4840` running in `idle`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
-libraries, transferred over the robot LAN, and verified with a 2,447-file
+libraries, transferred over the robot LAN, and verified with a 2,451-file
 SHA-256 manifest. The vendor package was not modified.
 
 See the [2026-09-05 deployment log](DEPLOYMENT_LOG_20260905.md) for the first
 controlled startup and rollback record.
 
-The `_pdprep` package is manifest-verified and completed two guarded hardware
-smoke cycles after all 25 motors reported online. The custom executor was left in
-`passive`; continue to verify motor readiness before every later motion test.
+The `_pdprep` package completed two guarded hardware cycles, but the subsequent
+provenance audit invalidated their policy-fidelity result: the jab trajectory
+used an older six-motion actor. That executor was stopped. The corrected
+`_per_motion` package binds each active motion to its accepted actor and was
+started only to persistent `idle`; no corrected action has run on hardware yet.
 
 ## Network Topology
 
@@ -105,7 +106,7 @@ file build/aarch64/_install/lib/libsrc_runner_rl_dance_example.so
 The independent runtime directory contains:
 
 ```text
-engineai_robotics_qualifier_20260905/
+engineai_robotics_qualifier_20260905_per_motion/
   _install/                         ARM64 binaries and runtime dependencies
   assets/config/t800/               base T800 and custom motion configuration
   assets/resource/                 T800 model XML, meshes, and environment
@@ -137,7 +138,7 @@ Complete every item before stopping the vendor controller:
 Run the static checks on Nezha:
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905
+cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 sha256sum -c DEPLOYMENT_MANIFEST.sha256
 
 source /opt/ros/humble/setup.bash
@@ -157,7 +158,7 @@ Executor startup is intentionally separate from motion triggering. Start the
 custom executor only after the physical preflight is complete.
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905
+cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 mkdir -p runtime_logs
 
 sudo systemctl stop robotics.service
@@ -175,39 +176,36 @@ pgrep -af src_executor
 tail -n 100 "$log"
 ```
 
-The restricted state graph starts at `idle` and configures an automatic path to
-`passive`. Do not send a gamepad combination during initial observation.
+The corrected restricted graph starts and remains at `idle`; it does not
+automatically enter `passive`. Do not send a gamepad combination during initial observation.
 Confirm stable sensor and motor communication, no configuration error, and no
 repeated fault before any motion test.
 
 ## Motion Map
 
-These bindings are present in the integration candidate; presence does not mean
-that every policy passed the current qualification gate.
+These are the only reachable bindings in the corrected integration candidate.
+The complete compatibility table is in [T800 Control Mapping](T800_CONTROL_MAPPING.md).
 
 | State | Entry state | Gamepad | Automatic return |
 | --- | --- | --- | --- |
+| `idle` | initial, or `passive` | `LB+START` | none |
+| `passive` (damping) | `idle`, PD states, or active actions | `LB+RB` | none |
 | `pd_stand` | `passive` | `LB+A` | none |
 | `pd_stand_x` (prone preparation) | `passive` or `pd_stand` | `LB+X` | none |
 | `pd_stand_y` (supine preparation) | `passive` or `pd_stand` | `LB+Y` | none |
 | `qualifier_front_kick` | `pd_stand` | `RB+A` | `pd_stand` |
-| `qualifier_spinning_kick` | `pd_stand` | `RB+X` | `pd_stand` |
 | `qualifier_straight_punch` | `pd_stand` | `RB+Y` | `pd_stand` |
 | `qualifier_hook_punch` | `pd_stand` | `LB+B` | `pd_stand` |
 | `qualifier_jab_left` | `pd_stand` | `RB+B` | `pd_stand` |
-| `qualifier_recovery_supine` | `passive` | `BACK+A` | `passive` |
-
 `pd_stand_x` and `pd_stand_y` are the official competition preparation poses.
-The state graph deliberately does not connect either one directly to the custom
-`qualifier_recovery_supine` policy. In particular, the official supine pose is
-more than the policy's configured `0.60 rad` initial-pose threshold away from
-its reference frame zero. Treat the official PD states and the custom recovery
-as separate workflows until an explicit trajectory-contract test approves a
-connection.
+EngineAI's accepted `rl_supine_to_stance` recovery returns to `walk` in its
+qualified graph. Because this restricted graph does not yet carry that return
+state, neither official recovery nor the older shared-policy custom recovery is
+currently reachable.
 
-The spinning kick did not pass the final acceptance gate and must not be treated
-as an approved hardware action. Test accepted motions individually, beginning
-with the least energetic motion and the exact required initial pose.
+The spinning kick did not pass the final acceptance gate and has no reachable
+state or key. Test accepted motions individually, beginning with the least
+energetic motion and the exact required initial pose.
 
 ## Keyboard Control From Windows
 
@@ -218,7 +216,7 @@ installing LCM or PyQt locally:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_pdprep && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 Run without `--arm` first to verify that `task_state` is received. The tool
@@ -228,12 +226,11 @@ map and `q` to exit. Its single-key map is:
 
 | Key | Request |
 | --- | --- |
-| `p` | `passive` |
+| `p` | `passive` damping |
 | `t` | `pd_stand` |
 | `x` / `y` | official prone / supine PD preparation |
 | `j` / `h` | left jab / hook punch |
 | `c` / `f` | straight punch / front kick |
-| `r` | custom supine recovery |
 | `i` | `idle` |
 
 The spinning kick has no keyboard shortcut because it failed the qualification
@@ -243,7 +240,7 @@ for motor readiness, emergency stop, or the physical exclusion zone.
 ## Monitoring
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905
+target=/home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -0 "$pid" && echo running
@@ -260,7 +257,7 @@ unexpected movement, repeated state transitions, or emergency-stop request.
 Stop the saved custom process group before restarting the vendor service:
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905
+target=/home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -- "-$pid"

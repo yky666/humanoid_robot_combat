@@ -177,3 +177,41 @@ left-jab trajectory finished normally at 12:03:02, returned automatically to
 `pd_stand`, and was placed back in `passive` at 12:03:08. A post-run audit again
 found zero severe entries, zero RC02 framing/timeout warnings, and zero power or
 motor-readiness warnings. No kick or recovery policy was requested.
+
+## Policy Provenance Correction
+
+Visual feedback from the operator prompted an artifact-level audit after the
+two smoke cycles. The trajectory was the accepted left-jab reference (SHA-256
+`726e473885fed51dc55c056d074dbaf4a90662f31042181d2487e8eaa724a2c5`),
+but the active MNN actor matched the older multi-motion run
+`2026-09-02_12-44-27_approved_qualifier_6_t800_joint_v1_from31000`. It did not
+match the final accepted jab export from
+`2026-09-04_21-53-19_canonical_v1_jab_left_r1/model_4999.pt`.
+
+The earlier cycles remain valid motor, communications, transition, and runtime
+smoke tests, but they are invalid as evidence that the final jab policy matches
+simulation. The 3-second startup interpolation also explains the deliberately
+slow approach to reference frame zero; it does not explain the actor mismatch.
+The old PID 2862 was stopped, and the vendor service remained inactive.
+
+Four accepted per-motion ONNX actors were extracted and converted separately
+with MNN 2.9.5. Each passed five deterministic ONNX-vs-MNN comparisons at a
+`0.001` threshold. The corrected runtime hashes are recorded in the policy
+README under the deployment overlay. The failed spinning kick and the old
+shared-policy recovery were removed from the reachable task graph. EngineAI's
+accepted `rl_supine_to_stance` artifacts remain archived but are not exposed
+until their qualified `walk` return path is integrated and tested.
+
+The corrected package was staged independently at:
+
+```text
+/home/user/projects/engineai_robotics_qualifier_20260905_per_motion
+```
+
+Its 2,451-file manifest passed with manifest-file SHA-256
+`362fa13bb9efff5cf63c25d25c5ff34d28d0c7b77a263774224aaeea9737619f`.
+At 12:26:20 it started as PID 4840. A dry-run state subscriber confirmed that
+the corrected graph remains in `idle`; no transition or action was sent. At
+12:27:20 the vendor service was inactive and startup logs contained zero severe
+entries, zero RC02 framing/timeout warnings, and zero power or motor-readiness
+warnings.

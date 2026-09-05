@@ -1,0 +1,83 @@
+{
+  "steps": 100,
+  "requested_steps": 100,
+  "stop_at_motion_end": false,
+  "loop_mode": "none",
+  "model_xml": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../assets/resource/t800.xml",
+  "policy_onnx": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../policies/roundhouse_540_midpush_model33778_2000iter/exported/policy.onnx",
+  "motion_file": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../policies/roundhouse_540_midpush_model33778_2000iter/motion/540huixuantitui_001_50hz_trainfoot_global_c-0048_from_portable.npz",
+  "safety_options": {
+    "policy_action_clip_abs": null,
+    "target_q_delta_clip_abs": null,
+    "clamp_target_to_joint_limits": false
+  },
+  "final": {
+    "base_z": 0.9405622564965946,
+    "roll": 0.14844073947821412,
+    "pitch": 0.09581839440034295,
+    "joint_vel_max_abs": 3.2080779516165916,
+    "target_error_max_abs": 1.2115751497482428
+  },
+  "samples": [
+    {
+      "base_z": 0.9553115090185994,
+      "roll": -0.011272433052886093,
+      "pitch": -0.13099193252235375,
+      "joint_vel_max_abs": 12.0290268567944,
+      "target_error_max_abs": 0.5240008164883965,
+      "step": 0,
+      "action_max_abs": 1.329311728477478,
+      "clipped_action_max_abs": 1.329311728477478
+    },
+    {
+      "base_z": 0.9522228223385631,
+      "roll": 0.02137959323551459,
+      "pitch": -0.08926605669727322,
+      "joint_vel_max_abs": 0.8163000236818244,
+      "target_error_max_abs": 0.7138849165998465,
+      "step": 20,
+      "action_max_abs": 3.385472536087036,
+      "clipped_action_max_abs": 3.385472536087036
+    },
+    {
+      "base_z": 0.954621390357488,
+      "roll": 0.020628575921940416,
+      "pitch": -0.08202833591799134,
+      "joint_vel_max_abs": 0.4849844226502846,
+      "target_error_max_abs": 0.7275048158179471,
+      "step": 40,
+      "action_max_abs": 3.34999680519104,
+      "clipped_action_max_abs": 3.34999680519104
+    },
+    {
+      "base_z": 0.9576274658961711,
+      "roll": 0.0067707281967327474,
+      "pitch": -0.06943720050128911,
+      "joint_vel_max_abs": 0.32875782350317423,
+      "target_error_max_abs": 1.1154060043293317,
+      "step": 60,
+      "action_max_abs": 3.1763217449188232,
+      "clipped_action_max_abs": 3.1763217449188232
+    },
+    {
+      "base_z": 0.9557982195542519,
+      "roll": 0.05694297110878198,
+      "pitch": 0.03670899680420791,
+      "joint_vel_max_abs": 5.694442196987528,
+      "target_error_max_abs": 1.6239410130797596,
+      "step": 80,
+      "action_max_abs": 9.437662124633789,
+      "clipped_action_max_abs": 9.437662124633789
+    },
+    {
+      "base_z": 0.9405622564965946,
+      "roll": 0.14844073947821412,
+      "pitch": 0.09581839440034295,
+      "joint_vel_max_abs": 3.2080779516165916,
+      "target_error_max_abs": 1.2115751497482428,
+      "step": 99,
+      "action_max_abs": 7.007439136505127,
+      "clipped_action_max_abs": 7.007439136505127
+    }
+  ]
+}

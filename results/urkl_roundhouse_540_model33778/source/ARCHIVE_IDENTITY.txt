@@ -1,0 +1,3 @@
+URKL_work.zip sha256: 494d4993c7376d79153942698dfc3651faf661ed75860a8b39566b5b37ac1e2f
+URKL_work.zip bytes: 910961874
+Archive intentionally omitted: verified extraction contains third-party repositories and duplicate runtime dependencies.

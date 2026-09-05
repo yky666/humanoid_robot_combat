@@ -1,0 +1,78 @@
+{
+  "status": "failed",
+  "candidate": "URKL_work roundhouse_540_midpush_model33778_2000iter",
+  "adapter": "current_policy_obs_to_legacy_140d_order",
+  "motion_file": "/mnt/data/yangky/test/engineai_URKL/worktrees/canonical_motion/540huixuantitui_model33778_t800_runtime30.npz",
+  "checkpoint": "/mnt/data/yangky/test/whole_body_tracking/logs/rsl_rl/t800_flat/urkl_roundhouse_540_model33778_eval/model_33778_rsl3_actor.pt",
+  "joint_order": [
+    "J00_HIP_PITCH_L",
+    "J01_HIP_ROLL_L",
+    "J02_HIP_YAW_L",
+    "J03_KNEE_PITCH_L",
+    "J04_ANKLE_PITCH_L",
+    "J05_ANKLE_ROLL_L",
+    "J06_HIP_PITCH_R",
+    "J07_HIP_ROLL_R",
+    "J08_HIP_YAW_R",
+    "J09_KNEE_PITCH_R",
+    "J10_ANKLE_PITCH_R",
+    "J11_ANKLE_ROLL_R",
+    "J12_TORSO_YAW",
+    "J13_SHOULDER_PITCH_L",
+    "J14_SHOULDER_ROLL_L",
+    "J15_SHOULDER_YAW_L",
+    "J16_ELBOW_PITCH_L",
+    "J17_ELBOW_YAW_L",
+    "J20_SHOULDER_PITCH_R",
+    "J21_SHOULDER_ROLL_R",
+    "J22_SHOULDER_YAW_R",
+    "J23_ELBOW_PITCH_R",
+    "J24_ELBOW_YAW_R",
+    "J27_HEAD_PITCH",
+    "J28_HEAD_YAW"
+  ],
+  "horizon_steps": 1632,
+  "executed_steps_per_batch": [
+    69
+  ],
+  "initial_ee_diagnostics": [
+    {
+      "batch": 1,
+      "max": 0.043506741523742676,
+      "mean": 0.013187702745199203,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.016800813376903534,
+        "LINK_ANKLE_ROLL_R": 0.007096327841281891,
+        "LINK_ELBOW_YAW_L": 0.043506741523742676,
+        "LINK_ELBOW_YAW_R": 0.02512204647064209
+      }
+    }
+  ],
+  "episodes": 1,
+  "num_envs": 4,
+  "total_trials": 4,
+  "successes": 0,
+  "success_rate": 0.0,
+  "min_success_rate": 0.95,
+  "first_failure_reasons": {
+    "time_out": 0,
+    "anchor_pos": 0,
+    "anchor_ori": 0,
+    "ee_body_pos": 4
+  },
+  "mean_metrics": {
+    "error_anchor_pos": 0.23645371236446974,
+    "error_anchor_rot": 0.3200226653961168,
+    "error_anchor_lin_vel": 0.7653290119723998,
+    "error_anchor_ang_vel": 1.4712504105291504,
+    "error_body_pos": 0.16440393721711807,
+    "error_body_rot": 0.2739662422218185,
+    "error_body_lin_vel": 0.9275965992955194,
+    "error_body_ang_vel": 2.96287455075029,
+    "error_joint_pos": 0.8187122504780258,
+    "error_joint_vel": 14.501813750336135,
+    "sampling_entropy": 0.9997998406921608,
+    "sampling_top1_prob": 0.03443205005664756,
+    "sampling_top1_bin": 0.0
+  }
+}

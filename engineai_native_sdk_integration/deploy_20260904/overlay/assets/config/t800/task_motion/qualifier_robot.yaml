@@ -10,7 +10,6 @@ tasks:
       - name: idle_runner
         enabled: true
     manual_transition: [passive]
-    auto_transition: passive
     key: [LB, START]
 
   - motion: passive
@@ -18,7 +17,7 @@ tasks:
     runner:
       - name: passive_runner
         enabled: true
-    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y, qualifier_recovery_supine]
+    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y]
     key: [LB, RB]
 
   - motion: pd_stand
@@ -32,7 +31,6 @@ tasks:
       - pd_stand_x
       - pd_stand_y
       - qualifier_front_kick
-      - qualifier_spinning_kick
       - qualifier_straight_punch
       - qualifier_hook_punch
       - qualifier_jab_left
@@ -65,13 +63,6 @@ tasks:
     auto_transition: pd_stand
     key: [RB, A]
 
-  - motion: qualifier_spinning_kick
-    period: 0.02
-    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_spinning_kick}]
-    manual_transition: [passive, pd_stand]
-    auto_transition: pd_stand
-    key: [RB, X]
-
   - motion: qualifier_straight_punch
     period: 0.02
     runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_straight_punch}]
@@ -92,10 +83,3 @@ tasks:
     manual_transition: [passive, pd_stand]
     auto_transition: pd_stand
     key: [RB, B]
-
-  - motion: qualifier_recovery_supine
-    period: 0.02
-    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_recovery_supine}]
-    manual_transition: [passive]
-    auto_transition: passive
-    key: [BACK, A]

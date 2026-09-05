@@ -33,22 +33,29 @@ and visual playback are supporting evidence, not acceptance evidence.
 | Straight punch | Passed | 320/320 |
 | Left jab | Passed | 316/320 |
 | Supine recovery | Passed, official EngineAI MNN | 320/320 |
-| Spinning kick | Failed tail gate | No formal rollout |
+| Spinning kick | r10 continuation running from r9 | r9 failed tail gate |
 | Stand/action/stand joint policy | Blocked | Not started |
 
 The latest spinning-kick run (`r9`) passed timeout, anchor, episode-length, and
 joint-error checks, but its end-effector termination rate was 4.58% against a
-3% maximum. It remains an archived experiment and is not in `best/`.
+3% maximum. It remains an archived experiment and is not in `best/`; r10 resumed
+from its `model_44991.pt` checkpoint on GPU1 on 2026-09-05.
+
+The imported senior 540-roundhouse model33778 was also reproduced independently.
+It completed the full reference in MuJoCo and has an H.264 review video, but only
+47/320 rollouts passed the corrected IsaacLab gate. It is retained as a failed
+baseline, not an accepted policy.
 
 The independent ARM64 package staged on the T800 controller is an integration
 candidate. Successful compilation, model conversion, or executor startup does
 not promote a policy to accepted status.
 
-The `_pdprep` candidate is running on Nezha with IMU firmware `V01.02.06b`.
-Motor readiness, `idle -> passive -> pd_stand`, and two guarded left-jab policy
-cycles have passed the initial hardware smoke tests; the controller was returned
-to `passive`. See the [deployment log](docs/DEPLOYMENT_LOG_20260905.md) before
-additional motion tests.
+The first `_pdprep` hardware smoke run completed with IMU firmware
+`V01.02.06b`, but a post-run provenance audit found that its left-jab trajectory
+was paired with an older six-motion joint actor instead of the accepted
+per-motion jab actor. That executor was stopped. The corrected package uses one
+accepted actor per active motion and has passed a fresh startup in persistent
+`idle`; no corrected policy action has run on hardware yet.
 
 ## Repository Map
 
@@ -59,6 +66,7 @@ additional motion tests.
 | `engineai_native_sdk_integration/` | EngineAI SDK patches, overlays, converted policy, and trajectories | [SDK integration](engineai_native_sdk_integration/README.md) |
 | `isaaclab_integration/` | Pinned IsaacLab launcher and script delta | [IsaacLab integration](isaaclab_integration/README.md) |
 | `results/t800_canonical_v1_20260902/` | Canonical references, checkpoints, reports, policies, and media | [Results README](results/t800_canonical_v1_20260902/README.md) |
+| `results/urkl_roundhouse_540_model33778/` | Imported 540-roundhouse baseline, corrected evaluation, and render | [Baseline README](results/urkl_roundhouse_540_model33778/README.md) |
 | `manifests/` | Exact upstream repositories and revisions | [Repository manifest](manifests/repositories.json) |
 | `docs/` | Archive notes and real-robot operations | [Archive notes](docs/ARCHIVE_20260905.md) |
 
@@ -138,8 +146,8 @@ playback. Accepted artifacts and failed experiments are stored separately.
 
 ### Runtime conversion
 
-The deployment integration extracts the actor from the training ONNX export and
-converts it with MNN 2.9.5. The runtime contract is:
+The deployment integration extracts each accepted per-motion actor from its
+training ONNX export and converts it with MNN 2.9.5. The runtime contract is:
 
 ```text
 obs:     float32 [1, 140]
@@ -156,7 +164,7 @@ The deployed candidate is isolated from the vendor installation:
 
 ```text
 Official: /apps/engineai_robotics
-Custom:   /home/user/projects/engineai_robotics_qualifier_20260905
+Custom:   /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 ```
 
 Only one `src_executor` may run. Never bypass the process guard in
@@ -183,8 +191,10 @@ included.
 - [Whole Body Tracking project guide](whole_body_tracking/README.md)
 - [EngineAI Native SDK integration](engineai_native_sdk_integration/README.md)
 - [T800 real-robot deployment and rollback](docs/REAL_ROBOT_DEPLOYMENT.md)
+- [T800 gamepad, keyboard, and state mapping](docs/T800_CONTROL_MAPPING.md)
 - [2026-09-05 deployment log](docs/DEPLOYMENT_LOG_20260905.md)
 - [Canonical results and qualification evidence](results/t800_canonical_v1_20260902/README.md)
+- [Imported model33778 540-roundhouse evaluation](results/urkl_roundhouse_540_model33778/README.md)
 - [Archive scope and restore notes](docs/ARCHIVE_20260905.md)
 - [Pinned repository revisions](manifests/repositories.json)
 

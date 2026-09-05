@@ -1,0 +1,126 @@
+{
+  "status": "failed",
+  "candidate": "URKL_work roundhouse_540_midpush_model33778_2000iter",
+  "adapter": "current_policy_obs_to_legacy_140d_order",
+  "motion_file": "/mnt/data/yangky/test/engineai_URKL/worktrees/canonical_motion/540huixuantitui_model33778_t800_runtime30.npz",
+  "checkpoint": "/mnt/data/yangky/test/whole_body_tracking/logs/rsl_rl/t800_flat/urkl_roundhouse_540_model33778_eval/model_33778_rsl3_actor.pt",
+  "joint_order": [
+    "J00_HIP_PITCH_L",
+    "J01_HIP_ROLL_L",
+    "J02_HIP_YAW_L",
+    "J03_KNEE_PITCH_L",
+    "J04_ANKLE_PITCH_L",
+    "J05_ANKLE_ROLL_L",
+    "J06_HIP_PITCH_R",
+    "J07_HIP_ROLL_R",
+    "J08_HIP_YAW_R",
+    "J09_KNEE_PITCH_R",
+    "J10_ANKLE_PITCH_R",
+    "J11_ANKLE_ROLL_R",
+    "J12_TORSO_YAW",
+    "J13_SHOULDER_PITCH_L",
+    "J14_SHOULDER_ROLL_L",
+    "J15_SHOULDER_YAW_L",
+    "J16_ELBOW_PITCH_L",
+    "J17_ELBOW_YAW_L",
+    "J20_SHOULDER_PITCH_R",
+    "J21_SHOULDER_ROLL_R",
+    "J22_SHOULDER_YAW_R",
+    "J23_ELBOW_PITCH_R",
+    "J24_ELBOW_YAW_R",
+    "J27_HEAD_PITCH",
+    "J28_HEAD_YAW"
+  ],
+  "horizon_steps": 1632,
+  "executed_steps_per_batch": [
+    1632,
+    1632,
+    1632,
+    1632,
+    1632
+  ],
+  "initial_ee_diagnostics": [
+    {
+      "batch": 1,
+      "max": 0.05395972728729248,
+      "mean": 0.013627955690026283,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.01970835030078888,
+        "LINK_ANKLE_ROLL_R": 0.02549278736114502,
+        "LINK_ELBOW_YAW_L": 0.05395972728729248,
+        "LINK_ELBOW_YAW_R": 0.04977262020111084
+      }
+    },
+    {
+      "batch": 2,
+      "max": 0.04803144931793213,
+      "mean": 0.011550705879926682,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.026053860783576965,
+        "LINK_ANKLE_ROLL_R": 0.026837769895792007,
+        "LINK_ELBOW_YAW_L": 0.04803144931793213,
+        "LINK_ELBOW_YAW_R": 0.04794657230377197
+      }
+    },
+    {
+      "batch": 3,
+      "max": 0.054625511169433594,
+      "mean": 0.013074315153062344,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.017780989408493042,
+        "LINK_ANKLE_ROLL_R": 0.02575809136033058,
+        "LINK_ELBOW_YAW_L": 0.0495678186416626,
+        "LINK_ELBOW_YAW_R": 0.054625511169433594
+      }
+    },
+    {
+      "batch": 4,
+      "max": 0.04774594306945801,
+      "mean": 0.012946877628564835,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.019865162670612335,
+        "LINK_ANKLE_ROLL_R": 0.035855427384376526,
+        "LINK_ELBOW_YAW_L": 0.04774594306945801,
+        "LINK_ELBOW_YAW_R": 0.042368292808532715
+      }
+    },
+    {
+      "batch": 5,
+      "max": 0.05208241939544678,
+      "mean": 0.014540385454893112,
+      "per_body_max": {
+        "LINK_ANKLE_ROLL_L": 0.02841581404209137,
+        "LINK_ANKLE_ROLL_R": 0.03387880325317383,
+        "LINK_ELBOW_YAW_L": 0.050969600677490234,
+        "LINK_ELBOW_YAW_R": 0.05208241939544678
+      }
+    }
+  ],
+  "episodes": 5,
+  "num_envs": 64,
+  "total_trials": 320,
+  "successes": 47,
+  "success_rate": 0.146875,
+  "min_success_rate": 0.95,
+  "first_failure_reasons": {
+    "time_out": 0,
+    "anchor_pos": 4,
+    "anchor_ori": 0,
+    "ee_body_pos": 271
+  },
+  "mean_metrics": {
+    "error_anchor_pos": 0.15981107560196417,
+    "error_anchor_rot": 0.1444869954449435,
+    "error_anchor_lin_vel": 0.37440152964828644,
+    "error_anchor_ang_vel": 0.9667477772552885,
+    "error_body_pos": 0.07418955453310856,
+    "error_body_rot": 0.1873346113599837,
+    "error_body_lin_vel": 0.5001531991760666,
+    "error_body_ang_vel": 1.7482104903707902,
+    "error_joint_pos": 0.7396224207482209,
+    "error_joint_vel": 8.001176047442007,
+    "sampling_entropy": 0.5682641801917377,
+    "sampling_top1_prob": 0.5620429051081266,
+    "sampling_top1_bin": 0.0
+  }
+}

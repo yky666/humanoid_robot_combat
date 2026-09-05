@@ -1,0 +1,2161 @@
+{
+  "model_xml": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../assets/resource/t800.xml",
+  "policy_onnx": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../policies/roundhouse_540_midpush_model33778_2000iter/exported/policy.onnx",
+  "motion_file": "/mnt/data/yangky/test/engineai_URKL/baselines/imported/urkl_work/engineai_robotics_native_sdk/experimental/t800_wbt_sim2sim/config/../policies/roundhouse_540_midpush_model33778_2000iter/motion/540huixuantitui_001_50hz_trainfoot_global_c-0048_from_portable.npz",
+  "safety_options": {
+    "policy_action_clip_abs": null,
+    "target_q_delta_clip_abs": null,
+    "clamp_target_to_joint_limits": false
+  },
+  "motion_reference": {
+    "frames": 1633,
+    "fps": 50.0,
+    "duration_s": 32.66,
+    "ref_violating_frames": 0,
+    "max_ref_joint_limit_violation": 2.2125244125703603e-07,
+    "lowest_base_z_frames": [
+      {
+        "frame": 958,
+        "base_z": 0.7077614068984985,
+        "joint_vel_absmax": 3.5872011184692383,
+        "base_ang_speed": 1.4099658727645874,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 957,
+        "base_z": 0.7078147530555725,
+        "joint_vel_absmax": 4.392045021057129,
+        "base_ang_speed": 1.379835605621338,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 959,
+        "base_z": 0.7086017727851868,
+        "joint_vel_absmax": 4.398268699645996,
+        "base_ang_speed": 1.4868637323379517,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 956,
+        "base_z": 0.7098779678344727,
+        "joint_vel_absmax": 6.069155216217041,
+        "base_ang_speed": 1.585589051246643,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 960,
+        "base_z": 0.7101397514343262,
+        "joint_vel_absmax": 4.9843339920043945,
+        "base_ang_speed": 1.4955942630767822,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08
+      },
+      {
+        "frame": 961,
+        "base_z": 0.7131665945053101,
+        "joint_vel_absmax": 5.31714391708374,
+        "base_ang_speed": 1.5309771299362183,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08
+      },
+      {
+        "frame": 955,
+        "base_z": 0.7131820321083069,
+        "joint_vel_absmax": 8.179512023925781,
+        "base_ang_speed": 1.668213963508606,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 962,
+        "base_z": 0.7183150053024292,
+        "joint_vel_absmax": 6.280918598175049,
+        "base_ang_speed": 1.6431454420089722,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08
+      },
+      {
+        "frame": 954,
+        "base_z": 0.7201010584831238,
+        "joint_vel_absmax": 9.806869506835938,
+        "base_ang_speed": 1.6725835800170898,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 0.0
+      },
+      {
+        "frame": 963,
+        "base_z": 0.7259659767150879,
+        "joint_vel_absmax": 7.950845241546631,
+        "base_ang_speed": 1.732720136642456,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08
+      }
+    ],
+    "highest_joint_velocity_frames": [
+      {
+        "frame": 364,
+        "joint_vel_absmax": 36.275936126708984,
+        "base_z": 0.8793157935142517,
+        "base_ang_speed": 17.00053596496582,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 933,
+        "joint_vel_absmax": 31.60173225402832,
+        "base_z": 1.2556802034378052,
+        "base_ang_speed": 11.307705879211426,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 1372,
+        "joint_vel_absmax": 31.48289680480957,
+        "base_z": 1.2151789665222168,
+        "base_ang_speed": 12.528535842895508,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 1346,
+        "joint_vel_absmax": 31.21953582763672,
+        "base_z": 0.9020777940750122,
+        "base_ang_speed": 17.201234817504883,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 1371,
+        "joint_vel_absmax": 31.010835647583008,
+        "base_z": 1.2312366962432861,
+        "base_ang_speed": 10.36159896850586,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 365,
+        "joint_vel_absmax": 30.635238647460938,
+        "base_z": 0.8809361457824707,
+        "base_ang_speed": 14.620308876037598,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 908,
+        "joint_vel_absmax": 29.68219757080078,
+        "base_z": 0.9011136293411255,
+        "base_ang_speed": 18.600135803222656,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 389,
+        "joint_vel_absmax": 27.17772102355957,
+        "base_z": 1.2463359832763672,
+        "base_ang_speed": 12.264090538024902,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 390,
+        "joint_vel_absmax": 24.914764404296875,
+        "base_z": 1.2349085807800293,
+        "base_ang_speed": 11.228781700134277,
+        "joint_limit_violation_count": 0
+      },
+      {
+        "frame": 1345,
+        "joint_vel_absmax": 24.639488220214844,
+        "base_z": 0.89266437292099,
+        "base_ang_speed": 19.093929290771484,
+        "joint_limit_violation_count": 0
+      }
+    ],
+    "top_violation_frames": [
+      {
+        "frame": 92,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 2.2125244125703603e-07,
+        "top_joints": []
+      },
+      {
+        "frame": 97,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 2.2125244125703603e-07,
+        "top_joints": []
+      },
+      {
+        "frame": 98,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 2.2125244125703603e-07,
+        "top_joints": []
+      },
+      {
+        "frame": 103,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 2.2125244125703603e-07,
+        "top_joints": []
+      },
+      {
+        "frame": 102,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 2.2125244125703603e-07,
+        "top_joints": []
+      },
+      {
+        "frame": 816,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08,
+        "top_joints": []
+      },
+      {
+        "frame": 1023,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08,
+        "top_joints": []
+      },
+      {
+        "frame": 1022,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08,
+        "top_joints": []
+      },
+      {
+        "frame": 1021,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08,
+        "top_joints": []
+      },
+      {
+        "frame": 1020,
+        "joint_limit_violation_count": 0,
+        "joint_limit_violation_max": 7.820129388491637e-08,
+        "top_joints": []
+      }
+    ]
+  },
+  "tracking": {
+    "steps": 1633,
+    "requested_steps": 99999,
+    "stop_at_motion_end": true,
+    "final": {
+      "base_z": 0.9638962865902307,
+      "roll": 0.19297834672466696,
+      "pitch": 0.13025724502793612,
+      "joint_vel_max_abs": 5.769775044625855,
+      "target_error_max_abs": 1.1183453398781609
+    },
+    "safety_options": {
+      "policy_action_clip_abs": null,
+      "target_q_delta_clip_abs": null,
+      "clamp_target_to_joint_limits": false
+    },
+    "min_base_z": 0.7431902774047788,
+    "target_violating_steps": 938,
+    "max_target_violation": 2.742950475997925,
+    "torque_saturation_steps": 5,
+    "max_torque_saturation_count": 1,
+    "nonfoot_contact_steps": 28,
+    "foot_ground_contact_steps": 1548,
+    "self_contact_steps": 28,
+    "nonfoot_world_contact_steps": 0,
+    "first_nonfoot_contacts": [
+      {
+        "step": 359,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.004132650754604894
+          }
+        ],
+        "max_contact_penetration": -0.004132650754604894
+      },
+      {
+        "step": 371,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_KNEE_PITCH_L",
+            "distance": -0.002312473794906955
+          }
+        ],
+        "max_contact_penetration": -0.002312473794906955
+      },
+      {
+        "step": 373,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_HIP_YAW_L",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.005575196505090264
+          },
+          {
+            "type": "self_contact",
+            "body_1": "LINK_HIP_YAW_L",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.00694428669633025
+          }
+        ],
+        "max_contact_penetration": -0.00694428669633025
+      },
+      {
+        "step": 395,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_ELBOW_PITCH_L",
+            "distance": -0.04656539497361764
+          }
+        ],
+        "max_contact_penetration": -0.04656539497361764
+      },
+      {
+        "step": 396,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_ELBOW_PITCH_L",
+            "distance": -0.02707623162636852
+          }
+        ],
+        "max_contact_penetration": -0.02707623162636852
+      },
+      {
+        "step": 903,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0032894371647033405
+          }
+        ],
+        "max_contact_penetration": -0.0032894371647033405
+      },
+      {
+        "step": 904,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.011946744554518884
+          }
+        ],
+        "max_contact_penetration": -0.011946744554518884
+      },
+      {
+        "step": 905,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0005205685312501818
+          }
+        ],
+        "max_contact_penetration": -0.0005205685312501818
+      },
+      {
+        "step": 907,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0013990499710371251
+          }
+        ],
+        "max_contact_penetration": -0.0013990499710371251
+      },
+      {
+        "step": 914,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_TORSO_YAW",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.00855395036371215
+          }
+        ],
+        "max_contact_penetration": -0.00855395036371215
+      }
+    ],
+    "first_foot_ground_contacts": [
+      {
+        "step": 0,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.007994486888806412
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.015312136715237235
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0013353689364577724
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.008653018762888594
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.012541666343560494
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.019209902677627042
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.009841070291856706
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.016509306625923252
+          }
+        ],
+        "max_contact_penetration": -0.019209902677627042
+      },
+      {
+        "step": 1,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.006519137552469564
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0030150415840742018
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.002317442102418403
+          }
+        ],
+        "max_contact_penetration": -0.006519137552469564
+      },
+      {
+        "step": 2,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0028350723934096843
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0011474053334571445
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0018838251286287279
+          }
+        ],
+        "max_contact_penetration": -0.0028350723934096843
+      },
+      {
+        "step": 3,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0016146551806699785
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0005879372752899646
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0007876375724170867
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.002445469820190331
+          }
+        ],
+        "max_contact_penetration": -0.002445469820190331
+      },
+      {
+        "step": 4,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0012451639969843324
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.000493672228888617
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.000512605634060935
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0015462405075771027
+          }
+        ],
+        "max_contact_penetration": -0.0015462405075771027
+      },
+      {
+        "step": 5,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0010781566428122759
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0004818417335933599
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.00047681240960097473
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0005590643970236203
+          }
+        ],
+        "max_contact_penetration": -0.0010781566428122759
+      },
+      {
+        "step": 6,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0009499912396793014
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.00045277442013992586
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.005396429709870627
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0006580261250608566
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.004952683289707455
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.00021427970489768487
+          }
+        ],
+        "max_contact_penetration": -0.005396429709870627
+      },
+      {
+        "step": 7,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0008316532494714139
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0003725278288665493
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.004771040361078229
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0010192044132820415
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.004298099131403667
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0005462631836074799
+          }
+        ],
+        "max_contact_penetration": -0.004771040361078229
+      },
+      {
+        "step": 8,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0007266757133194829
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.00019239421575650145
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.002824833413355876
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0010729713197797364
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0023440491018958953
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0005921870083197556
+          }
+        ],
+        "max_contact_penetration": -0.002824833413355876
+      },
+      {
+        "step": 9,
+        "contacts": [
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_L",
+            "distance": -0.0006297711070804013
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.001608807844552038
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0010461232578987054
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0011048777081665191
+          },
+          {
+            "type": "foot_ground_contact",
+            "body_1": "world",
+            "body_2": "LINK_ANKLE_ROLL_R",
+            "distance": -0.0005421931215131865
+          }
+        ],
+        "max_contact_penetration": -0.001608807844552038
+      }
+    ],
+    "first_self_contacts": [
+      {
+        "step": 359,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.004132650754604894
+          }
+        ],
+        "max_contact_penetration": -0.004132650754604894
+      },
+      {
+        "step": 371,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_KNEE_PITCH_L",
+            "distance": -0.002312473794906955
+          }
+        ],
+        "max_contact_penetration": -0.002312473794906955
+      },
+      {
+        "step": 373,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_HIP_YAW_L",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.005575196505090264
+          },
+          {
+            "type": "self_contact",
+            "body_1": "LINK_HIP_YAW_L",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.00694428669633025
+          }
+        ],
+        "max_contact_penetration": -0.00694428669633025
+      },
+      {
+        "step": 395,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_ELBOW_PITCH_L",
+            "distance": -0.04656539497361764
+          }
+        ],
+        "max_contact_penetration": -0.04656539497361764
+      },
+      {
+        "step": 396,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_R",
+            "body_2": "LINK_ELBOW_PITCH_L",
+            "distance": -0.02707623162636852
+          }
+        ],
+        "max_contact_penetration": -0.02707623162636852
+      },
+      {
+        "step": 903,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0032894371647033405
+          }
+        ],
+        "max_contact_penetration": -0.0032894371647033405
+      },
+      {
+        "step": 904,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.011946744554518884
+          }
+        ],
+        "max_contact_penetration": -0.011946744554518884
+      },
+      {
+        "step": 905,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0005205685312501818
+          }
+        ],
+        "max_contact_penetration": -0.0005205685312501818
+      },
+      {
+        "step": 907,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_KNEE_PITCH_L",
+            "body_2": "LINK_KNEE_PITCH_R",
+            "distance": -0.0013990499710371251
+          }
+        ],
+        "max_contact_penetration": -0.0013990499710371251
+      },
+      {
+        "step": 914,
+        "contacts": [
+          {
+            "type": "self_contact",
+            "body_1": "LINK_TORSO_YAW",
+            "body_2": "LINK_ELBOW_YAW_L",
+            "distance": -0.00855395036371215
+          }
+        ],
+        "max_contact_penetration": -0.00855395036371215
+      }
+    ],
+    "first_nonfoot_world_contacts": [],
+    "top_low_base_z": [
+      {
+        "step": 1395,
+        "base_z": 0.7431902774047788,
+        "roll": 0.2316008485365626,
+        "pitch": 0.5257451294163399,
+        "target_error_max_abs": 1.4684803086986464,
+        "joint_vel_max_abs": 9.393234281687585,
+        "action_max_abs": 9.541913032531738,
+        "clipped_action_max_abs": 9.541913032531738,
+        "target_violation_count": 3,
+        "target_violation_max": 1.1022373803329468,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.737160325050354,
+        "ref_joint_vel_absmax": 4.592509746551514,
+        "ref_base_ang_speed": 1.0438040494918823,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -1.7829173803329468,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.1022373803329468
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.3047179579734802,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.13021795797348024
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": -0.3804909884929657,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "low",
+            "amount": 0.03139098849296568
+          }
+        ]
+      },
+      {
+        "step": 1394,
+        "base_z": 0.7451887209215478,
+        "roll": 0.26208313088910007,
+        "pitch": 0.4715894454244577,
+        "target_error_max_abs": 1.571585450926983,
+        "joint_vel_max_abs": 10.021256194939014,
+        "action_max_abs": 9.790027618408203,
+        "clipped_action_max_abs": 9.790027618408203,
+        "target_violation_count": 3,
+        "target_violation_max": 1.3306703932952881,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7386211156845093,
+        "ref_joint_vel_absmax": 6.0326642990112305,
+        "ref_base_ang_speed": 1.1138108968734741,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.011350393295288,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.3306703932952881
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.50736403465271,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.33286403465271
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": -0.3901159167289734,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "low",
+            "amount": 0.04101591672897337
+          }
+        ]
+      },
+      {
+        "step": 1396,
+        "base_z": 0.7457649994590148,
+        "roll": 0.19295337015840178,
+        "pitch": 0.5838164888406728,
+        "target_error_max_abs": 1.3923559444466798,
+        "joint_vel_max_abs": 7.123367595667629,
+        "action_max_abs": 9.195676803588867,
+        "clipped_action_max_abs": 9.195676803588867,
+        "target_violation_count": 1,
+        "target_violation_max": 0.9092628129196167,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7386187314987183,
+        "ref_joint_vel_absmax": 5.731290817260742,
+        "ref_base_ang_speed": 1.0215097665786743,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -1.5899428129196167,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 0.9092628129196167
+          }
+        ]
+      },
+      {
+        "step": 1393,
+        "base_z": 0.750328622709571,
+        "roll": 0.27506464947008263,
+        "pitch": 0.42347108770298264,
+        "target_error_max_abs": 1.7555623717659423,
+        "joint_vel_max_abs": 8.177421189227893,
+        "action_max_abs": 9.809942245483398,
+        "clipped_action_max_abs": 9.809942245483398,
+        "target_violation_count": 4,
+        "target_violation_max": 1.5602572329711915,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7431904077529907,
+        "ref_joint_vel_absmax": 7.318497657775879,
+        "ref_base_ang_speed": 1.3156235218048096,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.2409372329711914,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.5602572329711915
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.6079011559486389,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.4334011559486389
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.15816056728363037,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.15816056728363037
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": -0.3845633268356323,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "low",
+            "amount": 0.0354633268356323
+          }
+        ]
+      },
+      {
+        "step": 1397,
+        "base_z": 0.7524468587908056,
+        "roll": 0.15016256618906526,
+        "pitch": 0.6415180910259835,
+        "target_error_max_abs": 1.3158798107975922,
+        "joint_vel_max_abs": 9.311136512586234,
+        "action_max_abs": 8.921229362487793,
+        "clipped_action_max_abs": 8.921229362487793,
+        "target_violation_count": 1,
+        "target_violation_max": 0.5855652459335328,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7418447732925415,
+        "ref_joint_vel_absmax": 7.824069023132324,
+        "ref_base_ang_speed": 0.7035520076751709,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -1.2662452459335327,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 0.5855652459335328
+          }
+        ]
+      },
+      {
+        "step": 1392,
+        "base_z": 0.75722315480926,
+        "roll": 0.2608297314167277,
+        "pitch": 0.3863423861036231,
+        "target_error_max_abs": 1.7919777199143787,
+        "joint_vel_max_abs": 8.526541307538853,
+        "action_max_abs": 9.798542022705078,
+        "clipped_action_max_abs": 9.798542022705078,
+        "target_violation_count": 4,
+        "target_violation_max": 1.6338992484283448,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.751034677028656,
+        "ref_joint_vel_absmax": 8.25634479522705,
+        "ref_base_ang_speed": 1.7479735612869263,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.3145792484283447,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.6338992484283448
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.5158087015151978,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.5158087015151978
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.6472240090370178,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.47272400903701783
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": -0.37645918130874634,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "low",
+            "amount": 0.027359181308746316
+          }
+        ]
+      },
+      {
+        "step": 1398,
+        "base_z": 0.7611663298194877,
+        "roll": 0.10479445156690169,
+        "pitch": 0.6920036177135195,
+        "target_error_max_abs": 1.2423045201844212,
+        "joint_vel_max_abs": 6.685456277483051,
+        "action_max_abs": 8.628525733947754,
+        "clipped_action_max_abs": 8.628525733947754,
+        "target_violation_count": 1,
+        "target_violation_max": 0.1474836238098145,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7457020878791809,
+        "ref_joint_vel_absmax": 9.172365188598633,
+        "ref_base_ang_speed": 0.21960578858852386,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -0.8281636238098145,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 0.1474836238098145
+          }
+        ]
+      },
+      {
+        "step": 1391,
+        "base_z": 0.7657439867661656,
+        "roll": 0.21610760521269834,
+        "pitch": 0.3565048554601236,
+        "target_error_max_abs": 2.124869240427337,
+        "joint_vel_max_abs": 22.775477599632364,
+        "action_max_abs": 9.782819747924805,
+        "clipped_action_max_abs": 9.782819747924805,
+        "target_violation_count": 4,
+        "target_violation_max": 1.639970577545166,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7628974914550781,
+        "ref_joint_vel_absmax": 8.946407318115234,
+        "ref_base_ang_speed": 3.196075916290283,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.320650577545166,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.639970577545166
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.849816083908081,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.849816083908081
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.6889740228652954,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.5144740228652954
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": -0.4048653244972229,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "low",
+            "amount": 0.05576532449722288
+          }
+        ]
+      },
+      {
+        "step": 1399,
+        "base_z": 0.7744164303287752,
+        "roll": 0.09235551501759677,
+        "pitch": 0.7289751734387793,
+        "target_error_max_abs": 1.1384551796285016,
+        "joint_vel_max_abs": 9.831878616648664,
+        "action_max_abs": 8.538894653320312,
+        "clipped_action_max_abs": 8.538894653320312,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7497227191925049,
+        "ref_joint_vel_absmax": 11.500377655029297,
+        "ref_base_ang_speed": 0.6577150821685791,
+        "top_target_violations": []
+      },
+      {
+        "step": 1390,
+        "base_z": 0.7769335003133796,
+        "roll": 0.1484901581865441,
+        "pitch": 0.3252459392212699,
+        "target_error_max_abs": 2.504283428552694,
+        "joint_vel_max_abs": 28.5070653416223,
+        "action_max_abs": 9.724674224853516,
+        "clipped_action_max_abs": 9.724674224853516,
+        "target_violation_count": 5,
+        "target_violation_max": 1.6712668307495118,
+        "torque_saturation_count": 1,
+        "ref_base_z": 0.7776501178741455,
+        "ref_joint_vel_absmax": 9.322617530822754,
+        "ref_base_ang_speed": 4.839976787567139,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.3519468307495117,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.6712668307495118
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -1.2405716180801392,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 1.2405716180801392
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.7341774106025696,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.5596774106025696
+          },
+          {
+            "joint": "J21_SHOULDER_ROLL_R",
+            "value": -2.5840752124786377,
+            "lower": -2.443,
+            "upper": 0.384,
+            "side": "low",
+            "amount": 0.14107521247863763
+          }
+        ]
+      }
+    ],
+    "top_target_error": [
+      {
+        "step": 1014,
+        "base_z": 0.8876095986633868,
+        "roll": -0.11608120073077079,
+        "pitch": 0.22063011884062397,
+        "target_error_max_abs": 3.736498565131133,
+        "joint_vel_max_abs": 2.498086867609262,
+        "action_max_abs": 8.914944648742676,
+        "clipped_action_max_abs": 8.914944648742676,
+        "target_violation_count": 1,
+        "target_violation_max": 2.7387049563598636,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8678624033927917,
+        "ref_joint_vel_absmax": 3.276599168777466,
+        "ref_base_ang_speed": 1.3023799657821655,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.4193849563598633,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.7387049563598636
+          }
+        ]
+      },
+      {
+        "step": 1015,
+        "base_z": 0.8863012811828501,
+        "roll": -0.117374296808328,
+        "pitch": 0.21543274594739373,
+        "target_error_max_abs": 3.717116018920727,
+        "joint_vel_max_abs": 2.70764802409095,
+        "action_max_abs": 8.767387390136719,
+        "clipped_action_max_abs": 8.767387390136719,
+        "target_violation_count": 1,
+        "target_violation_max": 2.742950475997925,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8693444728851318,
+        "ref_joint_vel_absmax": 3.5332858562469482,
+        "ref_base_ang_speed": 1.0924351215362549,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.423630475997925,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.742950475997925
+          }
+        ]
+      },
+      {
+        "step": 1013,
+        "base_z": 0.8912022356980877,
+        "roll": -0.1141872379011111,
+        "pitch": 0.22662936697910402,
+        "target_error_max_abs": 3.663407698701363,
+        "joint_vel_max_abs": 3.7668227369146745,
+        "action_max_abs": 8.983078956604004,
+        "clipped_action_max_abs": 8.983078956604004,
+        "target_violation_count": 1,
+        "target_violation_max": 2.649205244369507,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8697453141212463,
+        "ref_joint_vel_absmax": 2.1322407722473145,
+        "ref_base_ang_speed": 1.3014997243881226,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.329885244369507,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.649205244369507
+          }
+        ]
+      },
+      {
+        "step": 1016,
+        "base_z": 0.8874642691357519,
+        "roll": -0.11790700461046189,
+        "pitch": 0.21159471766290025,
+        "target_error_max_abs": 3.6622110625911417,
+        "joint_vel_max_abs": 2.9944984127837824,
+        "action_max_abs": 8.555357933044434,
+        "clipped_action_max_abs": 8.555357933044434,
+        "target_violation_count": 1,
+        "target_violation_max": 2.7191636927795413,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8742198348045349,
+        "ref_joint_vel_absmax": 3.070434093475342,
+        "ref_base_ang_speed": 0.6300292611122131,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.399843692779541,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.7191636927795413
+          }
+        ]
+      },
+      {
+        "step": 1012,
+        "base_z": 0.8969611962210055,
+        "roll": -0.11172653757711933,
+        "pitch": 0.23261846142488452,
+        "target_error_max_abs": 3.543161005520059,
+        "joint_vel_max_abs": 5.1173103186782445,
+        "action_max_abs": 9.003392219543457,
+        "clipped_action_max_abs": 9.003392219543457,
+        "target_violation_count": 1,
+        "target_violation_max": 2.527135170288086,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8749233484268188,
+        "ref_joint_vel_absmax": 4.382541656494141,
+        "ref_base_ang_speed": 0.9921006560325623,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.207815170288086,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.527135170288086
+          }
+        ]
+      },
+      {
+        "step": 1017,
+        "base_z": 0.891390536235843,
+        "roll": -0.1172918234782358,
+        "pitch": 0.20977479040321786,
+        "target_error_max_abs": 3.5282380967687264,
+        "joint_vel_max_abs": 3.9051742025884457,
+        "action_max_abs": 8.288992881774902,
+        "clipped_action_max_abs": 8.288992881774902,
+        "target_violation_count": 2,
+        "target_violation_max": 2.636573112792969,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8818001747131348,
+        "ref_joint_vel_absmax": 3.083854913711548,
+        "ref_base_ang_speed": 0.1829221546649933,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.3172531127929688,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.636573112792969
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": 0.1868787407875061,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "high",
+            "amount": 0.012378740787506115
+          }
+        ]
+      },
+      {
+        "step": 1011,
+        "base_z": 0.9044786184719987,
+        "roll": -0.10873590595923074,
+        "pitch": 0.23752726383262177,
+        "target_error_max_abs": 3.4528150468476326,
+        "joint_vel_max_abs": 5.138355126121958,
+        "action_max_abs": 9.014497756958008,
+        "clipped_action_max_abs": 9.014497756958008,
+        "target_violation_count": 1,
+        "target_violation_max": 2.43989900428772,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8828017115592957,
+        "ref_joint_vel_absmax": 6.435683250427246,
+        "ref_base_ang_speed": 0.4390993118286133,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.1205790042877197,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.43989900428772
+          }
+        ]
+      },
+      {
+        "step": 1010,
+        "base_z": 0.9134317641991686,
+        "roll": -0.10535471368472812,
+        "pitch": 0.24083721459593144,
+        "target_error_max_abs": 3.352407821322154,
+        "joint_vel_max_abs": 4.350555389535403,
+        "action_max_abs": 8.97055435180664,
+        "clipped_action_max_abs": 8.97055435180664,
+        "target_violation_count": 1,
+        "target_violation_max": 2.342200792617798,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8926297426223755,
+        "ref_joint_vel_absmax": 6.481191635131836,
+        "ref_base_ang_speed": 0.43080466985702515,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.022880792617798,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.342200792617798
+          }
+        ]
+      },
+      {
+        "step": 1018,
+        "base_z": 0.8979440111205892,
+        "roll": -0.11475643094615835,
+        "pitch": 0.21114738258006752,
+        "target_error_max_abs": 3.2449985913003907,
+        "joint_vel_max_abs": 5.403050898846805,
+        "action_max_abs": 8.046619415283203,
+        "clipped_action_max_abs": 8.046619415283203,
+        "target_violation_count": 3,
+        "target_violation_max": 2.425466335601807,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8913600444793701,
+        "ref_joint_vel_absmax": 3.6854968070983887,
+        "ref_base_ang_speed": 0.6907449960708618,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.1061463356018066,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.425466335601807
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": 0.17918507754802704,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "high",
+            "amount": 0.00468507754802705
+          },
+          {
+            "joint": "J03_KNEE_PITCH_L",
+            "value": -0.0034008026123046875,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.0034008026123046875
+          }
+        ]
+      },
+      {
+        "step": 1009,
+        "base_z": 0.9234194289152666,
+        "roll": -0.1018129258960531,
+        "pitch": 0.24258759617596826,
+        "target_error_max_abs": 3.2189325405013323,
+        "joint_vel_max_abs": 3.4017071771060023,
+        "action_max_abs": 8.902327537536621,
+        "clipped_action_max_abs": 8.902327537536621,
+        "target_violation_count": 1,
+        "target_violation_max": 2.2131619818878177,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.9040660858154297,
+        "ref_joint_vel_absmax": 5.2694172859191895,
+        "ref_base_ang_speed": 1.1027674674987793,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 2.8938419818878174,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.2131619818878177
+          }
+        ]
+      }
+    ],
+    "top_target_violation": [
+      {
+        "step": 1015,
+        "base_z": 0.8863012811828501,
+        "roll": -0.117374296808328,
+        "pitch": 0.21543274594739373,
+        "target_error_max_abs": 3.717116018920727,
+        "joint_vel_max_abs": 2.70764802409095,
+        "action_max_abs": 8.767387390136719,
+        "clipped_action_max_abs": 8.767387390136719,
+        "target_violation_count": 1,
+        "target_violation_max": 2.742950475997925,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8693444728851318,
+        "ref_joint_vel_absmax": 3.5332858562469482,
+        "ref_base_ang_speed": 1.0924351215362549,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.423630475997925,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.742950475997925
+          }
+        ]
+      },
+      {
+        "step": 1014,
+        "base_z": 0.8876095986633868,
+        "roll": -0.11608120073077079,
+        "pitch": 0.22063011884062397,
+        "target_error_max_abs": 3.736498565131133,
+        "joint_vel_max_abs": 2.498086867609262,
+        "action_max_abs": 8.914944648742676,
+        "clipped_action_max_abs": 8.914944648742676,
+        "target_violation_count": 1,
+        "target_violation_max": 2.7387049563598636,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8678624033927917,
+        "ref_joint_vel_absmax": 3.276599168777466,
+        "ref_base_ang_speed": 1.3023799657821655,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.4193849563598633,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.7387049563598636
+          }
+        ]
+      },
+      {
+        "step": 1016,
+        "base_z": 0.8874642691357519,
+        "roll": -0.11790700461046189,
+        "pitch": 0.21159471766290025,
+        "target_error_max_abs": 3.6622110625911417,
+        "joint_vel_max_abs": 2.9944984127837824,
+        "action_max_abs": 8.555357933044434,
+        "clipped_action_max_abs": 8.555357933044434,
+        "target_violation_count": 1,
+        "target_violation_max": 2.7191636927795413,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8742198348045349,
+        "ref_joint_vel_absmax": 3.070434093475342,
+        "ref_base_ang_speed": 0.6300292611122131,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.399843692779541,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.7191636927795413
+          }
+        ]
+      },
+      {
+        "step": 1013,
+        "base_z": 0.8912022356980877,
+        "roll": -0.1141872379011111,
+        "pitch": 0.22662936697910402,
+        "target_error_max_abs": 3.663407698701363,
+        "joint_vel_max_abs": 3.7668227369146745,
+        "action_max_abs": 8.983078956604004,
+        "clipped_action_max_abs": 8.983078956604004,
+        "target_violation_count": 1,
+        "target_violation_max": 2.649205244369507,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8697453141212463,
+        "ref_joint_vel_absmax": 2.1322407722473145,
+        "ref_base_ang_speed": 1.3014997243881226,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.329885244369507,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.649205244369507
+          }
+        ]
+      },
+      {
+        "step": 1017,
+        "base_z": 0.891390536235843,
+        "roll": -0.1172918234782358,
+        "pitch": 0.20977479040321786,
+        "target_error_max_abs": 3.5282380967687264,
+        "joint_vel_max_abs": 3.9051742025884457,
+        "action_max_abs": 8.288992881774902,
+        "clipped_action_max_abs": 8.288992881774902,
+        "target_violation_count": 2,
+        "target_violation_max": 2.636573112792969,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8818001747131348,
+        "ref_joint_vel_absmax": 3.083854913711548,
+        "ref_base_ang_speed": 0.1829221546649933,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.3172531127929688,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.636573112792969
+          },
+          {
+            "joint": "J05_ANKLE_ROLL_L",
+            "value": 0.1868787407875061,
+            "lower": -0.3491,
+            "upper": 0.1745,
+            "side": "high",
+            "amount": 0.012378740787506115
+          }
+        ]
+      },
+      {
+        "step": 1360,
+        "base_z": 1.0306648770254037,
+        "roll": 0.17206380488241896,
+        "pitch": -0.3974164310609402,
+        "target_error_max_abs": 2.8515662012772225,
+        "joint_vel_max_abs": 18.4374071971369,
+        "action_max_abs": 9.450302124023438,
+        "clipped_action_max_abs": 9.450302124023438,
+        "target_violation_count": 4,
+        "target_violation_max": 2.616231716461182,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.021132230758667,
+        "ref_joint_vel_absmax": 15.692461967468262,
+        "ref_base_ang_speed": 6.7698798179626465,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": 3.2969117164611816,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.616231716461182
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.7478294968605042,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.5733294968605042
+          },
+          {
+            "joint": "J16_ELBOW_PITCH_L",
+            "value": -2.3254754543304443,
+            "lower": -2.286,
+            "upper": 0.262,
+            "side": "low",
+            "amount": 0.039475454330444304
+          },
+          {
+            "joint": "J03_KNEE_PITCH_L",
+            "value": 2.3820908069610596,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "high",
+            "amount": 0.027090806961059588
+          }
+        ]
+      },
+      {
+        "step": 948,
+        "base_z": 0.9019418359579671,
+        "roll": -0.14555102127294187,
+        "pitch": 0.27883565408567684,
+        "target_error_max_abs": 2.726978377445829,
+        "joint_vel_max_abs": 11.88090331571034,
+        "action_max_abs": 7.975759506225586,
+        "clipped_action_max_abs": 7.975759506225586,
+        "target_violation_count": 6,
+        "target_violation_max": 2.5598652728271487,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8730557560920715,
+        "ref_joint_vel_absmax": 7.571056365966797,
+        "ref_base_ang_speed": 8.700212478637695,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": -3.2405452728271484,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 2.5598652728271487
+          },
+          {
+            "joint": "J03_KNEE_PITCH_L",
+            "value": -1.1040840148925781,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 1.1040840148925781
+          },
+          {
+            "joint": "J23_ELBOW_PITCH_R",
+            "value": -2.5583043098449707,
+            "lower": -2.286,
+            "upper": 0.262,
+            "side": "low",
+            "amount": 0.27230430984497067
+          },
+          {
+            "joint": "J21_SHOULDER_ROLL_R",
+            "value": -2.6879029273986816,
+            "lower": -2.443,
+            "upper": 0.384,
+            "side": "low",
+            "amount": 0.24490292739868158
+          }
+        ]
+      },
+      {
+        "step": 1012,
+        "base_z": 0.8969611962210055,
+        "roll": -0.11172653757711933,
+        "pitch": 0.23261846142488452,
+        "target_error_max_abs": 3.543161005520059,
+        "joint_vel_max_abs": 5.1173103186782445,
+        "action_max_abs": 9.003392219543457,
+        "clipped_action_max_abs": 9.003392219543457,
+        "target_violation_count": 1,
+        "target_violation_max": 2.527135170288086,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8749233484268188,
+        "ref_joint_vel_absmax": 4.382541656494141,
+        "ref_base_ang_speed": 0.9921006560325623,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.207815170288086,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.527135170288086
+          }
+        ]
+      },
+      {
+        "step": 1359,
+        "base_z": 1.0008747597376892,
+        "roll": 0.22348395928671322,
+        "pitch": -0.3029945197567377,
+        "target_error_max_abs": 3.0266419181206787,
+        "joint_vel_max_abs": 20.7727302148971,
+        "action_max_abs": 9.46300220489502,
+        "clipped_action_max_abs": 9.46300220489502,
+        "target_violation_count": 4,
+        "target_violation_max": 2.457432545013428,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.9918882250785828,
+        "ref_joint_vel_absmax": 16.292911529541016,
+        "ref_base_ang_speed": 6.991837024688721,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": 3.1381125450134277,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.457432545013428
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.8314186334609985,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.6569186334609985
+          },
+          {
+            "joint": "J16_ELBOW_PITCH_L",
+            "value": -2.5351269245147705,
+            "lower": -2.286,
+            "upper": 0.262,
+            "side": "low",
+            "amount": 0.24912692451477048
+          },
+          {
+            "joint": "J03_KNEE_PITCH_L",
+            "value": 2.5434229373931885,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "high",
+            "amount": 0.1884229373931885
+          }
+        ]
+      },
+      {
+        "step": 1011,
+        "base_z": 0.9044786184719987,
+        "roll": -0.10873590595923074,
+        "pitch": 0.23752726383262177,
+        "target_error_max_abs": 3.4528150468476326,
+        "joint_vel_max_abs": 5.138355126121958,
+        "action_max_abs": 9.014497756958008,
+        "clipped_action_max_abs": 9.014497756958008,
+        "target_violation_count": 1,
+        "target_violation_max": 2.43989900428772,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.8828017115592957,
+        "ref_joint_vel_absmax": 6.435683250427246,
+        "ref_base_ang_speed": 0.4390993118286133,
+        "top_target_violations": [
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": 3.1205790042877197,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "high",
+            "amount": 2.43989900428772
+          }
+        ]
+      }
+    ],
+    "top_action_abs": [
+      {
+        "step": 953,
+        "base_z": 0.8056126189722566,
+        "roll": 0.10281184203184437,
+        "pitch": 0.43498860200759576,
+        "target_error_max_abs": 2.3483833091595367,
+        "joint_vel_max_abs": 20.27143882656767,
+        "action_max_abs": 12.084708213806152,
+        "clipped_action_max_abs": 12.084708213806152,
+        "target_violation_count": 3,
+        "target_violation_max": 2.134530342407227,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7322937250137329,
+        "ref_joint_vel_absmax": 10.734902381896973,
+        "ref_base_ang_speed": 1.3346258401870728,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.8152103424072266,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 2.134530342407227
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -1.1345405578613281,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.9600405578613281
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.46180593967437744,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.46180593967437744
+          }
+        ]
+      },
+      {
+        "step": 930,
+        "base_z": 1.2407310812243517,
+        "roll": -0.3031314179639333,
+        "pitch": -0.6036810237488692,
+        "target_error_max_abs": 1.284189981617333,
+        "joint_vel_max_abs": 21.66511349247633,
+        "action_max_abs": 12.081395149230957,
+        "clipped_action_max_abs": 12.081395149230957,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.2635248899459839,
+        "ref_joint_vel_absmax": 20.812532424926758,
+        "ref_base_ang_speed": 8.410486221313477,
+        "top_target_violations": []
+      },
+      {
+        "step": 929,
+        "base_z": 1.2323569257564877,
+        "roll": -0.2839955777344193,
+        "pitch": -0.6190059273144572,
+        "target_error_max_abs": 1.468906591807483,
+        "joint_vel_max_abs": 18.76540377452042,
+        "action_max_abs": 12.050457954406738,
+        "clipped_action_max_abs": 12.050457954406738,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.2631556987762451,
+        "ref_joint_vel_absmax": 20.88678550720215,
+        "ref_base_ang_speed": 8.212780952453613,
+        "top_target_violations": []
+      },
+      {
+        "step": 954,
+        "base_z": 0.7969193667980621,
+        "roll": 0.13415231728015029,
+        "pitch": 0.4901477233909972,
+        "target_error_max_abs": 2.3171983582430182,
+        "joint_vel_max_abs": 10.140843281199043,
+        "action_max_abs": 11.868647575378418,
+        "clipped_action_max_abs": 11.868647575378418,
+        "target_violation_count": 3,
+        "target_violation_max": 2.084244764633179,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7201010584831238,
+        "ref_joint_vel_absmax": 9.806869506835938,
+        "ref_base_ang_speed": 1.6725835800170898,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.7649247646331787,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 2.084244764633179
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -1.0685433149337769,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.8940433149337769
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.30624282360076904,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.30624282360076904
+          }
+        ]
+      },
+      {
+        "step": 931,
+        "base_z": 1.2402726764003877,
+        "roll": -0.3218635194691872,
+        "pitch": -0.5759570195049483,
+        "target_error_max_abs": 1.0890667489528791,
+        "joint_vel_max_abs": 20.664135190088466,
+        "action_max_abs": 11.860128402709961,
+        "clipped_action_max_abs": 11.860128402709961,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.2610851526260376,
+        "ref_joint_vel_absmax": 13.593398094177246,
+        "ref_base_ang_speed": 10.438021659851074,
+        "top_target_violations": []
+      },
+      {
+        "step": 952,
+        "base_z": 0.8169025162833644,
+        "roll": 0.05383645587142261,
+        "pitch": 0.37714061103581636,
+        "target_error_max_abs": 2.1647859037255097,
+        "joint_vel_max_abs": 23.532119227440344,
+        "action_max_abs": 11.820043563842773,
+        "clipped_action_max_abs": 11.820043563842773,
+        "target_violation_count": 6,
+        "target_violation_max": 1.9824097521972657,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7506833076477051,
+        "ref_joint_vel_absmax": 11.51285171508789,
+        "ref_base_ang_speed": 4.254426002502441,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.6630897521972656,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 1.9824097521972657
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -1.0676908493041992,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.8931908493041992
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.8376744985580444,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.8376744985580444
+          },
+          {
+            "joint": "J04_ANKLE_PITCH_L",
+            "value": -0.7618597149848938,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 0.08117971498489385
+          }
+        ]
+      },
+      {
+        "step": 928,
+        "base_z": 1.2159038693052768,
+        "roll": -0.24555732678102082,
+        "pitch": -0.6276330369040599,
+        "target_error_max_abs": 1.5328926602640587,
+        "joint_vel_max_abs": 17.53201148939892,
+        "action_max_abs": 11.694045066833496,
+        "clipped_action_max_abs": 11.694045066833496,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.2525612115859985,
+        "ref_joint_vel_absmax": 16.44196128845215,
+        "ref_base_ang_speed": 8.104212760925293,
+        "top_target_violations": []
+      },
+      {
+        "step": 932,
+        "base_z": 1.2337829185366223,
+        "roll": -0.3556836190926958,
+        "pitch": -0.5390819704929901,
+        "target_error_max_abs": 0.9375027579813471,
+        "joint_vel_max_abs": 14.220399827847002,
+        "action_max_abs": 11.558036804199219,
+        "clipped_action_max_abs": 11.558036804199219,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.2597403526306152,
+        "ref_joint_vel_absmax": 15.645655632019043,
+        "ref_base_ang_speed": 4.866770267486572,
+        "top_target_violations": []
+      },
+      {
+        "step": 927,
+        "base_z": 1.1944354714824266,
+        "roll": -0.17503147287824955,
+        "pitch": -0.6361962229923865,
+        "target_error_max_abs": 1.4324949722723401,
+        "joint_vel_max_abs": 17.615194541826416,
+        "action_max_abs": 11.44944953918457,
+        "clipped_action_max_abs": 11.44944953918457,
+        "target_violation_count": 0,
+        "target_violation_max": 0.0,
+        "torque_saturation_count": 0,
+        "ref_base_z": 1.230629801750183,
+        "ref_joint_vel_absmax": 12.532559394836426,
+        "ref_base_ang_speed": 8.270988464355469,
+        "top_target_violations": []
+      },
+      {
+        "step": 955,
+        "base_z": 0.7897785006872786,
+        "roll": 0.13989260175893795,
+        "pitch": 0.5389174307093285,
+        "target_error_max_abs": 2.2533497416470154,
+        "joint_vel_max_abs": 7.468885779900013,
+        "action_max_abs": 11.396974563598633,
+        "clipped_action_max_abs": 11.396974563598633,
+        "target_violation_count": 3,
+        "target_violation_max": 2.0045130618286136,
+        "torque_saturation_count": 0,
+        "ref_base_z": 0.7131820321083069,
+        "ref_joint_vel_absmax": 8.179512023925781,
+        "ref_base_ang_speed": 1.668213963508606,
+        "top_target_violations": [
+          {
+            "joint": "J10_ANKLE_PITCH_R",
+            "value": -2.6851930618286133,
+            "lower": -0.68068,
+            "upper": 0.68068,
+            "side": "low",
+            "amount": 2.0045130618286136
+          },
+          {
+            "joint": "J11_ANKLE_ROLL_R",
+            "value": -0.9778156280517578,
+            "lower": -0.1745,
+            "upper": 0.3491,
+            "side": "low",
+            "amount": 0.8033156280517578
+          },
+          {
+            "joint": "J09_KNEE_PITCH_R",
+            "value": -0.23740780353546143,
+            "lower": 0.0,
+            "upper": 2.355,
+            "side": "low",
+            "amount": 0.23740780353546143
+          }
+        ]
+      }
+    ]
+  }
+}

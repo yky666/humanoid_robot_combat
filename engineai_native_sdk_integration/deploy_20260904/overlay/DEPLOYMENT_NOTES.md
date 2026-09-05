@@ -2,7 +2,7 @@
 
 ## Identity
 
-- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905_pdprep`
+- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905_per_motion`
 - SDK upstream commit: `335c60e88772c26c7852d0abd6b3c7439037dd8f`
 - Target: T800 Nezha controller, ARM64, ROS 2 Humble
 - Official package: `/apps/engineai_robotics` (not modified)
@@ -10,7 +10,7 @@
 
 ## Policy Interface
 
-- Runtime model: `assets/config/t800/rl_qualifier_deploy_20260904/policies/t800_qualifier_joint_policy.mnn`
+- Runtime models: one accepted per-motion MNN under `assets/config/t800/rl_qualifier_deploy_20260904/policies/`
 - Input: `obs`, float32, shape `[1, 140]`
 - Output: `actions`, float32, shape `[1, 25]`
 - MNN version used for conversion and validation: 2.9.5
@@ -24,24 +24,24 @@ and previous action. The runner rejects invalid dimensions and non-finite data.
 - `pd_stand_x` (official prone recovery preparation pose)
 - `pd_stand_y` (official supine recovery preparation pose)
 - `qualifier_front_kick`
-- `qualifier_spinning_kick`
 - `qualifier_straight_punch`
 - `qualifier_hook_punch`
 - `qualifier_jab_left`
-- `qualifier_recovery_supine`
 
-Standing motions can only be entered from `pd_stand` and return to `pd_stand`.
-Recovery can only be entered from `passive` and returns to `passive`.
+The initial state is `idle` and does not auto-transition. Standing motions can
+only be entered from `pd_stand` and return to `pd_stand`.
 
 The two PD poses come from EngineAI's `urkl_exams` branch at commit
 `0d759376cba552b480f267042d5d069ad5d96b50`. They are independent preparation
-states. Neither state transitions directly into `qualifier_recovery_supine`:
-the official supine pose differs from that policy's reference frame zero by
-more than its configured initial-pose threshold and has not been qualified as
-an interchangeable input.
+states. EngineAI's accepted `rl_supine_to_stance` policy returns to `walk` in
+its qualified graph. Both it and the older custom shared-policy recovery entry
+remain unreachable until that return path is integrated without changing the
+accepted contract.
 
 Official bindings reserve `LB+X` and `LB+Y` for the two PD poses. The custom
 hook punch and left jab therefore use `LB+B` and `RB+B`, respectively.
+The failed spinning kick and both recovery implementations have no reachable
+state or binding in this restricted graph.
 
 ## Keyboard Control
 
@@ -52,7 +52,9 @@ explicit `--arm` flag. Run it through an interactive SSH session from the
 Windows workstation; no LCM or GUI dependency is required on Windows.
 
 The tool enforces the restricted transition graph and intentionally omits the
-spinning kick because that policy did not pass its qualification gate.
+spinning kick because that policy did not pass its qualification gate. See
+`docs/T800_CONTROL_MAPPING.md` in the parent repository for the complete
+physical-gamepad, keyboard, and legacy-controller compatibility table.
 
 ## Safety Boundary
 
@@ -85,6 +87,8 @@ official service is deliberately stopped. The launcher checks that no other
 `src_executor` exists, sources ROS 2 Humble, sets all independent package paths,
 and then replaces itself with the custom executor.
 
-The first controlled initialization succeeded on 2026-09-05. RC02, IMU,
-MotorRunner, the 25-joint transform, and ROS 2 initialized without fatal or
-error log entries during the observation window. No policy motion was triggered.
+The first controlled initialization and two left-jab smoke cycles ran on
+2026-09-05. A later provenance audit showed that those cycles used the older
+six-motion joint actor instead of the accepted per-motion jab actor. The
+candidate was stopped, corrected, and must pass a new staged startup before its
+per-motion hardware result is accepted.

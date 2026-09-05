@@ -50,14 +50,17 @@ upstream revision. Use the overlay for reconstruction; keep the patch for
 source review and do not apply both representations to the same checkout.
 
 The deployment overlay includes the actor extraction and bundle validation
-tools, the 140-observation/25-action runner, restricted T800 state graph, MNN
-runtime model, and six reference trajectories. ARM64 build products are not
-committed because they depend on the matching controller SDK libraries.
+tools, the 140-observation/25-action runner, restricted T800 state graph,
+per-motion MNN runtime models, and six archived reference trajectories. Only
+the four accepted standing-action actors are reachable. ARM64 build products
+are not committed because they depend on the matching controller SDK libraries.
 
 The deployment graph additionally carries EngineAI's official `pd_stand_x`
-(prone) and `pd_stand_y` (supine) recovery preparation poses. They remain
-independent from the custom recovery trajectory; see the real-robot runbook for
-the binding map and compatibility boundary.
+(prone) and `pd_stand_y` (supine) recovery preparation poses. The accepted
+`rl_supine_to_stance` artifacts remain archived but unreachable until their
+qualified `walk` return state is integrated. See the
+[control mapping](../docs/T800_CONTROL_MAPPING.md) for physical and keyboard
+bindings and the legacy-controller compatibility boundary.
 
 `tools/virtual_gamepad/t800_keyboard_control.cc` provides a guarded ARM64
 terminal publisher for keyboard control through SSH. Build it on the ARM64 host

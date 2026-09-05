@@ -1,0 +1,528 @@
+{
+  "observation_normalization": "missing",
+  "onnx": {
+    "node_count": 9,
+    "op_types": [
+      "Div",
+      "Elu",
+      "Gemm",
+      "Sub"
+    ],
+    "has_embedded_normalizer": true,
+    "metadata_keys": [
+      "action_scale",
+      "default_joint_pos",
+      "joint_damping",
+      "joint_names",
+      "joint_stiffness",
+      "observation_history_lengths",
+      "observation_names"
+    ]
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "obs_absmax": 11.2045259475708,
+      "action_absmax": 1.329311728477478,
+      "action_l2": 2.617856979370117,
+      "segments": {
+        "command": {
+          "min": -8.39665412902832,
+          "max": 11.2045259475708,
+          "absmax": 11.2045259475708,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -1.1102228261018095e-16,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -1.7881238460540771,
+          "max": 0.9850654006004333,
+          "absmax": 1.7881238460540771,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -1.411227822303772,
+          "max": 1.4570701122283936,
+          "absmax": 1.4570701122283936,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -8.39665412902832,
+          "max": 11.2045259475708,
+          "absmax": 11.2045259475708,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.2591113746166229,
+          "max": 0.04231389984488487,
+          "absmax": 0.2591113746166229,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "obs_absmax": 7.069134712219238,
+      "action_absmax": 1.4660049676895142,
+      "action_l2": 2.6549055576324463,
+      "segments": {
+        "command": {
+          "min": -5.185065269470215,
+          "max": 7.069134712219238,
+          "absmax": 7.069134712219238,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -1.1102228922762585e-16,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -1.7881238460540771,
+          "max": 0.9850654006004333,
+          "absmax": 1.7881238460540771,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -1.481876015663147,
+          "max": 1.4451862573623657,
+          "absmax": 1.481876015663147,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -5.185065269470215,
+          "max": 7.069134712219238,
+          "absmax": 7.069134712219238,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.20895157754421234,
+          "max": 0.003666339674964547,
+          "absmax": 0.20895157754421234,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 50,
+      "obs_absmax": 1.759360909461975,
+      "action_absmax": 0.8148635625839233,
+      "action_l2": 2.182744264602661,
+      "segments": {
+        "command": {
+          "min": -1.759360909461975,
+          "max": 1.6114667654037476,
+          "absmax": 1.759360909461975,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -1.1102228261018095e-16,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.008845435455441475,
+          "max": 0.007364650722593069,
+          "absmax": 0.008845435455441475,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -1.609360933303833,
+          "max": 1.4614667892456055,
+          "absmax": 1.609360933303833,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -0.19333362579345703,
+          "max": 0.4596620798110962,
+          "absmax": 0.4596620798110962,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.0011349953711032867,
+          "max": 0.007273880299180746,
+          "absmax": 0.007273880299180746,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 250,
+      "obs_absmax": 2.487746000289917,
+      "action_absmax": 1.6269656419754028,
+      "action_l2": 2.932487964630127,
+      "segments": {
+        "command": {
+          "min": -2.487746000289917,
+          "max": 2.189565658569336,
+          "absmax": 2.487746000289917,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": 0.0,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.03882602974772453,
+          "max": 0.07611510902643204,
+          "absmax": 0.07611510902643204,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.487746000289917,
+          "max": 2.189565658569336,
+          "absmax": 2.487746000289917,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -0.6894081830978394,
+          "max": 0.5092905163764954,
+          "absmax": 0.6894081830978394,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.0018341171089559793,
+          "max": 0.011956019327044487,
+          "absmax": 0.011956019327044487,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 500,
+      "obs_absmax": 2.5591111183166504,
+      "action_absmax": 1.5517035722732544,
+      "action_l2": 2.970923662185669,
+      "segments": {
+        "command": {
+          "min": -2.5591111183166504,
+          "max": 2.2183594703674316,
+          "absmax": 2.5591111183166504,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": 0.0,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": 0.05038100853562355,
+          "max": 0.1726147085428238,
+          "absmax": 0.1726147085428238,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.5591111183166504,
+          "max": 2.2183594703674316,
+          "absmax": 2.5591111183166504,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -0.32046735286712646,
+          "max": 0.3021508455276489,
+          "absmax": 0.32046735286712646,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.0436200276017189,
+          "max": 0.08338333666324615,
+          "absmax": 0.08338333666324615,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 750,
+      "obs_absmax": 2.5658812522888184,
+      "action_absmax": 1.6821308135986328,
+      "action_l2": 3.3276307582855225,
+      "segments": {
+        "command": {
+          "min": -2.5658812522888184,
+          "max": 2.29020357131958,
+          "absmax": 2.5658812522888184,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -1.1102228261018095e-16,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.2826175391674042,
+          "max": 0.13700270652770996,
+          "absmax": 0.2826175391674042,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.5658812522888184,
+          "max": 2.29020357131958,
+          "absmax": 2.5658812522888184,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -2.2529520988464355,
+          "max": 1.7129004001617432,
+          "absmax": 2.2529520988464355,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.13741104304790497,
+          "max": -0.05072303116321564,
+          "absmax": 0.13741104304790497,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 1000,
+      "obs_absmax": 3.245609998703003,
+      "action_absmax": 2.4192306995391846,
+      "action_l2": 4.311450481414795,
+      "segments": {
+        "command": {
+          "min": -3.245609998703003,
+          "max": 2.7929999828338623,
+          "absmax": 3.245609998703003,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -2.7755570652545238e-17,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.04494533687829971,
+          "max": 0.7683217525482178,
+          "absmax": 0.7683217525482178,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.29288911819458,
+          "max": 2.7929999828338623,
+          "absmax": 2.7929999828338623,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -3.245609998703003,
+          "max": 2.6027872562408447,
+          "absmax": 3.245609998703003,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.29198917746543884,
+          "max": 0.30317163467407227,
+          "absmax": 0.30317163467407227,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 1250,
+      "obs_absmax": 2.4888079166412354,
+      "action_absmax": 1.5833059549331665,
+      "action_l2": 2.871196985244751,
+      "segments": {
+        "command": {
+          "min": -2.4888079166412354,
+          "max": 2.1964094638824463,
+          "absmax": 2.4888079166412354,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": -1.1102227599273605e-16,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.17997170984745026,
+          "max": 0.08243974298238754,
+          "absmax": 0.17997170984745026,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.4888079166412354,
+          "max": 2.1964094638824463,
+          "absmax": 2.4888079166412354,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -0.7327884435653687,
+          "max": 0.5998551845550537,
+          "absmax": 0.7327884435653687,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.00015704627730883658,
+          "max": 0.011945268139243126,
+          "absmax": 0.011945268139243126,
+          "finite": true
+        }
+      }
+    },
+    {
+      "frame": 1500,
+      "obs_absmax": 2.443000078201294,
+      "action_absmax": 1.4702059030532837,
+      "action_l2": 2.722378969192505,
+      "segments": {
+        "command": {
+          "min": -2.443000078201294,
+          "max": 2.144822359085083,
+          "absmax": 2.443000078201294,
+          "finite": true
+        },
+        "motion_anchor_ori_b": {
+          "min": 0.0,
+          "max": 1.0,
+          "absmax": 1.0,
+          "finite": true
+        },
+        "base_ang_vel": {
+          "min": -0.03812412917613983,
+          "max": 0.026515483856201172,
+          "absmax": 0.03812412917613983,
+          "finite": true
+        },
+        "joint_pos": {
+          "min": -2.408637762069702,
+          "max": 2.144822359085083,
+          "absmax": 2.408637762069702,
+          "finite": true
+        },
+        "joint_vel": {
+          "min": -0.38987547159194946,
+          "max": 0.19141770899295807,
+          "absmax": 0.38987547159194946,
+          "finite": true
+        },
+        "actions": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "motion_anchor_pos_b": {
+          "min": 0.0,
+          "max": 0.0,
+          "absmax": 0.0,
+          "finite": true
+        },
+        "base_lin_vel": {
+          "min": -0.010753076523542404,
+          "max": 0.014849710278213024,
+          "absmax": 0.014849710278213024,
+          "finite": true
+        }
+      }
+    }
+  ]
+}

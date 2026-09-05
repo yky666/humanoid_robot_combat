@@ -22,13 +22,18 @@ OBSERVATIONS = [
 ]
 STANDING_MOTIONS = {
     "qualifier_front_kick",
-    "qualifier_spinning_kick",
     "qualifier_straight_punch",
     "qualifier_hook_punch",
     "qualifier_jab_left",
 }
-RECOVERY = "qualifier_recovery_supine"
+DISABLED_MOTIONS = {"qualifier_spinning_kick", "qualifier_recovery_supine", "supine_to_stance"}
 RECOVERY_PREP = {"pd_stand_x", "pd_stand_y"}
+ACTION_POLICIES = {
+    "qualifier_front_kick": "front_kick_policy.mnn",
+    "qualifier_hook_punch": "hook_punch_policy.mnn",
+    "qualifier_jab_left": "jab_left_policy.mnn",
+    "qualifier_straight_punch": "straight_punch_policy.mnn",
+}
 EXPECTED_KEYS = {
     "idle": ("LB", "START"),
     "passive": ("LB", "RB"),
@@ -36,11 +41,9 @@ EXPECTED_KEYS = {
     "pd_stand_x": ("LB", "X"),
     "pd_stand_y": ("LB", "Y"),
     "qualifier_front_kick": ("RB", "A"),
-    "qualifier_spinning_kick": ("RB", "X"),
     "qualifier_straight_punch": ("RB", "Y"),
     "qualifier_hook_punch": ("LB", "B"),
     "qualifier_jab_left": ("RB", "B"),
-    RECOVERY: ("BACK", "A"),
 }
 
 
@@ -59,24 +62,22 @@ def validate_state_graph() -> None:
 
     task = load_yaml(CONFIG / "task_motion/qualifier_robot.yaml")
     motions = {entry["motion"]: entry for entry in task["tasks"]}
+    assert "auto_transition" not in motions["idle"]
+    assert DISABLED_MOTIONS.isdisjoint(motions)
     assert set(motions["pd_stand"]["manual_transition"]) == {
         "passive", *RECOVERY_PREP, *STANDING_MOTIONS
     }
-    assert RECOVERY not in motions["pd_stand"]["manual_transition"]
-    assert {RECOVERY, *RECOVERY_PREP} <= set(motions["passive"]["manual_transition"])
+    assert RECOVERY_PREP <= set(motions["passive"]["manual_transition"])
     for name in RECOVERY_PREP:
         other = (RECOVERY_PREP - {name}).pop()
         assert motions[name]["runner"] == [
             {"name": "pd_stand_runner", "enabled": True, "param_tag": name}
         ]
         assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand", other}
-        assert RECOVERY not in motions[name]["manual_transition"]
+        assert DISABLED_MOTIONS.isdisjoint(motions[name]["manual_transition"])
     for name in STANDING_MOTIONS:
         assert motions[name]["auto_transition"] == "pd_stand"
         assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand"}
-    assert motions[RECOVERY]["auto_transition"] == "passive"
-    assert set(motions[RECOVERY]["manual_transition"]) == {"passive"}
-
     actual_keys = {name: tuple(motions[name]["key"]) for name in EXPECTED_KEYS}
     assert actual_keys == EXPECTED_KEYS
     assert len(set(actual_keys.values())) == len(actual_keys), "duplicate gamepad binding"
@@ -104,7 +105,9 @@ def validate_motion(path: Path) -> None:
     assert config["transition_time"] >= 3.0
     assert 0 <= config["joint_limit_margin"] <= 0.05
 
-    assert config["policy_file"].endswith("t800_qualifier_joint_policy.mnn")
+    expected_policy = ACTION_POLICIES.get(path.stem)
+    if expected_policy:
+        assert Path(config["policy_file"]).name == expected_policy
     assert (CONFIG / config["policy_file"]).is_file()
     trajectory_path = CONFIG / config["trajectory_file_npz"]
     assert trajectory_path.is_file()

@@ -12,3 +12,4 @@ engineai_native_sdk_integration/**/*.mnn filter=lfs diff=lfs merge=lfs -text
 GMR/assets/noetix_n2/**/*.STL filter=lfs diff=lfs merge=lfs -text
 GMR/assets/t800/meshes_obj/**/*.obj filter=lfs diff=lfs merge=lfs -text
 *.patch -whitespace
+*.diff -whitespace

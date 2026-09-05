@@ -1,5 +1,5 @@
 # Generated staging config for T800 URKL qualifier approved motion: front kick
-policy_file: "rl_qualifier_deploy_20260904/policies/t800_qualifier_joint_policy.mnn"
+policy_file: "rl_qualifier_deploy_20260904/policies/front_kick_policy.mnn"
 trajectory_file_npz: "rl_qualifier_deploy_20260904/trajectories/kick_push_left_g17_stageii_tracking.npz"
 default_joint_pos:
   [

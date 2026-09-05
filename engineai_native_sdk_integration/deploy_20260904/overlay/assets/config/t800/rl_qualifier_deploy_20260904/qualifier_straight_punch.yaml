@@ -1,5 +1,5 @@
 # Generated staging config for T800 URKL qualifier approved motion: straight punch
-policy_file: "rl_qualifier_deploy_20260904/policies/t800_qualifier_joint_policy.mnn"
+policy_file: "rl_qualifier_deploy_20260904/policies/straight_punch_policy.mnn"
 trajectory_file_npz: "rl_qualifier_deploy_20260904/trajectories/punch_cross_left_e3_stageii_tracking.npz"
 default_joint_pos:
   [
