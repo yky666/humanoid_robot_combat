@@ -1,0 +1,79 @@
+# Restricted real-robot state graph for the independently deployed qualifier policy.
+cpu:
+  number: 3
+  priority: 10
+
+tasks:
+  - motion: idle
+    period: 0.002
+    runner:
+      - name: idle_runner
+        enabled: true
+    manual_transition: [passive]
+    auto_transition: passive
+    key: [LB, START]
+
+  - motion: passive
+    period: 0.002
+    runner:
+      - name: passive_runner
+        enabled: true
+    manual_transition: [idle, pd_stand, qualifier_recovery_supine]
+    key: [LB, RB]
+
+  - motion: pd_stand
+    period: 0.002
+    runner:
+      - name: pd_stand_runner
+        enabled: true
+        param_tag: pd_stand
+    manual_transition:
+      - passive
+      - qualifier_front_kick
+      - qualifier_spinning_kick
+      - qualifier_straight_punch
+      - qualifier_hook_punch
+      - qualifier_jab_left
+    key: [LB, A]
+
+  - motion: qualifier_front_kick
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_front_kick}]
+    manual_transition: [passive, pd_stand]
+    auto_transition: pd_stand
+    key: [RB, A]
+
+  - motion: qualifier_spinning_kick
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_spinning_kick}]
+    manual_transition: [passive, pd_stand]
+    auto_transition: pd_stand
+    key: [RB, X]
+
+  - motion: qualifier_straight_punch
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_straight_punch}]
+    manual_transition: [passive, pd_stand]
+    auto_transition: pd_stand
+    key: [RB, Y]
+
+  - motion: qualifier_hook_punch
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_hook_punch}]
+    manual_transition: [passive, pd_stand]
+    auto_transition: pd_stand
+    key: [LB, X]
+
+  - motion: qualifier_jab_left
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_jab_left}]
+    manual_transition: [passive, pd_stand]
+    auto_transition: pd_stand
+    key: [LB, Y]
+
+  - motion: qualifier_recovery_supine
+    period: 0.02
+    runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_recovery_supine}]
+    manual_transition: [passive]
+    auto_transition: passive
+    key: [BACK, A]

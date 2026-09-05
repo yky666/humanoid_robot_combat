@@ -1,0 +1,13 @@
+results/**/*.mp4 filter=lfs diff=lfs merge=lfs -text
+results/**/*.pt filter=lfs diff=lfs merge=lfs -text
+results/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+results/**/*.mnn filter=lfs diff=lfs merge=lfs -text
+results/**/*.npy filter=lfs diff=lfs merge=lfs -text
+results/**/*.npz filter=lfs diff=lfs merge=lfs -text
+results/**/*.pkl filter=lfs diff=lfs merge=lfs -text
+results/**/*.tar.zst filter=lfs diff=lfs merge=lfs -text
+engineai_native_sdk_integration/**/*.onnx filter=lfs diff=lfs merge=lfs -text
+engineai_native_sdk_integration/**/*.npz filter=lfs diff=lfs merge=lfs -text
+engineai_native_sdk_integration/**/*.mnn filter=lfs diff=lfs merge=lfs -text
+GMR/assets/noetix_n2/**/*.STL filter=lfs diff=lfs merge=lfs -text
+GMR/assets/t800/meshes_obj/**/*.obj filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,641 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 54f51b0..411ad43 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -3,9 +3,13 @@ cmake_minimum_required(VERSION 3.16)
+ project(engineai_robotics LANGUAGES C CXX)
+ 
+ # Set some variables
++set(ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT "/opt/engineai_robotics_third_party" CACHE PATH
++    "EngineAI third-party dependency prefix")
++set(ENGINEAI_ROBOTICS_HARDWARE_ROOT "/opt/engineai_robotics_hardware" CACHE PATH
++    "EngineAI hardware dependency prefix")
+ list(APPEND ENGINEAI_ROBOTICS_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+-list(APPEND ENGINEAI_ROBOTICS_THIRD_PARTY /opt/engineai_robotics_third_party)
+-list(APPEND ENGINEAI_ROBOTICS_HARDWARE /opt/engineai_robotics_hardware)
++list(APPEND ENGINEAI_ROBOTICS_THIRD_PARTY ${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT})
++list(APPEND ENGINEAI_ROBOTICS_HARDWARE ${ENGINEAI_ROBOTICS_HARDWARE_ROOT})
+ 
+ # Set cmake path
+ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+@@ -108,4 +112,3 @@ endif()
+ 
+ # Add subdirectories
+ add_subdirectory(src)
+-
+diff --git a/assets/config/t800/mode.yaml b/assets/config/t800/mode.yaml
+index cf73523..50e0cba 100644
+--- a/assets/config/t800/mode.yaml
++++ b/assets/config/t800/mode.yaml
+@@ -1,4 +1,4 @@
+-active_mode: sim
++active_mode: robot
+ 
+ # ------------------------------------------------------------------------------------------------ #
+ 
+@@ -16,7 +16,7 @@ mode:
+     - tag: resident_task
+       scope: task_resident/robot
+     - tag: motion_task
+-      scope: task_motion/default
++      scope: task_motion/qualifier_robot
+     - tag: global_options
+       scope: global_options/release
+     - tag: lcm
+@@ -51,6 +51,18 @@ mode:
+       scope: rl_stance_to_supine/default
+     - tag: rl_dance_example
+       scope: rl_dance_example/default
++    - tag: qualifier_front_kick
++      scope: rl_qualifier_deploy_20260904/qualifier_front_kick
++    - tag: qualifier_spinning_kick
++      scope: rl_qualifier_deploy_20260904/qualifier_spinning_kick
++    - tag: qualifier_straight_punch
++      scope: rl_qualifier_deploy_20260904/qualifier_straight_punch
++    - tag: qualifier_hook_punch
++      scope: rl_qualifier_deploy_20260904/qualifier_hook_punch
++    - tag: qualifier_jab_left
++      scope: rl_qualifier_deploy_20260904/qualifier_jab_left
++    - tag: qualifier_recovery_supine
++      scope: rl_qualifier_deploy_20260904/qualifier_recovery_supine
+       
+   sim:
+     - tag: resident_task
+@@ -88,4 +100,4 @@ mode:
+     - tag: rl_stance_to_supine
+       scope: rl_stance_to_supine/default
+     - tag: rl_dance_example
+-      scope: rl_dance_example/default
+\ No newline at end of file
++      scope: rl_dance_example/default
+diff --git a/cmake/Crashpad.cmake b/cmake/Crashpad.cmake
+index 882f8d4..08b890e 100644
+--- a/cmake/Crashpad.cmake
++++ b/cmake/Crashpad.cmake
+@@ -4,13 +4,13 @@ message(STATUS "Calculated Crashpad third-party path: ${ENGINEAI_ROBOTICS_THIRD_
+ add_library(crashpad_client INTERFACE)
+ 
+ target_include_directories(crashpad_client INTERFACE
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/include/crashpad/"
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/include/crashpad/client/"
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/include/crashpad/util/"
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/include/crashpad/snapshot/"
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/include/crashpad/third_party/mini_chromium/"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include/crashpad/"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include/crashpad/client/"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include/crashpad/util/"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include/crashpad/snapshot/"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include/crashpad/third_party/mini_chromium/"
+ )
+ 
+ target_link_libraries(crashpad_client INTERFACE
+-    "${ENGINEAI_ROBOTICS_THIRD_PARTY}/lib/libclient.a"
++    "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/lib/libclient.a"
+ )
+diff --git a/core/cmake/EngineAICoreTargets.cmake b/core/cmake/EngineAICoreTargets.cmake
+index 5cf3271..8cb7f86 100644
+--- a/core/cmake/EngineAICoreTargets.cmake
++++ b/core/cmake/EngineAICoreTargets.cmake
+@@ -69,7 +69,7 @@ set_target_properties(EngineAICore::src_common_base PROPERTIES
+ add_library(EngineAICore::src_common_containers INTERFACE IMPORTED)
+ 
+ set_target_properties(EngineAICore::src_common_containers PROPERTIES
+-  INTERFACE_LINK_LIBRARIES "/opt/engineai_robotics_third_party/lib/libsodium.so"
++  INTERFACE_LINK_LIBRARIES "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/lib/libsodium.so"
+   INTERFACE_SOURCES ""
+ )
+ 
+@@ -93,7 +93,7 @@ set_target_properties(EngineAICore::src_common_parameter PROPERTIES
+ add_library(EngineAICore::src_common_tool SHARED IMPORTED)
+ 
+ set_target_properties(EngineAICore::src_common_tool PROPERTIES
+-  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;/opt/engineai_robotics_third_party/lib/libsodium.so"
++  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/lib/libsodium.so"
+   INTERFACE_SOURCES ""
+ )
+ 
+@@ -133,8 +133,8 @@ set_target_properties(EngineAICore::src_core_estimator_parallel_palms PROPERTIES
+ add_library(EngineAICore::src_core_math SHARED IMPORTED)
+ 
+ set_target_properties(EngineAICore::src_core_math PROPERTIES
+-  INTERFACE_INCLUDE_DIRECTORIES "/opt/engineai_robotics_third_party/include"
+-  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;EngineAICore::src_common_tool;/opt/engineai_robotics_third_party/lib/libMNN.so;/opt/engineai_robotics_third_party/lib/libqpOASES.so"
++  INTERFACE_INCLUDE_DIRECTORIES "${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/include"
++  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;EngineAICore::src_common_tool;${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/lib/libMNN.so;${ENGINEAI_ROBOTICS_THIRD_PARTY_ROOT}/lib/libqpOASES.so"
+   INTERFACE_SOURCES ""
+ )
+ 
+@@ -198,7 +198,7 @@ set_target_properties(EngineAICore::src_runner_joint_motor_transform_runner PROP
+ add_library(EngineAICore::src_runner_motor SHARED IMPORTED)
+ 
+ set_target_properties(EngineAICore::src_runner_motor PROPERTIES
+-  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;EngineAICore::src_runner_basic;EngineAICore::src_data;/opt/engineai_robotics_hardware/lib/libmotor.so"
++  INTERFACE_LINK_LIBRARIES "yaml-cpp::yaml-cpp;glog::glog;fmt::fmt;Eigen3::Eigen;EngineAICore::src_runner_basic;EngineAICore::src_data;${ENGINEAI_ROBOTICS_HARDWARE_ROOT}/lib/libmotor.so"
+   INTERFACE_SOURCES ""
+ )
+ 
+diff --git a/src/data/_param/rl_dance_example_param/rl_dance_example_param.h b/src/data/_param/rl_dance_example_param/rl_dance_example_param.h
+index 3cf143d..5f77aa7 100644
+--- a/src/data/_param/rl_dance_example_param/rl_dance_example_param.h
++++ b/src/data/_param/rl_dance_example_param/rl_dance_example_param.h
+@@ -27,6 +27,13 @@ class RlDanceExampleParam : public BasicParam {
+   Eigen::VectorXd LOAD_PARAM(action_scale);
+   bool LOAD_PARAM(resident_control);
+ 
++  // Optional deployment guards. Existing example configs remain compatible.
++  std::optional<float> LOAD_PARAM(action_clip);
++  std::optional<float> LOAD_PARAM(transition_time);
++  std::optional<float> LOAD_PARAM(max_initial_pose_error);
++  std::optional<float> LOAD_PARAM(joint_limit_margin);
++  std::optional<int> LOAD_PARAM(expected_observation_dim);
++
+   int num_actions;
+ };
+ 
+diff --git a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h b/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
+index 8367eb7..4ad2713 100644
+--- a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
++++ b/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <string>
+ #include <vector>
+ 
+ #include "basic/motion_runner.h"
+@@ -36,6 +37,8 @@ class RlDanceExampleRunner : public MotionRunner {
+   void initHistoryBuffers();
+   void fillObsContextConstantPart();
+   void updateFirstFrameYawAlignment();
++  void ValidateConfiguration() const;
++  void RequestSafeExit(const std::string& reason);
+ 
+   Eigen::MatrixXd npyFloatToMatrixXd(const cnpy::NpyArray& npy_array, int row_index = 0);
+ 
+@@ -45,6 +48,7 @@ class RlDanceExampleRunner : public MotionRunner {
+ 
+   // --- Parameters and reference trajectory ---
+   std::shared_ptr<data::RlDanceExampleParam> param_;
++  std::shared_ptr<const Eigen::MatrixXd> ref_body_pos_w_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_pos_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_vel_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_body_quat_w_all_;
+@@ -73,7 +77,18 @@ class RlDanceExampleRunner : public MotionRunner {
+   Eigen::VectorXd tau_ff_des_;
+   Eigen::VectorXd joint_kp_;
+   Eigen::VectorXd joint_kd_;
++  Eigen::VectorXd joint_kp_des_;
++  Eigen::VectorXd joint_kd_des_;
+   Eigen::VectorXd action_scale_;
++  Eigen::VectorXd initial_joint_q_;
++  Eigen::VectorXd initial_joint_kp_;
++  Eigen::VectorXd initial_joint_kd_;
++  Eigen::VectorXd last_safe_q_des_;
++  Eigen::VectorXd last_safe_kp_;
++  Eigen::VectorXd last_safe_kd_;
++
++  double elapsed_time_ = 0.0;
++  bool safety_fault_ = false;
+ 
+   Eigen::Matrix3d ref_init_yaw_rot_;
+   Eigen::Matrix3d body_init_yaw_rot_;
+diff --git a/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h b/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
+index 8b21de2..5894eb4 100644
+--- a/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
++++ b/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
+@@ -16,6 +16,7 @@ namespace wbt_obs {
+ struct ObsContext {
+   std::shared_ptr<data::DataStore> data_store = nullptr;
+ 
++  std::shared_ptr<const Eigen::MatrixXd> ref_body_pos_w_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_pos_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_vel_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_body_quat_w_all = nullptr;
+@@ -28,6 +29,8 @@ struct ObsContext {
+ 
+   Eigen::Matrix3d ref_init_yaw_rot = Eigen::Matrix3d::Identity();
+   Eigen::Matrix3d body_init_yaw_rot = Eigen::Matrix3d::Identity();
++  Eigen::Vector3d ref_init_pos_w = Eigen::Vector3d::Zero();
++  Eigen::Vector3d body_init_pos_w = Eigen::Vector3d::Zero();
+   Eigen::Vector3d imu_install_bias = Eigen::Vector3d::Zero();
+ 
+   std::shared_ptr<const std::vector<int>> joint_vel_mask_indices = nullptr;
+diff --git a/src/runner/rl_dance_example/src/rl_dance_example_runner.cc b/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
+index 7eb55c7..1a21d71 100644
+--- a/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
++++ b/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
+@@ -30,6 +30,10 @@
+ 
+ #include "rl_dance_example/rl_dance_example_runner.h"
+ 
++#include <algorithm>
++#include <cmath>
++#include <stdexcept>
++
+ #include <glog/logging.h>
+ 
+ #include "math/rotation_matrix.h"
+@@ -52,7 +56,7 @@ void RlDanceExampleRunner::SetupContext() { data_store_->parallel_by_classic_par
+ /**
+  * @brief Tears down the runtime context. Currently no cleanup needed.
+  */
+-void RlDanceExampleRunner::TeardownContext() {}
++void RlDanceExampleRunner::TeardownContext() { data_store_->parallel_by_classic_parser.store(true); }
+ 
+ /**
+  * @brief Initialization upon entering this Runner. Allocates all resources.
+@@ -68,78 +72,91 @@ void RlDanceExampleRunner::TeardownContext() {}
+  * @return true if initialization succeeds, false on parameter or model load failure.
+  */
+ bool RlDanceExampleRunner::Enter() {
+-  // --- Step 1: Parameter loading ---
+-  // Reload parameters if a tag has been set (supports runtime config switching)
+-  if (!param_tag_.empty()) {
+-    param_ = data::ParamManager::create<data::RlDanceExampleParam>(param_tag_);
+-  }
+-  if (!param_) {
+-    LOG(ERROR) << "[WbtRunner::Enter] Failed to create WbtParam";
+-    return false;
+-  }
+-
+-  // --- Step 2: Joint PD gains and index mapping ---
+-  // Initialize full-body joint arrays (all joints, not just policy-controlled ones)
+-  joint_kp_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
+-  joint_kd_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
+-  default_joint_q_ = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(model_param_->num_total_joints));
+-
+-  // Build the mapping from policy action indices to full-body joint indices.
+-  // policy2deploy_joint_idx_[i] gives the full-body joint index for the i-th policy output.
+-  policy2deploy_joint_idx_ = std::make_shared<Eigen::VectorXi>(Eigen::VectorXi::Zero(param_->num_actions));
+-  for (size_t i = 0; i < param_->joint_names.size(); ++i) {
+-    int deploy_idx = model_param_->joint_id_in_total_limb.at(param_->joint_names[i]);
+-    (*policy2deploy_joint_idx_)(static_cast<int>(i)) = deploy_idx;
+-  }
++  try {
++    if (!param_tag_.empty()) param_ = data::ParamManager::create<data::RlDanceExampleParam>(param_tag_);
++    if (!param_) throw std::runtime_error("failed to create WBT parameters");
++
++    if (param_->num_actions <= 0 || param_->joint_names.size() != static_cast<size_t>(param_->num_actions) ||
++        param_->joint_stiffness.size() != param_->num_actions || param_->joint_damping.size() != param_->num_actions ||
++        param_->default_joint_pos.size() != param_->num_actions || param_->action_scale.size() != param_->num_actions) {
++      throw std::runtime_error("joint/action parameter dimensions are inconsistent");
++    }
+ 
+-  // Apply PD gains and default positions only to the policy-controlled joints
+-  joint_kp_(*policy2deploy_joint_idx_) = param_->joint_stiffness;
+-  joint_kd_(*policy2deploy_joint_idx_) = param_->joint_damping;
+-  (*default_joint_q_)(*policy2deploy_joint_idx_) = param_->default_joint_pos;
+-  action_scale_ = param_->action_scale;
+-
+-  // --- Step 3: Load the MLP policy network ---
+-  std::string policy_path =
+-      common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->policy_file);
+-  mlp_net_ = std::make_unique<math::MNNModel>(policy_path);
+-  if (!mlp_net_) {
+-    LOG(ERROR) << "[WbtRunner::Enter] Failed to load policy model";
++    joint_kp_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
++    joint_kd_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
++    default_joint_q_ = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(model_param_->num_total_joints));
++    policy2deploy_joint_idx_ = std::make_shared<Eigen::VectorXi>(Eigen::VectorXi::Zero(param_->num_actions));
++    for (size_t i = 0; i < param_->joint_names.size(); ++i) {
++      (*policy2deploy_joint_idx_)(static_cast<int>(i)) = model_param_->joint_id_in_total_limb.at(param_->joint_names[i]);
++    }
++    joint_kp_(*policy2deploy_joint_idx_) = param_->joint_stiffness;
++    joint_kd_(*policy2deploy_joint_idx_) = param_->joint_damping;
++    (*default_joint_q_)(*policy2deploy_joint_idx_) = param_->default_joint_pos;
++    action_scale_ = param_->action_scale;
++
++    const std::string policy_path =
++        common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->policy_file);
++    mlp_net_ = std::make_unique<math::MNNModel>(policy_path);
++    if (!mlp_net_) throw std::runtime_error("failed to load MNN policy: " + policy_path);
++
++    const int total_obs_dim = ComputeTotalObservationDim();
++    if (param_->expected_observation_dim.has_value() && total_obs_dim != param_->expected_observation_dim.value()) {
++      throw std::runtime_error("observation dimension mismatch: expected " +
++                               std::to_string(param_->expected_observation_dim.value()) + ", got " +
++                               std::to_string(total_obs_dim));
++    }
++    mlp_net_observation_vec.setZero(total_obs_dim);
++    mlp_net_action_ = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(param_->num_actions));
++    initHistoryBuffers();
++
++    const std::string traj_path =
++        common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->trajectory_file_npz);
++    trajectory_npz = cnpy::npz_load(traj_path);
++    for (const char* key : {"joint_pos", "joint_vel", "body_quat_w"}) {
++      if (trajectory_npz.count(key) == 0) throw std::runtime_error(std::string("trajectory missing key: ") + key);
++    }
++    if (trajectory_npz.count("body_pos_w") > 0) {
++      ref_body_pos_w_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz.at("body_pos_w")));
++    }
++    ref_joint_pos_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz.at("joint_pos")));
++    ref_joint_vel_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz.at("joint_vel")));
++    ref_body_quat_w_all_ =
++        std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz.at("body_quat_w")));
++    max_policy_step = ref_joint_pos_all_->rows() - 1;
++    ValidateConfiguration();
++
++    is_first_time_ = true;
++    policy_step = 0;
++    elapsed_time_ = 0.0;
++    safety_fault_ = false;
++    GetMutableOutput().Reset();
++    fillObsContextConstantPart();
++
++    data_store_->joint_info.GetState(data::JointInfoType::kPosition, q_real_);
++    data_store_->joint_info.GetCommand(data::JointInfoType::kPosition, initial_joint_q_);
++    data_store_->joint_info.GetCommand(data::JointInfoType::kStiffness, initial_joint_kp_);
++    data_store_->joint_info.GetCommand(data::JointInfoType::kDamping, initial_joint_kd_);
++    if (initial_joint_q_.size() != model_param_->num_total_joints || !initial_joint_q_.allFinite()) initial_joint_q_ = q_real_;
++    if (initial_joint_kp_.size() != model_param_->num_total_joints || !initial_joint_kp_.allFinite()) initial_joint_kp_ = joint_kp_;
++    if (initial_joint_kd_.size() != model_param_->num_total_joints || !initial_joint_kd_.allFinite()) initial_joint_kd_ = joint_kd_;
++
++    const double pose_error =
++        (q_real_(*policy2deploy_joint_idx_) - ref_joint_pos_all_->row(0).transpose()).cwiseAbs().maxCoeff();
++    if (param_->max_initial_pose_error.has_value() && pose_error > param_->max_initial_pose_error.value()) {
++      throw std::runtime_error("initial pose guard rejected entry; max joint error=" + std::to_string(pose_error));
++    }
++    last_safe_q_des_ = initial_joint_q_;
++    last_safe_kp_ = initial_joint_kp_;
++    last_safe_kd_ = initial_joint_kd_;
++
++    LOG(INFO) << "[WbtRunner::Enter] Done, obs_dim=" << total_obs_dim << ", actions=" << param_->num_actions
++              << ", frames=" << ref_joint_pos_all_->rows() << ", initial_pose_error=" << pose_error;
++    return true;
++  } catch (const std::exception& e) {
++    LOG(ERROR) << "[WbtRunner::Enter] Refusing to enter: " << e.what();
++    GetMutableOutput().Reset();
+     return false;
+   }
+-
+-  // Compute the total observation dimension (sum of all observation components × their history lengths)
+-  int total_obs_dim = ComputeTotalObservationDim();
+-  mlp_net_observation_vec.setZero(total_obs_dim);
+-  mlp_net_action_ = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(param_->num_actions));
+-
+-  // --- Step 4: Initialize observation history buffers ---
+-  // Each observation component has its own sliding-window history buffer
+-  initHistoryBuffers();
+-
+-  // --- Step 5: Load reference dance trajectory ---
+-  // The .npz file contains pre-recorded motion data with keys:
+-  //   "joint_pos"    — reference joint positions [num_frames x num_actions]
+-  //   "joint_vel"    — reference joint velocities [num_frames x num_actions]
+-  //   "body_quat_w"  — reference body quaternion (w, x, y, z) [num_frames x 4]
+-  std::string traj_path =
+-      common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->trajectory_file_npz);
+-  trajectory_npz = cnpy::npz_load(traj_path);
+-  ref_joint_pos_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["joint_pos"]));
+-  ref_joint_vel_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["joint_vel"]));
+-  ref_body_quat_w_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["body_quat_w"]));
+-  max_policy_step = ref_joint_pos_all_->rows() - 1;
+-
+-  // --- Step 6: Reset runtime state ---
+-  is_first_time_ = true;
+-  policy_step = 0;
+-  GetMutableOutput().Reset();
+-
+-  // Pre-fill observation context fields that remain constant throughout execution
+-  fillObsContextConstantPart();
+-
+-  LOG(INFO) << "[WbtRunner::Enter] Done, obs_dim=" << total_obs_dim << ", actions=" << param_->num_actions
+-            << ", frames=" << ref_joint_pos_all_->rows();
+-  return true;
+ }
+ 
+ /**
+@@ -153,6 +170,7 @@ bool RlDanceExampleRunner::Enter() {
+  */
+ void RlDanceExampleRunner::fillObsContextConstantPart() {
+   obs_ctx_.data_store = data_store_;
++  obs_ctx_.ref_body_pos_w_all = ref_body_pos_w_all_;
+   obs_ctx_.ref_joint_pos_all = ref_joint_pos_all_;
+   obs_ctx_.ref_joint_vel_all = ref_joint_vel_all_;
+   obs_ctx_.ref_body_quat_w_all = ref_body_quat_w_all_;
+@@ -174,13 +192,29 @@ void RlDanceExampleRunner::fillObsContextConstantPart() {
+  * so the robot holds the final pose once the trajectory is fully played.
+  */
+ void RlDanceExampleRunner::Run() {
+-  CalculateObservation();   // Assemble observation from registered components
+-  CalculateMotorCommand();  // Run policy inference and compute target positions
+-  SendMotorCommand();       // Send PD commands to motors
+-
+-  // Advance trajectory frame and loop back to the start.
+-  // policy_step = (policy_step >= max_policy_step) ? 0 : policy_step + 1;
+-  policy_step = std::min(policy_step + 1, max_policy_step);
++  if (safety_fault_) return;
++  try {
++    CalculateObservation();
++    CalculateMotorCommand();
++    SendMotorCommand();
++
++    last_safe_q_des_ = q_des_;
++    last_safe_kp_ = joint_kp_des_;
++    last_safe_kd_ = joint_kd_des_;
++    elapsed_time_ += runner_period_;
++
++    const double transition_time = param_->transition_time.value_or(0.0f);
++    if (elapsed_time_ >= transition_time) {
++      if (IsTrajectoryFinished()) {
++        LOG(INFO) << "Trajectory finished, requesting configured auto transition.";
++        SetRunnerState(RunnerState::kTryExit);
++      } else {
++        ++policy_step;
++      }
++    }
++  } catch (const std::exception& e) {
++    RequestSafeExit(e.what());
++  }
+ }
+ 
+ // ============================================================================
+@@ -222,6 +256,9 @@ void RlDanceExampleRunner::CalculateObservation() {
+ 
+     // Compute a single-step observation for this component via the registry
+     Eigen::VectorXd single = wbt_obs::GetObservation(obs_name, obs_ctx_);
++    if (single.size() != GetObservationDim(obs_name) || !single.allFinite()) {
++      throw std::runtime_error("invalid observation component: " + obs_name);
++    }
+ 
+     // Update the sliding-window history buffer for this component
+     Eigen::MatrixXd& buf = observation_history_buffers_[i];
+@@ -246,6 +283,7 @@ void RlDanceExampleRunner::CalculateObservation() {
+   if (is_first_time_) {
+     is_first_time_ = false;
+   }
++  if (!mlp_net_observation_vec.allFinite()) throw std::runtime_error("observation contains NaN or Inf");
+ }
+ 
+ /**
+@@ -281,6 +319,10 @@ void RlDanceExampleRunner::updateFirstFrameYawAlignment() {
+   // Share with the observation context so observation functions can use them
+   obs_ctx_.ref_init_yaw_rot = ref_init_yaw_rot_;
+   obs_ctx_.body_init_yaw_rot = body_init_yaw_rot_;
++  if (ref_body_pos_w_all_ && ref_body_pos_w_all_->rows() > 0) {
++    obs_ctx_.ref_init_pos_w = ref_body_pos_w_all_->row(0).transpose();
++    obs_ctx_.body_init_pos_w = data_store_->base_state_in_world.Get()->frame.pose.position;
++  }
+ }
+ 
+ // ============================================================================
+@@ -308,6 +350,11 @@ void RlDanceExampleRunner::CalculateMotorCommand() {
+ 
+   // Run MLP forward inference (float precision, cast back to double)
+   *mlp_net_action_ = (mlp_net_->Inference(mlp_net_observation_vec.cast<float>())).cast<double>();
++  if (mlp_net_action_->size() != param_->num_actions || !mlp_net_action_->allFinite()) {
++    throw std::runtime_error("policy returned invalid action tensor");
++  }
++  const double action_clip = param_->action_clip.value_or(1.0f);
++  *mlp_net_action_ = mlp_net_action_->cwiseMax(-action_clip).cwiseMin(action_clip);
+ 
+   // Map action to target joint positions:
+   //   q_des = ref_joint_pos + action * action_scale (for policy-controlled joints only)
+@@ -321,11 +368,29 @@ void RlDanceExampleRunner::CalculateMotorCommand() {
+   } else {
+     q_des_(*policy2deploy_joint_idx_) += mlp_net_action_->cwiseProduct(action_scale_);
+   }
+-  
+-  //轨迹播放完毕则退出 runner
+-  if (IsTrajectoryFinished()) {
+-    LOG(INFO) << "Trajectory finished, requesting exit.";
+-    SetRunnerState(RunnerState::kTryExit);
++
++  joint_kp_des_ = joint_kp_;
++  joint_kd_des_ = joint_kd_;
++  const double transition_time = param_->transition_time.value_or(0.0f);
++  if (transition_time > 0.0 && elapsed_time_ < transition_time) {
++    const double ratio = std::clamp(elapsed_time_ / transition_time, 0.0, 1.0);
++    q_des_ = ratio * q_des_ + (1.0 - ratio) * initial_joint_q_;
++    joint_kp_des_ = ratio * joint_kp_ + (1.0 - ratio) * initial_joint_kp_;
++    joint_kd_des_ = ratio * joint_kd_ + (1.0 - ratio) * initial_joint_kd_;
++  }
++
++  Eigen::VectorXd upper(model_param_->num_total_joints), lower(model_param_->num_total_joints);
++  data_store_->joint_info.GetUpperPositionLimit(upper);
++  data_store_->joint_info.GetLowerPositionLimit(lower);
++  const double margin = std::max(0.0f, param_->joint_limit_margin.value_or(0.0f));
++  for (int i = 0; i < q_des_.size(); ++i) {
++    const double lo = std::isfinite(lower(i)) ? lower(i) + margin : lower(i);
++    const double hi = std::isfinite(upper(i)) ? upper(i) - margin : upper(i);
++    if (lo > hi) throw std::runtime_error("invalid joint limit after margin");
++    q_des_(i) = std::clamp(q_des_(i), lo, hi);
++  }
++  if (!q_des_.allFinite() || !joint_kp_des_.allFinite() || !joint_kd_des_.allFinite()) {
++    throw std::runtime_error("motor command contains NaN or Inf");
+   }
+ }
+ 
+@@ -338,7 +403,7 @@ void RlDanceExampleRunner::CalculateMotorCommand() {
+ void RlDanceExampleRunner::SendMotorCommand() {
+   qd_des_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
+   tau_ff_des_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
+-  GetMutableOutput().SetCommand(q_des_, qd_des_, joint_kp_, joint_kd_, tau_ff_des_);
++  GetMutableOutput().SetCommand(q_des_, qd_des_, joint_kp_des_, joint_kd_des_, tau_ff_des_);
+ }
+ 
+ // ============================================================================
+@@ -353,7 +418,10 @@ TransitionState RlDanceExampleRunner::TryExit() { return TransitionState::kCompl
+ /**
+  * @brief Post-exit cleanup. Currently no additional actions needed.
+  */
+-bool RlDanceExampleRunner::Exit() { return true; }
++bool RlDanceExampleRunner::Exit() {
++  data_store_->parallel_by_classic_parser.store(true);
++  return true;
++}
+ 
+ /**
+  * @brief Runner termination. Currently no additional actions needed.
+@@ -401,6 +469,7 @@ void RlDanceExampleRunner::initHistoryBuffers() {
+  */
+ Eigen::MatrixXd RlDanceExampleRunner::npyFloatToMatrixXd(const cnpy::NpyArray& npy_array, int row_index) {
+   const std::vector<size_t>& shape = npy_array.shape;
++  if (npy_array.word_size != sizeof(float)) throw std::runtime_error("trajectory arrays must be float32");
+   const float* data = npy_array.data<float>();
+   if (shape.size() == 2) {
+     size_t rows = shape[0], cols = shape[1];
+@@ -462,4 +531,41 @@ int RlDanceExampleRunner::ComputeTotalObservationDim() const {
+   return total;
+ }
+ 
++void RlDanceExampleRunner::ValidateConfiguration() const {
++  if (!ref_joint_pos_all_ || ref_joint_pos_all_->rows() < 2 || ref_joint_pos_all_->cols() != param_->num_actions ||
++      !ref_joint_vel_all_ || ref_joint_vel_all_->rows() != ref_joint_pos_all_->rows() ||
++      ref_joint_vel_all_->cols() != param_->num_actions || !ref_body_quat_w_all_ ||
++      ref_body_quat_w_all_->rows() != ref_joint_pos_all_->rows() || ref_body_quat_w_all_->cols() != 4) {
++    throw std::runtime_error("trajectory shapes are inconsistent");
++  }
++  if (!ref_joint_pos_all_->allFinite() || !ref_joint_vel_all_->allFinite() || !ref_body_quat_w_all_->allFinite()) {
++    throw std::runtime_error("trajectory contains NaN or Inf");
++  }
++  const bool needs_body_pos =
++      std::find(param_->observation_names.begin(), param_->observation_names.end(), "motion_anchor_pos_b") !=
++      param_->observation_names.end();
++  if (needs_body_pos && (!ref_body_pos_w_all_ || ref_body_pos_w_all_->rows() != ref_joint_pos_all_->rows() ||
++                         ref_body_pos_w_all_->cols() != 3 || !ref_body_pos_w_all_->allFinite())) {
++    throw std::runtime_error("motion_anchor_pos_b requires finite body_pos_w [frames, bodies, 3]");
++  }
++  if (param_->observation_names.size() != param_->observation_history_lengths.size() ||
++      std::any_of(param_->observation_history_lengths.begin(), param_->observation_history_lengths.end(),
++                  [](int length) { return length <= 0; })) {
++    throw std::runtime_error("observation history configuration is invalid");
++  }
++}
++
++void RlDanceExampleRunner::RequestSafeExit(const std::string& reason) {
++  safety_fault_ = true;
++  LOG(ERROR) << "[WbtRunner::Safety] " << reason << "; holding last finite command and exiting";
++  if (last_safe_q_des_.size() == model_param_->num_total_joints && last_safe_q_des_.allFinite()) {
++    qd_des_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
++    tau_ff_des_ = Eigen::VectorXd::Zero(model_param_->num_total_joints);
++    GetMutableOutput().SetCommand(last_safe_q_des_, qd_des_, last_safe_kp_, last_safe_kd_, tau_ff_des_);
++  } else {
++    GetMutableOutput().Reset();
++  }
++  SetRunnerState(RunnerState::kTryExit);
++}
++
+ }  // namespace runner
+diff --git a/src/runner/rl_dance_example/src/wbt_obs_registry.cc b/src/runner/rl_dance_example/src/wbt_obs_registry.cc
+index d202f96..3060ce2 100644
+--- a/src/runner/rl_dance_example/src/wbt_obs_registry.cc
++++ b/src/runner/rl_dance_example/src/wbt_obs_registry.cc
+@@ -94,6 +94,37 @@ std::unordered_map<std::string, ObsEntry>& GetRegistry() {
+         },
+     };
+ 
++    registry["motion_anchor_pos_b"] = {
++        [](int) { return 3; },
++        [](const ObsContext& ctx) {
++          if (!ctx.data_store || !ctx.ref_body_pos_w_all || ctx.ref_body_pos_w_all->rows() == 0) {
++            LOG(ERROR) << "[obs:motion_anchor_pos_b] missing body position trajectory or data store";
++            return Eigen::VectorXd();
++          }
++
++          const int step = std::min(ctx.policy_step, static_cast<int>(ctx.ref_body_pos_w_all->rows()) - 1);
++          const Eigen::Vector3d ref_delta_w = ctx.ref_body_pos_w_all->row(step).transpose() - ctx.ref_init_pos_w;
++          const Eigen::Vector3d aligned_ref_pos_w =
++              ctx.body_init_pos_w + ctx.body_init_yaw_rot * ctx.ref_init_yaw_rot.transpose() * ref_delta_w;
++          const auto base_state = ctx.data_store->base_state_in_world.Get();
++          const Eigen::Matrix3d body_rot_w = math::RotationMatrixd(base_state->frame.pose.quaternion).matrix();
++          return Eigen::VectorXd(body_rot_w.transpose() * (aligned_ref_pos_w - base_state->frame.pose.position));
++        },
++    };
++
++    registry["base_lin_vel"] = {
++        [](int) { return 3; },
++        [](const ObsContext& ctx) {
++          if (!ctx.data_store) {
++            LOG(ERROR) << "[obs:base_lin_vel] data store is null";
++            return Eigen::VectorXd();
++          }
++          const auto base_state = ctx.data_store->base_state_in_world.Get();
++          const Eigen::Matrix3d body_rot_w = math::RotationMatrixd(base_state->frame.pose.quaternion).matrix();
++          return Eigen::VectorXd(body_rot_w.transpose() * base_state->frame.twist.linear);
++        },
++    };
++
+     registry["base_ang_vel"] = {
+         [](int) { return 3; },
+         [](const ObsContext& ctx) {

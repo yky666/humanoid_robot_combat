@@ -1,0 +1,9 @@
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/accad_e3_cross_left_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/accad_e4_cross_right_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/fall_male1_crouch_to_prone_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/fall_male1_crouch_to_supine_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/fall_male2_crouch_to_supine_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/getup_female1_supine_to_crouch_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/getup_male1_supine_to_crouch_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/getup_male2_supine_to_crouch_stageii.npz
+/data2/yangky/test/whole_body_tracking/artifacts/required_motion_T800/smplx_src/transition_male2_crouch_to_ready_stageii.npz

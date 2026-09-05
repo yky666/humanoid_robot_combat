@@ -1,0 +1,36 @@
+{
+  "snapshot_date": "2026-09-05",
+  "source_root": "/mnt/data/yangky/test",
+  "repositories": [
+    {
+      "name": "IsaacLab",
+      "upstream": "https://github.com/isaac-sim/IsaacLab.git",
+      "commit": "ddb044eb5b2300792de41e82d53b032f3632b489",
+      "local_delta": "isaaclab_integration"
+    },
+    {
+      "name": "whole_body_tracking",
+      "upstream": "https://github.com/HybridRobotics/whole_body_tracking.git",
+      "commit": "4af8a015bf4ee0edf282e6325b758c24c130407a",
+      "local_delta": "whole_body_tracking"
+    },
+    {
+      "name": "GMR",
+      "upstream": "https://github.com/YanjieZe/GMR.git",
+      "commit": "1986066a686f8ad6384209af1e54d5e46ad63bbb",
+      "local_delta": "GMR"
+    },
+    {
+      "name": "engineai_robotics_native_sdk_development",
+      "upstream": "https://github.com/engineai-robotics/engineai_robotics_native_sdk.git",
+      "commit": "c8a04c90889d6f4967bc1a43c0716796a86122aa",
+      "local_delta": "engineai_native_sdk_integration"
+    },
+    {
+      "name": "engineai_robotics_native_sdk_deployment",
+      "upstream": "https://github.com/engineai-robotics/engineai_robotics_native_sdk.git",
+      "commit": "335c60e88772c26c7852d0abd6b3c7439037dd8f",
+      "local_delta": "engineai_native_sdk_integration/deploy_20260904"
+    }
+  ]
+}

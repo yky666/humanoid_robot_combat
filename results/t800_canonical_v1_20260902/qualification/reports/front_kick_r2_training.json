@@ -1,0 +1,34 @@
+{
+  "motion": "front_kick",
+  "status": "failed",
+  "run_dir": "/mnt/data/yangky/test/whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-03_00-07-46_canonical_v1_front_kick_r2",
+  "checkpoint": "/mnt/data/yangky/test/whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-03_00-07-46_canonical_v1_front_kick_r2/model_9998.pt",
+  "last_step": 9998,
+  "tail_samples": 100,
+  "metrics": {
+    "time_out_rate": 0.9669677734375,
+    "anchor_pos_termination_rate": 0.0039459228515625,
+    "anchor_ori_termination_rate": 0.0,
+    "ee_pos_termination_rate": 0.03042724609375,
+    "mean_episode_length": 492.2201986694336,
+    "joint_pos_l2_error": 0.6424351739883423,
+    "anchor_pos_error": 0.16786975756287575
+  },
+  "checks": {
+    "time_out_rate": true,
+    "mean_episode_length": true,
+    "anchor_pos_termination_rate": true,
+    "anchor_ori_termination_rate": true,
+    "ee_pos_termination_rate": false,
+    "joint_pos_l2_error": true
+  },
+  "missing_tags": [],
+  "thresholds": {
+    "min_time_out_rate": 0.95,
+    "min_episode_length": 450.0,
+    "max_anchor_pos_termination": 0.02,
+    "max_anchor_ori_termination": 0.02,
+    "max_ee_pos_termination": 0.03,
+    "max_joint_pos_error": 1.0
+  }
+}

@@ -13,7 +13,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg
-from isaaclab.terrains import TerrainImporterCfg
+from isaaclab.terrains import MeshPlaneTerrainCfg, TerrainGeneratorCfg, TerrainImporterCfg
 
 ##
 # Pre-defined configs
@@ -41,21 +41,29 @@ VELOCITY_RANGE = {
 class MySceneCfg(InteractiveSceneCfg):
     """Configuration for the terrain scene with a legged robot."""
 
-    # ground terrain
+    # A local mesh plane keeps training independent of Isaac Nucleus/S3 availability.
     terrain = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="plane",
+        terrain_type="generator",
         collision_group=-1,
+        terrain_generator=TerrainGeneratorCfg(
+            seed=0,
+            size=(128.0, 128.0),
+            border_width=0.0,
+            num_rows=1,
+            num_cols=1,
+            curriculum=False,
+            use_cache=True,
+            sub_terrains={"flat": MeshPlaneTerrainCfg(proportion=1.0)},
+        ),
+        use_terrain_origins=False,
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
             restitution_combine_mode="multiply",
             static_friction=1.0,
             dynamic_friction=1.0,
         ),
-        visual_material=sim_utils.MdlFileCfg(
-            mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
-            project_uvw=True,
-        ),
+        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.12, 0.16, 0.20)),
     )
     # robots
     robot: ArticulationCfg = MISSING

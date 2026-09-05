@@ -1,0 +1,14 @@
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_front_g3_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_push_left_g17_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_push_right_g18_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_reverse_spin_cresent_left_g19_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_reverse_spin_cresent_right_g20_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_roundhouse_left_g8_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_roundhouse_right_g9_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/kick_spinning_back_g4_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_cross_left_e3_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_cross_right_e4_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_hook_left_e5_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_hook_right_e6_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_jab_left_e1_stageii.pkl
+/data2/yangky/test/whole_body_tracking/artifacts/official_mimic_T800/gmr_pkl/punch_jab_right_e2_stageii.pkl

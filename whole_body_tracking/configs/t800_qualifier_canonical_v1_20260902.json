@@ -1,0 +1,48 @@
+{
+  "description": "Canonical-order T800 qualifier references. Five standing actions are trained independently; supine recovery remains a separate policy.",
+  "joint_order_version": "t800_policy_v1",
+  "motions": [
+    {
+      "name": "front_kick",
+      "group": "standing_action",
+      "official_target": "front_push_kick",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/kick_push_left_g17_stageii_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz/kick_push_left_g17_stageii.npz"
+    },
+    {
+      "name": "spinning_kick",
+      "group": "standing_action",
+      "official_target": "spinning_kick",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/kick_reverse_spin_cresent_right_g20_stageii_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz/kick_reverse_spin_cresent_right_g20_stageii.npz"
+    },
+    {
+      "name": "straight_punch",
+      "group": "standing_action",
+      "official_target": "straight_punch",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_cross_left_e3_stageii_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz/punch_cross_left_e3_stageii.npz"
+    },
+    {
+      "name": "hook_punch",
+      "group": "standing_action",
+      "official_target": "hook_punch",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_hook_left_e5_stageii_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz/punch_hook_left_e5_stageii.npz"
+    },
+    {
+      "name": "jab_left",
+      "group": "standing_action",
+      "official_target": "straight_punch_variant",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_jab_left_e1_stageii_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz/punch_jab_left_e1_stageii.npz"
+    },
+    {
+      "name": "recovery_supine",
+      "group": "recovery",
+      "official_target": "supine_recovery_to_walking_zero",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_walking_zero_v1/recovery_supine_male2_reverse_fall_to_ready_tracking.npz",
+      "raw_gmr": "artifacts/t800_approved_qualifier_20260902/gmr_npz_walking_zero_v1/recovery_supine_male2_reverse_fall_to_ready.npz"
+    }
+  ]
+}

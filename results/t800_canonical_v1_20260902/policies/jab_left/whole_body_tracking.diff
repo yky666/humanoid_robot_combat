@@ -1,0 +1,1140 @@
+--- git commit ---
+4af8a015bf4ee0edf282e6325b758c24c130407a
+
+
+--- git status ---
+On branch main
+Your branch is ahead of 'origin/main' by 2 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   scripts/batch_prepare_t800_motions.py
+	modified:   scripts/rsl_rl/play.py
+	modified:   scripts/rsl_rl/train.py
+	modified:   scripts/t800_csv_to_npz.py
+	modified:   source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/agents/rsl_rl_ppo_cfg.py
+	modified:   source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/flat_env_cfg.py
+	modified:   source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/t800_mdp.py
+	modified:   source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/commands.py
+	modified:   source/whole_body_tracking/whole_body_tracking/tasks/tracking/tracking_env_cfg.py
+	modified:   source/whole_body_tracking/whole_body_tracking/utils/exporter.py
+	modified:   source/whole_body_tracking/whole_body_tracking/utils/my_on_policy_runner.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	configs/t800_combat_motion_manifest_sys01.json
+	configs/t800_combat_reference_qc.json
+	configs/t800_official_mimic_approved_20260902.json
+	configs/t800_qualifier_approved_20260902.json
+	configs/t800_qualifier_canonical_v1_20260902.json
+	configs/t800_qualifier_standing5_canonical_v1_20260902.json
+	docs/
+	review_videos/
+	scripts/motiondecode_t800_train_queue.sh
+	scripts/rsl_rl/evaluate_t800_policy.py
+	scripts/rsl_rl/play_t800_policy_switch.py
+	scripts/start_motiondecode_t800_npz_tmux.sh
+	scripts/start_motiondecode_t800_train_queue_tmux.sh
+	scripts/start_motiondecode_t800_train_tmux.sh
+	scripts/start_t800_qualifier_staged_train_tmux.sh
+	scripts/t800_build_recovery_chain_candidates.py
+	scripts/t800_build_stand_action_sequences.py
+	scripts/t800_check_training_acceptance.py
+	scripts/t800_locomotion_pkl_to_npz_queue.sh
+	scripts/t800_migrate_tracking_npz_joint_order.py
+	scripts/t800_official_mimic_approved_train_queue.sh
+	scripts/t800_qualifier_staged_train_queue.sh
+	scripts/t800_render_punching_reference_audit.sh
+	scripts/t800_render_reference_review.sh
+	scripts/t800_retarget_official_mimic_candidates.sh
+	scripts/t800_retarget_required_reference_audit.sh
+	scripts/t800_runtime_affinity_guard.sh
+	scripts/t800_stage_engineai_sdk_assets.py
+	scripts/t800_urkl_mimic_train_render_queue.sh
+	scripts/t800_validate_joint_contract.py
+	scripts/t800_validate_sdk_joint_contract.py
+	source/whole_body_tracking/whole_body_tracking/robots/t800_joint_order.py
+	source/whole_body_tracking/whole_body_tracking/utils/rsl_rl_compat.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/scripts/batch_prepare_t800_motions.py b/scripts/batch_prepare_t800_motions.py
+index d243d1c..4211464 100644
+--- a/scripts/batch_prepare_t800_motions.py
++++ b/scripts/batch_prepare_t800_motions.py
+@@ -5,9 +5,23 @@ from __future__ import annotations
+ 
+ import argparse
+ import json
++import numpy as np
+ import pathlib
++import selectors
+ import subprocess
+ import sys
++import time
++
++
++REQUIRED_NPZ_KEYS = (
++    "fps",
++    "joint_pos",
++    "joint_vel",
++    "body_pos_w",
++    "body_quat_w",
++    "body_lin_vel_w",
++    "body_ang_vel_w",
++)
+ 
+ 
+ def load_manifest(manifest_path: pathlib.Path) -> list[dict]:
+@@ -15,6 +29,77 @@ def load_manifest(manifest_path: pathlib.Path) -> list[dict]:
+     return data["motions"]
+ 
+ 
++def validate_npz(path: pathlib.Path) -> bool:
++    try:
++        with np.load(path) as data:
++            if any(key not in data for key in REQUIRED_NPZ_KEYS):
++                return False
++            return data["joint_pos"].ndim == 2 and data["body_pos_w"].ndim == 3
++    except Exception:
++        return False
++
++
++def stop_process(process: subprocess.Popen, grace_seconds: float) -> None:
++    if process.poll() is not None:
++        return
++    process.terminate()
++    try:
++        process.wait(timeout=grace_seconds)
++    except subprocess.TimeoutExpired:
++        process.kill()
++        process.wait()
++
++
++def run_converter(
++    cmd: list[str],
++    output_path: pathlib.Path,
++    saved_exit_timeout: float,
++    process_timeout: float,
++) -> int:
++    process = subprocess.Popen(
++        cmd,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.STDOUT,
++        text=True,
++        bufsize=1,
++    )
++    assert process.stdout is not None
++    selector = selectors.DefaultSelector()
++    selector.register(process.stdout, selectors.EVENT_READ)
++    start_time = time.monotonic()
++    saved_time = None
++
++    while True:
++        for key, _ in selector.select(timeout=1.0):
++            line = key.fileobj.readline()
++            if line:
++                print(line, end="", flush=True)
++
++        if saved_time is None and validate_npz(output_path):
++            saved_time = time.monotonic()
++
++        returncode = process.poll()
++        if returncode is not None:
++            for line in process.stdout:
++                print(line, end="", flush=True)
++            return 0 if validate_npz(output_path) else returncode
++
++        now = time.monotonic()
++        if saved_time is not None and now - saved_time > saved_exit_timeout:
++            print(
++                f"[WARN] Output is valid but converter is still running after {saved_exit_timeout:.1f}s; "
++                "terminating child process.",
++                flush=True,
++            )
++            stop_process(process, grace_seconds=10.0)
++            return 0 if validate_npz(output_path) else 1
++
++        if process_timeout > 0 and now - start_time > process_timeout:
++            print(f"[FAIL] Converter timed out after {process_timeout:.1f}s.", flush=True)
++            stop_process(process, grace_seconds=10.0)
++            return 0 if validate_npz(output_path) else 124
++
++
+ def main() -> int:
+     repo_root = pathlib.Path(__file__).resolve().parents[1]
+     parser = argparse.ArgumentParser(description="Batch-convert T800 combat motions into tracking-ready NPZ files.")
+@@ -37,6 +122,18 @@ def main() -> int:
+         help="Optional motion names to include.",
+     )
+     parser.add_argument("--force", action="store_true", help="Rebuild outputs even if the target NPZ already exists.")
++    parser.add_argument(
++        "--saved_exit_timeout",
++        type=float,
++        default=20.0,
++        help="Seconds to wait for Isaac Sim to exit after a valid output NPZ is detected.",
++    )
++    parser.add_argument(
++        "--process_timeout",
++        type=float,
++        default=900.0,
++        help="Maximum seconds to wait for one converter subprocess. Set <=0 to disable.",
++    )
+     args = parser.parse_args()
+ 
+     manifest = load_manifest(args.manifest.resolve())
+@@ -57,8 +154,10 @@ def main() -> int:
+     for motion in selected:
+         output_path = pathlib.Path(motion["output_path"])
+         if output_path.exists() and not args.force:
+-            print(f"[SKIP] {motion['name']}: {output_path} already exists")
+-            continue
++            if validate_npz(output_path):
++                print(f"[SKIP] {motion['name']}: {output_path} already exists")
++                continue
++            print(f"[WARN] {motion['name']}: {output_path} exists but is invalid; rebuilding")
+ 
+         cmd = [
+             sys.executable,
+@@ -80,10 +179,10 @@ def main() -> int:
+         ]
+         print(f"[RUN ] {motion['name']}")
+         print("       " + " ".join(cmd))
+-        result = subprocess.run(cmd, check=False)
+-        if result.returncode != 0:
+-            print(f"[FAIL] {motion['name']} exited with code {result.returncode}")
+-            return result.returncode
++        returncode = run_converter(cmd, output_path, args.saved_exit_timeout, args.process_timeout)
++        if returncode != 0:
++            print(f"[FAIL] {motion['name']} exited with code {returncode}")
++            return returncode
+ 
+     print("[OK] Finished preparing selected motions.")
+     return 0
+diff --git a/scripts/rsl_rl/play.py b/scripts/rsl_rl/play.py
+index f7da4a7..253ecf7 100644
+--- a/scripts/rsl_rl/play.py
++++ b/scripts/rsl_rl/play.py
+@@ -60,6 +60,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
+ # Import extensions to set up environment tasks
+ import whole_body_tracking.tasks  # noqa: F401
+ from whole_body_tracking.utils.exporter import attach_onnx_metadata, export_motion_policy_as_onnx
++from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg, get_policy_module
+ 
+ 
+ @hydra_task_config(args_cli.task, "rsl_rl_cfg_entry_point")
+@@ -193,7 +194,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+     env = RslRlVecEnvWrapper(env)
+ 
+     # load previously trained model
+-    ppo_runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
++    ppo_runner = OnPolicyRunner(env, adapt_legacy_ppo_cfg(agent_cfg.to_dict()), log_dir=None, device=agent_cfg.device)
+     ppo_runner.load(resume_path)
+ 
+     # obtain the trained policy for inference
+@@ -205,10 +206,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+ 
+     export_motion_policy_as_onnx(
+         env.unwrapped,
+-        ppo_runner.alg.policy,
+-        # 这里还是和train中同样问题，没有obs_normalizer属性
+-        # normalizer=ppo_runner.obs_normalizer,
+-        normalizer=getattr(ppo_runner, 'obs_normalizer', None),
++        get_policy_module(ppo_runner.alg),
++        normalizer=getattr(ppo_runner, "obs_normalizer", None),
+         path=export_model_dir,
+         filename="policy.onnx",
+     )
+diff --git a/scripts/rsl_rl/train.py b/scripts/rsl_rl/train.py
+index 988a006..74895c8 100644
+--- a/scripts/rsl_rl/train.py
++++ b/scripts/rsl_rl/train.py
+@@ -76,6 +76,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
+ # Import extensions to set up environment tasks
+ import whole_body_tracking.tasks  # noqa: F401
+ from whole_body_tracking.utils.my_on_policy_runner import MotionOnPolicyRunner as OnPolicyRunner
++from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg
+ 
+ torch.backends.cuda.matmul.allow_tf32 = True
+ torch.backends.cudnn.allow_tf32 = True
+@@ -116,6 +117,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+         env_cfg.commands.motion.motion_file = str(pathlib.Path(artifact.download()) / "motion.npz")
+         print(f"[INFO] Downloaded motion file from registry: {env_cfg.commands.motion.motion_file}")
+ 
++    # Training does not consume marker renders. Keep environment creation local-only
++    # instead of resolving Isaac Sim's remote frame marker asset.
++    env_cfg.commands.motion.debug_vis = False
++    if hasattr(env_cfg.scene, "contact_forces"):
++        env_cfg.scene.contact_forces.debug_vis = False
++
+     # specify directory for logging experiments
+     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)
+     log_root_path = os.path.abspath(log_root_path)
+@@ -149,7 +156,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+ 
+     # create runner from rsl-rl
+     runner = OnPolicyRunner(
+-        env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device, registry_name=registry_name
++        env, adapt_legacy_ppo_cfg(agent_cfg.to_dict()), log_dir=log_dir, device=agent_cfg.device, registry_name=registry_name
+     )
+     # write git state to logs
+     runner.add_git_repo_to_log(__file__)
+diff --git a/scripts/t800_csv_to_npz.py b/scripts/t800_csv_to_npz.py
+index 4fa14f9..ae409a6 100644
+--- a/scripts/t800_csv_to_npz.py
++++ b/scripts/t800_csv_to_npz.py
+@@ -5,9 +5,12 @@
+     # Legacy CSV input: root_pos(xyz), root_quat(xyzw), dof_pos
+     python t800_csv_to_npz.py --input_file /path/to/t800_motion.csv --input_fps 30 --output_name t800_motion --output_fps 50
+ 
+-    # GMR pickle input (even if it uses a .npz suffix)
++    # GMR pickle input
+     python t800_csv_to_npz.py --input_file /path/to/gmr_motion.npz --input_format gmr_pickle --output_name t800_motion
+ 
++    # Portable GMR raw NPZ input: root_pos, root_rot(xyzw), dof_pos, fps
++    python t800_csv_to_npz.py --input_file /path/to/gmr_motion_raw.npz --input_format gmr_npz --output_name t800_motion
++
+     # Legacy 40-column numpy input:
+     python t800_csv_to_npz.py --input_file /path/to/riot_combo.npy --input_format legacy_npy --output_name riot_combo_tracking
+ """
+@@ -29,11 +32,11 @@ parser.add_argument("--input_file", type=str, required=True, help="The path to t
+ parser.add_argument(
+     "--input_format",
+     type=str,
+-    choices=("auto", "csv", "gmr_pickle", "legacy_npy"),
++    choices=("auto", "csv", "gmr_pickle", "gmr_npz", "legacy_npy"),
+     default="auto",
+     help=(
+-        "Input motion format. Use gmr_pickle for GMR outputs saved via pickle (sometimes with a .npz suffix). "
+-        "Use legacy_npy for historic 40-column T800 arrays."
++        "Input motion format. Use gmr_pickle for GMR outputs saved via pickle, gmr_npz for portable raw GMR "
++        "arrays, or legacy_npy for historic 40-column T800 arrays."
+     ),
+ )
+ parser.add_argument(
+@@ -91,7 +94,12 @@ from isaaclab.utils.math import axis_angle_from_quat, quat_conjugate, quat_mul,
+ # Pre-defined configs for t800
+ ##
+ from whole_body_tracking.robots.t800 import T800_CFG
+-from whole_body_tracking.tasks.tracking.config.t800.t800_mdp import T800_DFS_JOINT_NAMES
++from whole_body_tracking.robots.t800_joint_order import (
++    T800_JOINT_ORDER_VERSION,
++    T800_POLICY_JOINT_NAMES,
++)
++
++T800_DFS_JOINT_NAMES = T800_POLICY_JOINT_NAMES
+ 
+ 
+ # Historic local T800 arrays store root pose followed by an interleaved 25-DoF joint block
+@@ -173,6 +181,8 @@ class MotionLoader:
+             self._load_csv_motion()
+         elif input_format == "gmr_pickle":
+             self._load_gmr_pickle_motion()
++        elif input_format == "gmr_npz":
++            self._load_gmr_npz_motion()
+         elif input_format == "legacy_npy":
+             self._load_legacy_npy_motion()
+         else:
+@@ -196,6 +206,13 @@ class MotionLoader:
+             arr = np.load(input_path, allow_pickle=False)
+             if arr.ndim == 2 and arr.shape[1] == 40:
+                 return "legacy_npy"
++        if input_path.suffix.lower() == ".npz":
++            try:
++                with np.load(input_path, allow_pickle=False) as motion:
++                    if {"root_pos", "root_rot", "dof_pos"}.issubset(motion.files):
++                        return "gmr_npz"
++            except Exception:
++                pass
+ 
+         try:
+             with open(input_path, "rb") as f:
+@@ -207,7 +224,7 @@ class MotionLoader:
+ 
+         raise ValueError(
+             f"Unable to infer input format for {self.motion_file}. Please pass --input_format csv, "
+-            "gmr_pickle, or legacy_npy."
++            "gmr_pickle, gmr_npz, or legacy_npy."
+         )
+ 
+     def _resolve_input_fps(self, file_fps: int | float | None = None) -> float:
+@@ -250,24 +267,23 @@ class MotionLoader:
+         self.motion_base_rots_input = self.motion_base_rots_input[:, [3, 0, 1, 2]]  # xyzw -> wxyz
+         self.motion_dof_poss_input = motion[:, 7:]
+ 
+-    def _load_gmr_pickle_motion(self):
+-        # Older or alternate numpy builds may serialize arrays under private module
+-        # paths such as "numpy._core". Map them to the local numpy install so the
+-        # GMR pickle can be loaded across environments.
+-        if "numpy._core" not in sys.modules:
+-            sys.modules["numpy._core"] = np.core
+-        if "numpy._core.numeric" not in sys.modules:
+-            sys.modules["numpy._core.numeric"] = np.core.numeric
+-
+-        with open(self.motion_file, "rb") as f:
+-            motion = pickle.load(f)
++    def _fps_from_gmr_value(self, value):
++        if value is None:
++            return None
++        value = np.asarray(value)
++        if value.size != 1:
++            raise ValueError(f"GMR fps should be scalar, got shape {value.shape}")
++        return float(value.reshape(-1)[0])
+ 
++    def _load_gmr_arrays(self, motion):
+         required_keys = {"root_pos", "root_rot", "dof_pos"}
+-        missing_keys = required_keys.difference(motion.keys())
++        keys = set(motion.keys() if isinstance(motion, dict) else motion.files)
++        missing_keys = required_keys.difference(keys)
+         if missing_keys:
+-            raise KeyError(f"GMR pickle is missing required keys: {sorted(missing_keys)}")
++            raise KeyError(f"GMR motion is missing required keys: {sorted(missing_keys)}")
+ 
+-        self.input_fps = self._resolve_input_fps(file_fps=motion.get("fps"))
++        file_fps = self._fps_from_gmr_value(motion["fps"]) if "fps" in keys else None
++        self.input_fps = self._resolve_input_fps(file_fps=file_fps)
+         self.input_dt = 1.0 / self.input_fps
+ 
+         root_pos = torch.from_numpy(np.asarray(motion["root_pos"], dtype=np.float32)).to(self.device)
+@@ -288,6 +304,24 @@ class MotionLoader:
+         self.motion_base_rots_input = root_rot_xyzw[:, [3, 0, 1, 2]]  # xyzw -> wxyz
+         self.motion_dof_poss_input = dof_pos
+ 
++    def _load_gmr_pickle_motion(self):
++        # Older or alternate numpy builds may serialize arrays under private module
++        # paths such as "numpy._core". Map them to the local numpy install so the
++        # GMR pickle can be loaded across environments.
++        if "numpy._core" not in sys.modules:
++            sys.modules["numpy._core"] = np.core
++        if "numpy._core.numeric" not in sys.modules:
++            sys.modules["numpy._core.numeric"] = np.core.numeric
++
++        with open(self.motion_file, "rb") as f:
++            motion = pickle.load(f)
++
++        self._load_gmr_arrays(motion)
++
++    def _load_gmr_npz_motion(self):
++        with np.load(self.motion_file, allow_pickle=False) as motion:
++            self._load_gmr_arrays(motion)
++
+     def _load_legacy_npy_motion(self):
+         motion = torch.from_numpy(np.load(self.motion_file, allow_pickle=False))
+         motion = motion.to(torch.float32).to(self.device)
+@@ -409,6 +443,9 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene, joi
+     # ------- data logger -------------------------------------------------------
+     log = {
+         "fps": [args_cli.output_fps],
++        "joint_names": np.asarray(joint_names),
++        "joint_order_version": np.asarray(T800_JOINT_ORDER_VERSION),
++        "body_names": np.asarray(robot.body_names),
+         "joint_pos": [],
+         "joint_vel": [],
+         "body_pos_w": [],
+@@ -455,8 +492,8 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene, joi
+         sim.set_camera_view(pos_lookat + np.array([2.0, 2.0, 0.5]), pos_lookat)
+ 
+         if not file_saved:
+-            log["joint_pos"].append(robot.data.joint_pos[0, :].cpu().numpy().copy())
+-            log["joint_vel"].append(robot.data.joint_vel[0, :].cpu().numpy().copy())
++            log["joint_pos"].append(robot.data.joint_pos[0, robot_joint_indexes].cpu().numpy().copy())
++            log["joint_vel"].append(robot.data.joint_vel[0, robot_joint_indexes].cpu().numpy().copy())
+             log["body_pos_w"].append(robot.data.body_pos_w[0, :].cpu().numpy().copy())
+             log["body_quat_w"].append(robot.data.body_quat_w[0, :].cpu().numpy().copy())
+             log["body_lin_vel_w"].append(robot.data.body_lin_vel_w[0, :].cpu().numpy().copy())
+diff --git a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/agents/rsl_rl_ppo_cfg.py b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/agents/rsl_rl_ppo_cfg.py
+index 26efdba..be634d2 100644
+--- a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/agents/rsl_rl_ppo_cfg.py
++++ b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/agents/rsl_rl_ppo_cfg.py
+@@ -11,6 +11,7 @@ class T800FlatPPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     empirical_normalization = True
+     policy = RslRlPpoActorCriticCfg(
+         init_noise_std=0.6,
++        noise_std_type="log",
+         actor_hidden_dims=[512, 256, 128],
+         critic_hidden_dims=[512, 256, 128],
+         activation="elu",
+diff --git a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/flat_env_cfg.py b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/flat_env_cfg.py
+index a063c4c..0580db6 100644
+--- a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/flat_env_cfg.py
++++ b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/flat_env_cfg.py
+@@ -5,6 +5,7 @@ from isaaclab.managers import SceneEntityCfg
+ 
+ from . import t800_mdp
+ from whole_body_tracking.robots.t800 import T800_ACTION_SCALE, T800_CFG
++from whole_body_tracking.robots.t800_joint_order import T800_POLICY_JOINT_NAMES
+ from whole_body_tracking.tasks.tracking.config.t800.agents.rsl_rl_ppo_cfg import LOW_FREQ_SCALE
+ from whole_body_tracking.tasks.tracking.tracking_env_cfg import TrackingEnvCfg
+ 
+@@ -31,23 +32,23 @@ class T800FlatEnvCfg(TrackingEnvCfg):
+         self.scene.robot = T800_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+         self.actions.joint_pos = t800_mdp.ResidualRefJointPositionActionCfg(
+             asset_name="robot",
+-            joint_names=t800_mdp.T800_DFS_JOINT_NAMES,
++            joint_names=T800_POLICY_JOINT_NAMES,
+             command_name="motion",
+             preserve_order=True,
+         )
+         self.actions.joint_pos.scale = T800_ACTION_SCALE
+-        dfs_joint_asset_cfg = SceneEntityCfg("robot", joint_names=t800_mdp.T800_DFS_JOINT_NAMES, preserve_order=True)
+-        self.observations.policy.joint_pos.params = {"asset_cfg": dfs_joint_asset_cfg}
+-        self.observations.policy.joint_vel.params = {"asset_cfg": dfs_joint_asset_cfg}
+-        self.observations.critic.joint_pos.params = {"asset_cfg": dfs_joint_asset_cfg}
+-        self.observations.critic.joint_vel.params = {"asset_cfg": dfs_joint_asset_cfg}
++        policy_joint_asset_cfg = SceneEntityCfg(
++            "robot", joint_names=T800_POLICY_JOINT_NAMES, preserve_order=True
++        )
++        self.observations.policy.joint_pos.params = {"asset_cfg": policy_joint_asset_cfg}
++        self.observations.policy.joint_vel.params = {"asset_cfg": policy_joint_asset_cfg}
++        self.observations.critic.joint_pos.params = {"asset_cfg": policy_joint_asset_cfg}
++        self.observations.critic.joint_vel.params = {"asset_cfg": policy_joint_asset_cfg}
+         self.commands.motion.anchor_body_name = "LINK_BASE"
+         self.commands.motion.motion_file = _resolve_t800_motion_file()
+-        self.commands.motion.motion_joint_names = t800_mdp.T800_DFS_JOINT_NAMES
++        self.commands.motion.motion_joint_names = T800_POLICY_JOINT_NAMES
+         self.commands.motion.motion_body_names = t800_mdp.T800_MOTION_BODY_NAMES
+-        self.commands.motion.min_traj_duration = self.episode_length_s
+-        self.commands.motion.bridge_frames = 35
+-        self.commands.motion.pd_stand_reset_ratio = 0.35
++        self.commands.motion.motion_start_reset_ratio = 0.35
+         self.commands.motion.pose_range = {
+             "x": (-0.03, 0.03),
+             "y": (-0.03, 0.03),
+diff --git a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/t800_mdp.py b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/t800_mdp.py
+index b347419..008f4dc 100644
+--- a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/t800_mdp.py
++++ b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/t800_mdp.py
+@@ -7,42 +7,13 @@ from isaaclab.envs.mdp.actions.actions_cfg import JointActionCfg
+ from isaaclab.envs.mdp.actions.joint_actions import JointAction
+ from isaaclab.utils import configclass
+ 
++from whole_body_tracking.robots.t800_joint_order import T800_DFS_JOINT_NAMES
+ from whole_body_tracking.tasks.tracking.mdp.commands import MotionCommand
+ 
+ if TYPE_CHECKING:
+     from isaaclab.envs import ManagerBasedEnv
+ 
+ 
+-# NOTE: This order matches the DFS-style joint order expected by the T800
+-# motion data used in training on this branch.
+-T800_DFS_JOINT_NAMES = [
+-    "J00_HIP_PITCH_L",
+-    "J01_HIP_ROLL_L",
+-    "J02_HIP_YAW_L",
+-    "J03_KNEE_PITCH_L",
+-    "J04_ANKLE_PITCH_L",
+-    "J05_ANKLE_ROLL_L",
+-    "J06_HIP_PITCH_R",
+-    "J07_HIP_ROLL_R",
+-    "J08_HIP_YAW_R",
+-    "J09_KNEE_PITCH_R",
+-    "J10_ANKLE_PITCH_R",
+-    "J11_ANKLE_ROLL_R",
+-    "J12_TORSO_YAW",
+-    "J13_SHOULDER_PITCH_L",
+-    "J14_SHOULDER_ROLL_L",
+-    "J15_SHOULDER_YAW_L",
+-    "J16_ELBOW_PITCH_L",
+-    "J17_ELBOW_YAW_L",
+-    "J20_SHOULDER_PITCH_R",
+-    "J21_SHOULDER_ROLL_R",
+-    "J22_SHOULDER_YAW_R",
+-    "J23_ELBOW_PITCH_R",
+-    "J24_ELBOW_YAW_R",
+-    "J27_HEAD_PITCH",
+-    "J28_HEAD_YAW",
+-]
+-
+ T800_MOTION_BODY_NAMES = [
+     "LINK_BASE",
+     "LINK_HIP_PITCH_L",
+diff --git a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/commands.py b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/commands.py
+index 5325068..8356860 100644
+--- a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/commands.py
++++ b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/mdp/commands.py
+@@ -1,5 +1,6 @@
+ from __future__ import annotations
+ 
++import json
+ import math
+ import numpy as np
+ import os
+@@ -28,18 +29,174 @@ if TYPE_CHECKING:
+ 
+ 
+ class MotionLoader:
+-    def __init__(self, motion_file: str, body_indexes: Sequence[int], device: str = "cpu"):
+-        assert os.path.isfile(motion_file), f"Invalid file path: {motion_file}"
+-        data = np.load(motion_file)
+-        self.fps = data["fps"]
+-        self.joint_pos = torch.tensor(data["joint_pos"], dtype=torch.float32, device=device)
+-        self.joint_vel = torch.tensor(data["joint_vel"], dtype=torch.float32, device=device)
+-        self._body_pos_w = torch.tensor(data["body_pos_w"], dtype=torch.float32, device=device)
+-        self._body_quat_w = torch.tensor(data["body_quat_w"], dtype=torch.float32, device=device)
+-        self._body_lin_vel_w = torch.tensor(data["body_lin_vel_w"], dtype=torch.float32, device=device)
+-        self._body_ang_vel_w = torch.tensor(data["body_ang_vel_w"], dtype=torch.float32, device=device)
++    def __init__(
++        self,
++        motion_file: str,
++        body_indexes: Sequence[int],
++        joint_names: Sequence[str],
++        legacy_joint_names: Sequence[str],
++        device: str = "cpu",
++    ):
++        self.motion_files = self._resolve_motion_files(motion_file)
++        assert self.motion_files, f"No motion files found for: {motion_file}"
+         self._body_indexes = body_indexes
++        self.joint_names = list(joint_names)
++        self._legacy_joint_names = list(legacy_joint_names)
++        self._load_motions(device)
+         self.time_step_total = self.joint_pos.shape[0]
++        self._build_episode_boundary_tensors(device)
++
++    def _resolve_motion_files(self, motion_file: str) -> list[str]:
++        motion_path = os.path.abspath(os.path.expanduser(motion_file))
++        if os.path.isdir(motion_path):
++            return sorted(
++                os.path.join(root, filename)
++                for root, _, filenames in os.walk(motion_path)
++                for filename in sorted(filenames)
++                if filename.endswith(".npz")
++            )
++        assert os.path.isfile(motion_path), f"Invalid file path: {motion_file}"
++        if motion_path.endswith(".json"):
++            with open(motion_path, encoding="utf-8") as f:
++                manifest = json.load(f)
++            motions = manifest["motions"] if isinstance(manifest, dict) and "motions" in manifest else manifest
++            files = []
++            for motion in motions:
++                if isinstance(motion, str):
++                    files.append(motion)
++                elif isinstance(motion, dict):
++                    files.append(motion.get("output_path") or motion.get("motion_file") or motion.get("input_file"))
++                else:
++                    raise TypeError(f"Unsupported motion manifest entry: {motion!r}")
++            return [os.path.abspath(os.path.expanduser(path)) for path in files if path]
++        return [motion_path]
++
++    def _load_motions(self, device: str):
++        required_keys = (
++            "fps",
++            "joint_pos",
++            "joint_vel",
++            "body_pos_w",
++            "body_quat_w",
++            "body_lin_vel_w",
++            "body_ang_vel_w",
++        )
++        fps_list = []
++        traj_lengths = []
++        joint_pos_list = []
++        joint_vel_list = []
++        body_pos_w_list = []
++        body_quat_w_list = []
++        body_lin_vel_w_list = []
++        body_ang_vel_w_list = []
++        expected_shapes = None
++
++        def decode_names(values) -> list[str]:
++            names = []
++            for value in np.asarray(values).reshape(-1).tolist():
++                names.append(value.decode("utf-8") if isinstance(value, bytes) else str(value))
++            return names
++
++        def reorder_joint_columns(values: np.ndarray, source_names: list[str], motion_path: str) -> np.ndarray:
++            if values.ndim != 2 or values.shape[1] != len(source_names):
++                raise ValueError(
++                    f"Joint data shape/name mismatch in {motion_path}: shape={values.shape}, names={len(source_names)}"
++                )
++            if len(source_names) != len(set(source_names)):
++                raise ValueError(f"Duplicate joint names in {motion_path}: {source_names}")
++            missing = [name for name in self.joint_names if name not in source_names]
++            extra = [name for name in source_names if name not in self.joint_names]
++            if missing or extra:
++                raise ValueError(f"Joint contract mismatch in {motion_path}: missing={missing}, extra={extra}")
++            indices = [source_names.index(name) for name in self.joint_names]
++            return values[:, indices]
++
++        for motion_path in self.motion_files:
++            assert os.path.isfile(motion_path), f"Invalid motion file: {motion_path}"
++            with np.load(motion_path) as data:
++                missing_keys = [key for key in required_keys if key not in data]
++                if missing_keys:
++                    raise KeyError(f"{motion_path} is missing motion keys: {missing_keys}")
++
++                source_joint_names = (
++                    decode_names(data["joint_names"]) if "joint_names" in data else self._legacy_joint_names
++                )
++                joint_pos = reorder_joint_columns(data["joint_pos"], source_joint_names, motion_path)
++                joint_vel = reorder_joint_columns(data["joint_vel"], source_joint_names, motion_path)
++                body_pos_w = data["body_pos_w"]
++                body_quat_w = data["body_quat_w"]
++                body_lin_vel_w = data["body_lin_vel_w"]
++                body_ang_vel_w = data["body_ang_vel_w"]
++                current_shapes = (
++                    joint_pos.shape[1:],
++                    joint_vel.shape[1:],
++                    body_pos_w.shape[1:],
++                    body_quat_w.shape[1:],
++                    body_lin_vel_w.shape[1:],
++                    body_ang_vel_w.shape[1:],
++                )
++                if expected_shapes is None:
++                    expected_shapes = current_shapes
++                elif current_shapes != expected_shapes:
++                    raise ValueError(
++                        f"Motion shape mismatch in {motion_path}: expected {expected_shapes}, got {current_shapes}"
++                    )
++
++                fps = data["fps"]
++                fps_list.append(float(np.asarray(fps).reshape(-1)[0]))
++                traj_lengths.append(int(joint_pos.shape[0]))
++                joint_pos_list.append(torch.tensor(joint_pos, dtype=torch.float32))
++                joint_vel_list.append(torch.tensor(joint_vel, dtype=torch.float32))
++                body_pos_w_list.append(torch.tensor(body_pos_w, dtype=torch.float32))
++                body_quat_w_list.append(torch.tensor(body_quat_w, dtype=torch.float32))
++                body_lin_vel_w_list.append(torch.tensor(body_lin_vel_w, dtype=torch.float32))
++                body_ang_vel_w_list.append(torch.tensor(body_ang_vel_w, dtype=torch.float32))
++
++        self.fps = np.asarray(fps_list, dtype=np.float32)
++        if not np.allclose(self.fps, self.fps[0]):
++            raise ValueError(f"All motion files must use the same fps, got {self.fps.tolist()}")
++        self.traj_lengths = torch.tensor(traj_lengths, dtype=torch.long, device=device)
++        self.joint_pos = torch.cat(joint_pos_list, dim=0).to(device)
++        self.joint_vel = torch.cat(joint_vel_list, dim=0).to(device)
++        self._body_pos_w = torch.cat(body_pos_w_list, dim=0).to(device)
++        self._body_quat_w = torch.cat(body_quat_w_list, dim=0).to(device)
++        self._body_lin_vel_w = torch.cat(body_lin_vel_w_list, dim=0).to(device)
++        self._body_ang_vel_w = torch.cat(body_ang_vel_w_list, dim=0).to(device)
++
++    def _build_episode_boundary_tensors(self, device: str):
++        offsets = torch.cat(
++            [
++                torch.zeros(1, dtype=torch.long, device=device),
++                torch.cumsum(self.traj_lengths, dim=0)[:-1],
++            ],
++            dim=0,
++        )
++        self.motion_offsets = offsets
++        end_steps = offsets + self.traj_lengths
++        valid_start_steps = []
++        for offset, length in zip(offsets.tolist(), self.traj_lengths.tolist()):
++            if length > 1:
++                valid_start_steps.append(torch.arange(offset, offset + length - 1, dtype=torch.long, device=device))
++        self.valid_start_steps = torch.cat(valid_start_steps, dim=0) if valid_start_steps else offsets
++        self.end_markers = torch.zeros(self.time_step_total + 1, dtype=torch.bool, device=device)
++        self.end_markers[end_steps] = True
++
++    @property
++    def has_multiple_motions(self) -> bool:
++        return len(self.motion_files) > 1
++
++    def sample_time_steps(self, count: int, start_ratio: float = 0.0) -> torch.Tensor:
++        motion_ids = torch.randint(0, len(self.motion_files), (count,), device=self.traj_lengths.device)
++        max_local_steps = torch.clamp(self.traj_lengths[motion_ids] - 1, min=1)
++        local_steps = (torch.rand(count, device=self.traj_lengths.device) * max_local_steps).long()
++        if start_ratio > 0.0:
++            start_mask = torch.rand(count, device=self.traj_lengths.device) < start_ratio
++            local_steps[start_mask] = 0
++        return self.motion_offsets[motion_ids] + local_steps
++
++    def is_done(self, time_steps: torch.Tensor) -> torch.Tensor:
++        clamped = torch.clamp(time_steps, 0, self.time_step_total)
++        return self.end_markers[clamped]
+ 
+     @property
+     def body_pos_w(self) -> torch.Tensor:
+@@ -70,8 +227,20 @@ class MotionCommand(CommandTerm):
+         self.body_indexes = torch.tensor(
+             self.robot.find_bodies(self.cfg.body_names, preserve_order=True)[0], dtype=torch.long, device=self.device
+         )
++        self.motion_joint_names = list(self.cfg.motion_joint_names or self.robot.data.joint_names)
++        self.joint_indexes = torch.tensor(
++            self.robot.find_joints(self.motion_joint_names, preserve_order=True)[0],
++            dtype=torch.long,
++            device=self.device,
++        )
+ 
+-        self.motion = MotionLoader(self.cfg.motion_file, self.body_indexes, device=self.device)
++        self.motion = MotionLoader(
++            self.cfg.motion_file,
++            self.body_indexes,
++            self.motion_joint_names,
++            self.robot.data.joint_names,
++            device=self.device,
++        )
+         self.time_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
+         self.body_pos_relative_w = torch.zeros(self.num_envs, len(cfg.body_names), 3, device=self.device)
+         self.body_quat_relative_w = torch.zeros(self.num_envs, len(cfg.body_names), 4, device=self.device)
+@@ -91,6 +260,8 @@ class MotionCommand(CommandTerm):
+         self.metrics["error_anchor_ang_vel"] = torch.zeros(self.num_envs, device=self.device)
+         self.metrics["error_body_pos"] = torch.zeros(self.num_envs, device=self.device)
+         self.metrics["error_body_rot"] = torch.zeros(self.num_envs, device=self.device)
++        self.metrics["error_body_lin_vel"] = torch.zeros(self.num_envs, device=self.device)
++        self.metrics["error_body_ang_vel"] = torch.zeros(self.num_envs, device=self.device)
+         self.metrics["error_joint_pos"] = torch.zeros(self.num_envs, device=self.device)
+         self.metrics["error_joint_vel"] = torch.zeros(self.num_envs, device=self.device)
+         self.metrics["sampling_entropy"] = torch.zeros(self.num_envs, device=self.device)
+@@ -143,11 +314,11 @@ class MotionCommand(CommandTerm):
+ 
+     @property
+     def robot_joint_pos(self) -> torch.Tensor:
+-        return self.robot.data.joint_pos
++        return self.robot.data.joint_pos[:, self.joint_indexes]
+ 
+     @property
+     def robot_joint_vel(self) -> torch.Tensor:
+-        return self.robot.data.joint_vel
++        return self.robot.data.joint_vel[:, self.joint_indexes]
+ 
+     @property
+     def robot_body_pos_w(self) -> torch.Tensor:
+@@ -205,6 +376,15 @@ class MotionCommand(CommandTerm):
+         self.metrics["error_joint_vel"] = torch.norm(self.joint_vel - self.robot_joint_vel, dim=-1)
+ 
+     def _adaptive_sampling(self, env_ids: Sequence[int]):
++        if self.motion.has_multiple_motions:
++            self.time_steps[env_ids] = self.motion.sample_time_steps(
++                len(env_ids), start_ratio=self.cfg.motion_start_reset_ratio
++            )
++            self.metrics["sampling_entropy"][:] = 1.0
++            self.metrics["sampling_top1_prob"][:] = 1.0 / max(len(self.motion.motion_files), 1)
++            self.metrics["sampling_top1_bin"][:] = 0.0
++            return
++
+         episode_failed = self._env.termination_manager.terminated[env_ids]
+         if torch.any(episode_failed):
+             current_bin_index = torch.clamp(
+@@ -231,6 +411,9 @@ class MotionCommand(CommandTerm):
+             / self.bin_count
+             * (self.motion.time_step_total - 1)
+         ).long()
++        if self.cfg.motion_start_reset_ratio > 0.0:
++            start_mask = torch.rand(len(env_ids), device=self.device) < self.cfg.motion_start_reset_ratio
++            self.time_steps[env_ids[start_mask]] = 0
+ 
+         # Metrics
+         H = -(sampling_probabilities * (sampling_probabilities + 1e-12).log()).sum()
+@@ -266,11 +449,13 @@ class MotionCommand(CommandTerm):
+         joint_vel = self.joint_vel.clone()
+ 
+         joint_pos += sample_uniform(*self.cfg.joint_position_range, joint_pos.shape, joint_pos.device)
+-        soft_joint_pos_limits = self.robot.data.soft_joint_pos_limits[env_ids]
++        soft_joint_pos_limits = self.robot.data.soft_joint_pos_limits[env_ids][:, self.joint_indexes]
+         joint_pos[env_ids] = torch.clip(
+             joint_pos[env_ids], soft_joint_pos_limits[:, :, 0], soft_joint_pos_limits[:, :, 1]
+         )
+-        self.robot.write_joint_state_to_sim(joint_pos[env_ids], joint_vel[env_ids], env_ids=env_ids)
++        self.robot.write_joint_state_to_sim(
++            joint_pos[env_ids], joint_vel[env_ids], joint_ids=self.joint_indexes, env_ids=env_ids
++        )
+         self.robot.write_root_state_to_sim(
+             torch.cat([root_pos[env_ids], root_ori[env_ids], root_lin_vel[env_ids], root_ang_vel[env_ids]], dim=-1),
+             env_ids=env_ids,
+@@ -278,9 +463,17 @@ class MotionCommand(CommandTerm):
+ 
+     def _update_command(self):
+         self.time_steps += 1
+-        env_ids = torch.where(self.time_steps >= self.motion.time_step_total)[0]
++        env_ids = torch.where(self.motion.is_done(self.time_steps))[0]
+         self._resample_command(env_ids)
+ 
++        self.refresh_relative_body_targets()
++
++        self.bin_failed_count = (
++            self.cfg.adaptive_alpha * self._current_bin_failed + (1 - self.cfg.adaptive_alpha) * self.bin_failed_count
++        )
++        self._current_bin_failed.zero_()
++
++    def refresh_relative_body_targets(self):
+         anchor_pos_w_repeat = self.anchor_pos_w[:, None, :].repeat(1, len(self.cfg.body_names), 1)
+         anchor_quat_w_repeat = self.anchor_quat_w[:, None, :].repeat(1, len(self.cfg.body_names), 1)
+         robot_anchor_pos_w_repeat = self.robot_anchor_pos_w[:, None, :].repeat(1, len(self.cfg.body_names), 1)
+@@ -293,11 +486,6 @@ class MotionCommand(CommandTerm):
+         self.body_quat_relative_w = quat_mul(delta_ori_w, self.body_quat_w)
+         self.body_pos_relative_w = delta_pos_w + quat_apply(delta_ori_w, self.body_pos_w - anchor_pos_w_repeat)
+ 
+-        self.bin_failed_count = (
+-            self.cfg.adaptive_alpha * self._current_bin_failed + (1 - self.cfg.adaptive_alpha) * self.bin_failed_count
+-        )
+-        self._current_bin_failed.zero_()
+-
+     def _set_debug_vis_impl(self, debug_vis: bool):
+         if debug_vis:
+             if not hasattr(self, "current_anchor_visualizer"):
+@@ -357,6 +545,7 @@ class MotionCommandCfg(CommandTermCfg):
+     asset_name: str = MISSING
+ 
+     motion_file: str = MISSING
++    motion_joint_names: list[str] | None = None
+     anchor_body_name: str = MISSING
+     body_names: list[str] = MISSING
+ 
+@@ -364,6 +553,7 @@ class MotionCommandCfg(CommandTermCfg):
+     velocity_range: dict[str, tuple[float, float]] = {}
+ 
+     joint_position_range: tuple[float, float] = (-0.52, 0.52)
++    motion_start_reset_ratio: float = 0.0
+ 
+     adaptive_kernel_size: int = 1
+     adaptive_lambda: float = 0.8
+diff --git a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/tracking_env_cfg.py b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/tracking_env_cfg.py
+index b050402..bc4f5c6 100644
+--- a/source/whole_body_tracking/whole_body_tracking/tasks/tracking/tracking_env_cfg.py
++++ b/source/whole_body_tracking/whole_body_tracking/tasks/tracking/tracking_env_cfg.py
+@@ -13,7 +13,7 @@ from isaaclab.managers import SceneEntityCfg
+ from isaaclab.managers import TerminationTermCfg as DoneTerm
+ from isaaclab.scene import InteractiveSceneCfg
+ from isaaclab.sensors import ContactSensorCfg
+-from isaaclab.terrains import TerrainImporterCfg
++from isaaclab.terrains import MeshPlaneTerrainCfg, TerrainGeneratorCfg, TerrainImporterCfg
+ 
+ ##
+ # Pre-defined configs
+@@ -41,21 +41,29 @@ VELOCITY_RANGE = {
+ class MySceneCfg(InteractiveSceneCfg):
+     """Configuration for the terrain scene with a legged robot."""
+ 
+-    # ground terrain
++    # A local mesh plane keeps training independent of Isaac Nucleus/S3 availability.
+     terrain = TerrainImporterCfg(
+         prim_path="/World/ground",
+-        terrain_type="plane",
++        terrain_type="generator",
+         collision_group=-1,
++        terrain_generator=TerrainGeneratorCfg(
++            seed=0,
++            size=(128.0, 128.0),
++            border_width=0.0,
++            num_rows=1,
++            num_cols=1,
++            curriculum=False,
++            use_cache=True,
++            sub_terrains={"flat": MeshPlaneTerrainCfg(proportion=1.0)},
++        ),
++        use_terrain_origins=False,
+         physics_material=sim_utils.RigidBodyMaterialCfg(
+             friction_combine_mode="multiply",
+             restitution_combine_mode="multiply",
+             static_friction=1.0,
+             dynamic_friction=1.0,
+         ),
+-        visual_material=sim_utils.MdlFileCfg(
+-            mdl_path="{NVIDIA_NUCLEUS_DIR}/Materials/Base/Architecture/Shingles_01.mdl",
+-            project_uvw=True,
+-        ),
++        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.12, 0.16, 0.20)),
+     )
+     # robots
+     robot: ArticulationCfg = MISSING
+diff --git a/source/whole_body_tracking/whole_body_tracking/utils/exporter.py b/source/whole_body_tracking/whole_body_tracking/utils/exporter.py
+index e096f90..d1e76ff 100644
+--- a/source/whole_body_tracking/whole_body_tracking/utils/exporter.py
++++ b/source/whole_body_tracking/whole_body_tracking/utils/exporter.py
+@@ -4,12 +4,12 @@
+ # SPDX-License-Identifier: BSD-3-Clause
+ 
+ import os
++import copy
+ import torch
+ 
+ import onnx
+ 
+ from isaaclab.envs import ManagerBasedRLEnv
+-from isaaclab_rl.rsl_rl.exporter import _OnnxPolicyExporter
+ 
+ from whole_body_tracking.tasks.tracking.mdp import MotionCommand
+ 
+@@ -28,9 +28,24 @@ def export_motion_policy_as_onnx(
+     policy_exporter.export(path, filename)
+ 
+ 
+-class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
++class _OnnxMotionPolicyExporter(torch.nn.Module):
+     def __init__(self, env: ManagerBasedRLEnv, actor_critic, normalizer=None, verbose=False):
+-        super().__init__(actor_critic, normalizer, verbose)
++        super().__init__()
++        self.verbose = verbose
++        if hasattr(actor_critic, "as_onnx"):
++            self.actor = actor_critic.as_onnx(verbose=verbose)
++            self.normalizer = torch.nn.Identity()
++            self.input_size = self.actor.input_size
++        else:
++            if hasattr(actor_critic, "actor"):
++                self.actor = copy.deepcopy(actor_critic.actor)
++            elif hasattr(actor_critic, "student"):
++                self.actor = copy.deepcopy(actor_critic.student)
++            else:
++                raise ValueError("Policy does not have an actor/student module or an as_onnx() exporter.")
++            self.normalizer = copy.deepcopy(normalizer) if normalizer else torch.nn.Identity()
++            self.input_size = self.actor[0].in_features
++
+         cmd: MotionCommand = env.command_manager.get_term("motion")
+ 
+         self.joint_pos = cmd.motion.joint_pos.to("cpu")
+@@ -55,7 +70,7 @@ class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
+ 
+     def export(self, path, filename):
+         self.to("cpu")
+-        obs = torch.zeros(1, self.actor[0].in_features)
++        obs = torch.zeros(1, self.input_size)
+         time_step = torch.zeros(1, 1)
+         torch.onnx.export(
+             self,
+@@ -99,18 +114,24 @@ def attach_onnx_metadata(env: ManagerBasedRLEnv, run_path: str, path: str, filen
+             history_length = term_cfg["history_length"]
+             observation_history_lengths.append(1 if history_length == 0 else history_length)
+ 
++    action_term = env.action_manager.get_term("joint_pos")
++    action_joint_ids = action_term._joint_ids
++    action_joint_names = list(action_term._joint_names)
++    command = env.command_manager.get_term("motion")
++
+     metadata = {
+         "run_path": run_path,
+-        "joint_names": env.scene["robot"].data.joint_names,
+-        "joint_stiffness": env.scene["robot"].data.joint_stiffness[0].cpu().tolist(),
+-        "joint_damping": env.scene["robot"].data.joint_damping[0].cpu().tolist(),
+-        "default_joint_pos": env.scene["robot"].data.default_joint_pos_nominal.cpu().tolist(),
++        "joint_names": action_joint_names,
++        "trajectory_joint_names": list(command.motion.joint_names),
++        "joint_stiffness": env.scene["robot"].data.joint_stiffness[0, action_joint_ids].cpu().tolist(),
++        "joint_damping": env.scene["robot"].data.joint_damping[0, action_joint_ids].cpu().tolist(),
++        "default_joint_pos": env.scene["robot"].data.default_joint_pos_nominal[action_joint_ids].cpu().tolist(),
+         "command_names": env.command_manager.active_terms,
+         "observation_names": observation_names,
+         "observation_history_lengths": observation_history_lengths,
+-        "action_scale": env.action_manager.get_term("joint_pos")._scale[0].cpu().tolist(),
+-        "anchor_body_name": env.command_manager.get_term("motion").cfg.anchor_body_name,
+-        "body_names": env.command_manager.get_term("motion").cfg.body_names,
++        "action_scale": action_term._scale[0].cpu().tolist(),
++        "anchor_body_name": command.cfg.anchor_body_name,
++        "body_names": command.cfg.body_names,
+     }
+ 
+     model = onnx.load(onnx_path)
+diff --git a/source/whole_body_tracking/whole_body_tracking/utils/my_on_policy_runner.py b/source/whole_body_tracking/whole_body_tracking/utils/my_on_policy_runner.py
+index 2ba8c87..be92e08 100644
+--- a/source/whole_body_tracking/whole_body_tracking/utils/my_on_policy_runner.py
++++ b/source/whole_body_tracking/whole_body_tracking/utils/my_on_policy_runner.py
+@@ -1,22 +1,66 @@
+ import os
+ 
++import torch
+ from rsl_rl.env import VecEnv
+ from rsl_rl.runners.on_policy_runner import OnPolicyRunner
+ 
+-from isaaclab_rl.rsl_rl import export_policy_as_onnx
+-
+-import wandb
+ from whole_body_tracking.utils.exporter import attach_onnx_metadata, export_motion_policy_as_onnx
++from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg, get_policy_module
++
++
++def _logger_type(runner: OnPolicyRunner) -> str:
++    logger_type = getattr(runner, "logger_type", None) or getattr(getattr(runner, "logger", None), "logger_type", None)
++    return (logger_type or runner.cfg.get("logger", "tensorboard")).lower()
++
++
++def _adapt_distribution_state_dict(loaded_dict: dict, runner: OnPolicyRunner) -> tuple[dict | None, bool]:
++    actor_state = loaded_dict.get("actor_state_dict")
++    if actor_state is None:
++        return None, False
++
++    target_state = runner.alg.actor.state_dict()
++    converted = False
++    if "distribution.log_std_param" in target_state and "distribution.std_param" in actor_state:
++        std = actor_state.pop("distribution.std_param").detach().clone().clamp_min(1.0e-6)
++        actor_state["distribution.log_std_param"] = torch.log(std)
++        converted = True
++    elif "distribution.std_param" in target_state and "distribution.log_std_param" in actor_state:
++        log_std = actor_state.pop("distribution.log_std_param").detach().clone()
++        actor_state["distribution.std_param"] = torch.exp(log_std).clamp_min(1.0e-6)
++        converted = True
++
++    load_cfg = None
++    if converted:
++        load_cfg = {"actor": True, "critic": True, "optimizer": False, "iteration": True, "rnd": True}
++        print("[INFO] Converted Gaussian std checkpoint parameterization; skipping optimizer state reload.")
++    return load_cfg, converted
+ 
+ 
+ class MyOnPolicyRunner(OnPolicyRunner):
++    def __init__(self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu"):
++        super().__init__(env, adapt_legacy_ppo_cfg(train_cfg), log_dir, device)
++
++    def load(
++        self, path: str, load_cfg: dict | None = None, strict: bool = True, map_location: str | None = None
++    ) -> dict:
++        loaded_dict = torch.load(path, weights_only=False, map_location=map_location)
++        converted_load_cfg, converted = _adapt_distribution_state_dict(loaded_dict, self)
++        if converted and load_cfg is None:
++            load_cfg = converted_load_cfg
++        load_iteration = self.alg.load(loaded_dict, load_cfg, strict)
++        if load_iteration:
++            self.current_learning_iteration = loaded_dict["iter"]
++        return loaded_dict["infos"]
++
+     def save(self, path: str, infos=None):
+         """Save the model and training information."""
+         super().save(path, infos)
+-        if self.logger_type in ["wandb"]:
++        if _logger_type(self) in ["wandb"]:
++            import wandb
++
+             policy_path = path.split("model")[0]
+             filename = policy_path.split("/")[-2] + ".onnx"
+-            export_policy_as_onnx(self.alg.policy, normalizer=self.obs_normalizer, path=policy_path, filename=filename)
++            self.export_policy_to_onnx(policy_path, filename=filename)
+             attach_onnx_metadata(self.env.unwrapped, wandb.run.name, path=policy_path, filename=filename)
+             wandb.save(policy_path + filename, base_path=os.path.dirname(policy_path))
+ 
+@@ -25,23 +69,35 @@ class MotionOnPolicyRunner(OnPolicyRunner):
+     def __init__(
+         self, env: VecEnv, train_cfg: dict, log_dir: str | None = None, device="cpu", registry_name: str = None
+     ):
+-        super().__init__(env, train_cfg, log_dir, device)
++        super().__init__(env, adapt_legacy_ppo_cfg(train_cfg), log_dir, device)
+         self.registry_name = registry_name
+ 
++    def load(
++        self, path: str, load_cfg: dict | None = None, strict: bool = True, map_location: str | None = None
++    ) -> dict:
++        loaded_dict = torch.load(path, weights_only=False, map_location=map_location)
++        converted_load_cfg, converted = _adapt_distribution_state_dict(loaded_dict, self)
++        if converted and load_cfg is None:
++            load_cfg = converted_load_cfg
++        load_iteration = self.alg.load(loaded_dict, load_cfg, strict)
++        if load_iteration:
++            self.current_learning_iteration = loaded_dict["iter"]
++        return loaded_dict["infos"]
++
+     def save(self, path: str, infos=None):
+         """Save the model and training information."""
+         super().save(path, infos)
+-        if self.logger_type in ["wandb"]:
++        if _logger_type(self) in ["wandb"]:
++            import wandb
++
+             policy_path = path.split("model")[0]
+             filename = policy_path.split("/")[-2] + ".onnx"
+-            
+-            # 新的组件中没有obs_normalizer(观察值归一化器)的组件
+-            # export_motion_policy_as_onnx(
+-            #     self.env.unwrapped, self.alg.policy, normalizer=self.obs_normalizer, path=policy_path, filename=filename
+-            # )
+-
+             export_motion_policy_as_onnx(
+-                self.env.unwrapped, self.alg.policy, normalizer=getattr(self, 'obs_normalizer', None), path=policy_path, filename=filename
++                self.env.unwrapped,
++                get_policy_module(self.alg),
++                normalizer=getattr(self, "obs_normalizer", None),
++                path=policy_path,
++                filename=filename,
+             )
+             attach_onnx_metadata(self.env.unwrapped, wandb.run.name, path=policy_path, filename=filename)
+             wandb.save(policy_path + filename, base_path=os.path.dirname(policy_path))

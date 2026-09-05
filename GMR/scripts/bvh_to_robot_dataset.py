@@ -7,7 +7,7 @@ from tqdm import tqdm
 import torch
 import pickle
 
-from general_motion_retargeting.utils.lafan1 import load_lafan1_file
+from general_motion_retargeting.utils.lafan1 import load_bvh_file
 from general_motion_retargeting.kinematics_model import KinematicsModel
 from general_motion_retargeting import GeneralMotionRetargeting as GMR
 from rich import print
@@ -34,6 +34,12 @@ if __name__ == "__main__":
         "--robot",
         default="unitree_g1",
     )
+
+    parser.add_argument(
+        "--format",
+        choices=["lafan1", "nokov"],
+        default="lafan1",
+    )
     
     parser.add_argument(
         "--override",
@@ -45,6 +51,24 @@ if __name__ == "__main__":
         "--target_fps",
         default=30,
         type=int,
+    )
+
+    parser.add_argument(
+        "--height_adjust",
+        default=False,
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "--ground_offset",
+        default=0.03,
+        type=float,
+    )
+
+    parser.add_argument(
+        "--perframe_height_adjust",
+        default=False,
+        action="store_true",
     )
 
     args = parser.parse_args()
@@ -73,8 +97,8 @@ if __name__ == "__main__":
             
             # Load LAFAN1 trajectory
             try:
-                lafan1_data_frames, actual_human_height = load_lafan1_file(bvh_file_path)
-                src_fps = 30  # LAFAN1 data is typically 30 FPS
+                lafan1_data_frames, actual_human_height = load_bvh_file(bvh_file_path, format=args.format)
+                src_fps = args.target_fps
             except Exception as e:
                 print(f"Error loading {bvh_file_path}: {e}")
                 continue
@@ -82,7 +106,7 @@ if __name__ == "__main__":
             
             # Initialize the retargeting system
             retarget = GMR(
-                src_human="bvh",
+                src_human=f"bvh_{args.format}",
                 tgt_robot=args.robot,
                 actual_human_height=actual_human_height,
             )
@@ -124,16 +148,14 @@ if __name__ == "__main__":
             )
             body_names = kinematics_model.body_names
 
-            HEIGHT_ADJUST = False
-            PERFRAME_ADJUST = False
-            if HEIGHT_ADJUST:
+            if args.height_adjust:
                 body_pos, _ = kinematics_model.forward_kinematics(
                     torch.from_numpy(root_pos).to(device=device, dtype=torch.float),
                     torch.from_numpy(root_rot).to(device=device, dtype=torch.float),
                     torch.from_numpy(dof_pos).to(device=device, dtype=torch.float)
                 )
-                ground_offset = 0.00
-                if not PERFRAME_ADJUST:
+                ground_offset = args.ground_offset
+                if not args.perframe_height_adjust:
                     lowest_height = torch.min(body_pos[..., 2]).item()
                     root_pos[:, 2] = root_pos[:, 2] - lowest_height + ground_offset
                 else:

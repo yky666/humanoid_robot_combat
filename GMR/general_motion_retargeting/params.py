@@ -25,6 +25,7 @@ ROBOT_XML_DICT = {
     "fourier_gr3": ASSET_ROOT / "fourier_gr3v2_1_1" / "mjcf" / "gr3v2_1_1_dummy_hand.xml",
     "pi_plus": ASSET_ROOT / "pi_plus" / "scene_pi_plus_21dof.xml",
     "t800": ASSET_ROOT / "t800" / "t800.xml",
+    "noetix_n2": ASSET_ROOT / "noetix_n2" / "mjcf" / "n2_18dof.xml",
 }
 
 IK_CONFIG_DICT = {
@@ -49,6 +50,7 @@ IK_CONFIG_DICT = {
         "fourier_gr3": IK_CONFIG_ROOT / "smplx_to_gr3.json",
         "pi_plus": IK_CONFIG_ROOT / "smplx_to_pi_plus.json",
         "t800": IK_CONFIG_ROOT / "smplx_to_t800.json",
+        "noetix_n2": IK_CONFIG_ROOT / "smplx_to_n2.json",
     },
     "bvh_lafan1":{
         "unitree_g1": IK_CONFIG_ROOT / "bvh_lafan1_to_g1.json",
@@ -101,7 +103,8 @@ ROBOT_BASE_DICT = {
     "pal_talos": "base_link",
     "fourier_gr3": "base_link",
     "pi_plus": "base_link",
-    "t800": "LINK_BASE",  
+    "t800": "LINK_BASE",
+    "noetix_n2": "base_link",  
 }
 
 VIEWER_CAM_DISTANCE_DICT = {
@@ -125,4 +128,5 @@ VIEWER_CAM_DISTANCE_DICT = {
     "fourier_gr3": 2.0,
     "pi_plus": 2.5,
     "t800": 2.5,
+    "noetix_n2": 2.2,
 }

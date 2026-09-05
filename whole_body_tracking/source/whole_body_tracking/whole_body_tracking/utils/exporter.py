@@ -4,12 +4,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os
+import copy
 import torch
 
 import onnx
 
 from isaaclab.envs import ManagerBasedRLEnv
-from isaaclab_rl.rsl_rl.exporter import _OnnxPolicyExporter
 
 from whole_body_tracking.tasks.tracking.mdp import MotionCommand
 
@@ -28,9 +28,24 @@ def export_motion_policy_as_onnx(
     policy_exporter.export(path, filename)
 
 
-class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
+class _OnnxMotionPolicyExporter(torch.nn.Module):
     def __init__(self, env: ManagerBasedRLEnv, actor_critic, normalizer=None, verbose=False):
-        super().__init__(actor_critic, normalizer, verbose)
+        super().__init__()
+        self.verbose = verbose
+        if hasattr(actor_critic, "as_onnx"):
+            self.actor = actor_critic.as_onnx(verbose=verbose)
+            self.normalizer = torch.nn.Identity()
+            self.input_size = self.actor.input_size
+        else:
+            if hasattr(actor_critic, "actor"):
+                self.actor = copy.deepcopy(actor_critic.actor)
+            elif hasattr(actor_critic, "student"):
+                self.actor = copy.deepcopy(actor_critic.student)
+            else:
+                raise ValueError("Policy does not have an actor/student module or an as_onnx() exporter.")
+            self.normalizer = copy.deepcopy(normalizer) if normalizer else torch.nn.Identity()
+            self.input_size = self.actor[0].in_features
+
         cmd: MotionCommand = env.command_manager.get_term("motion")
 
         self.joint_pos = cmd.motion.joint_pos.to("cpu")
@@ -55,7 +70,7 @@ class _OnnxMotionPolicyExporter(_OnnxPolicyExporter):
 
     def export(self, path, filename):
         self.to("cpu")
-        obs = torch.zeros(1, self.actor[0].in_features)
+        obs = torch.zeros(1, self.input_size)
         time_step = torch.zeros(1, 1)
         torch.onnx.export(
             self,
@@ -99,18 +114,24 @@ def attach_onnx_metadata(env: ManagerBasedRLEnv, run_path: str, path: str, filen
             history_length = term_cfg["history_length"]
             observation_history_lengths.append(1 if history_length == 0 else history_length)
 
+    action_term = env.action_manager.get_term("joint_pos")
+    action_joint_ids = action_term._joint_ids
+    action_joint_names = list(action_term._joint_names)
+    command = env.command_manager.get_term("motion")
+
     metadata = {
         "run_path": run_path,
-        "joint_names": env.scene["robot"].data.joint_names,
-        "joint_stiffness": env.scene["robot"].data.joint_stiffness[0].cpu().tolist(),
-        "joint_damping": env.scene["robot"].data.joint_damping[0].cpu().tolist(),
-        "default_joint_pos": env.scene["robot"].data.default_joint_pos_nominal.cpu().tolist(),
+        "joint_names": action_joint_names,
+        "trajectory_joint_names": list(command.motion.joint_names),
+        "joint_stiffness": env.scene["robot"].data.joint_stiffness[0, action_joint_ids].cpu().tolist(),
+        "joint_damping": env.scene["robot"].data.joint_damping[0, action_joint_ids].cpu().tolist(),
+        "default_joint_pos": env.scene["robot"].data.default_joint_pos_nominal[action_joint_ids].cpu().tolist(),
         "command_names": env.command_manager.active_terms,
         "observation_names": observation_names,
         "observation_history_lengths": observation_history_lengths,
-        "action_scale": env.action_manager.get_term("joint_pos")._scale[0].cpu().tolist(),
-        "anchor_body_name": env.command_manager.get_term("motion").cfg.anchor_body_name,
-        "body_names": env.command_manager.get_term("motion").cfg.body_names,
+        "action_scale": action_term._scale[0].cpu().tolist(),
+        "anchor_body_name": command.cfg.anchor_body_name,
+        "body_names": command.cfg.body_names,
     }
 
     model = onnx.load(onnx_path)

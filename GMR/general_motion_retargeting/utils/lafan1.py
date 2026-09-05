@@ -29,6 +29,9 @@ def load_bvh_file(bvh_file, format="lafan1"):
             result[bone] = [position, orientation]
             
         if format == "lafan1":
+            if "Spine3" not in result and "Chest" in result:
+                result["Spine3"] = result["Chest"]
+
             # Add modified foot pose
             # result["LeftFootMod"] = [result["LeftFoot"][0], result["LeftToe"][1]]
             # result["RightFootMod"] = [result["RightFoot"][0], result["RightToe"][1]]
@@ -53,5 +56,4 @@ def load_bvh_file(bvh_file, format="lafan1"):
     human_height = 1.75  # cm to m
 
     return frames, human_height
-
 

@@ -1,0 +1,26 @@
+{
+  "description": "Five canonical-order standing qualifier actions for later joint-policy training.",
+  "joint_order_version": "t800_policy_v1",
+  "motions": [
+    {
+      "name": "front_kick",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/kick_push_left_g17_stageii_tracking.npz"
+    },
+    {
+      "name": "spinning_kick",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/kick_reverse_spin_cresent_right_g20_stageii_tracking.npz"
+    },
+    {
+      "name": "straight_punch",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_cross_left_e3_stageii_tracking.npz"
+    },
+    {
+      "name": "hook_punch",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_hook_left_e5_stageii_tracking.npz"
+    },
+    {
+      "name": "jab_left",
+      "motion_file": "artifacts/t800_approved_qualifier_20260902/tracking_npz_canonical_v1/punch_jab_left_e1_stageii_tracking.npz"
+    }
+  ]
+}

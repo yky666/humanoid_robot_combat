@@ -7,41 +7,12 @@ from isaaclab.envs.mdp.actions.actions_cfg import JointActionCfg
 from isaaclab.envs.mdp.actions.joint_actions import JointAction
 from isaaclab.utils import configclass
 
+from whole_body_tracking.robots.t800_joint_order import T800_DFS_JOINT_NAMES
 from whole_body_tracking.tasks.tracking.mdp.commands import MotionCommand
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv
 
-
-# NOTE: This order matches the DFS-style joint order expected by the T800
-# motion data used in training on this branch.
-T800_DFS_JOINT_NAMES = [
-    "J00_HIP_PITCH_L",
-    "J01_HIP_ROLL_L",
-    "J02_HIP_YAW_L",
-    "J03_KNEE_PITCH_L",
-    "J04_ANKLE_PITCH_L",
-    "J05_ANKLE_ROLL_L",
-    "J06_HIP_PITCH_R",
-    "J07_HIP_ROLL_R",
-    "J08_HIP_YAW_R",
-    "J09_KNEE_PITCH_R",
-    "J10_ANKLE_PITCH_R",
-    "J11_ANKLE_ROLL_R",
-    "J12_TORSO_YAW",
-    "J13_SHOULDER_PITCH_L",
-    "J14_SHOULDER_ROLL_L",
-    "J15_SHOULDER_YAW_L",
-    "J16_ELBOW_PITCH_L",
-    "J17_ELBOW_YAW_L",
-    "J20_SHOULDER_PITCH_R",
-    "J21_SHOULDER_ROLL_R",
-    "J22_SHOULDER_YAW_R",
-    "J23_ELBOW_PITCH_R",
-    "J24_ELBOW_YAW_R",
-    "J27_HEAD_PITCH",
-    "J28_HEAD_YAW",
-]
 
 T800_MOTION_BODY_NAMES = [
     "LINK_BASE",

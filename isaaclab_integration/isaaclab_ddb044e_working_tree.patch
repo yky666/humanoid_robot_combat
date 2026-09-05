@@ -1,0 +1,64 @@
+diff --git a/isaaclab.sh b/isaaclab.sh
+index 2f7ab42ded6..39c4f6ed81c 100755
+--- a/isaaclab.sh
++++ b/isaaclab.sh
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env bash
++#!/bin/bash
+ 
+ # Copyright (c) 2022-2025, The Isaac Lab Project Developers (https://github.com/isaac-sim/IsaacLab/blob/main/CONTRIBUTORS.md).
+ # All rights reserved.
+diff --git a/scripts/environments/list_envs.py b/scripts/environments/list_envs.py
+index 0beb83e9213..ca8d7a5b409 100644
+--- a/scripts/environments/list_envs.py
++++ b/scripts/environments/list_envs.py
+@@ -37,6 +37,9 @@ from prettytable import PrettyTable
+ 
+ import isaaclab_tasks  # noqa: F401
+ 
++# 🌟 新增这两行，强行唤醒你的包！
++import robotlib
++import soccerTask
+ 
+ def main():
+     """Print all environments registered in `isaaclab_tasks` extension."""
+diff --git a/scripts/reinforcement_learning/rsl_rl/play.py b/scripts/reinforcement_learning/rsl_rl/play.py
+index beb92072173..8094257dfe3 100644
+--- a/scripts/reinforcement_learning/rsl_rl/play.py
++++ b/scripts/reinforcement_learning/rsl_rl/play.py
+@@ -77,6 +77,11 @@ import isaaclab_tasks  # noqa: F401
+ from isaaclab_tasks.utils import get_checkpoint_path
+ from isaaclab_tasks.utils.hydra import hydra_task_config
+ 
++#additional soccer task and robot assets
++import robotlib
++import soccerTask
++
++
+ # PLACEHOLDER: Extension template (do not remove this comment)
+ 
+ 
+diff --git a/scripts/reinforcement_learning/rsl_rl/train.py b/scripts/reinforcement_learning/rsl_rl/train.py
+index 0cce12d7eba..6333e71e1d5 100644
+--- a/scripts/reinforcement_learning/rsl_rl/train.py
++++ b/scripts/reinforcement_learning/rsl_rl/train.py
+@@ -15,6 +15,7 @@ from isaaclab.app import AppLauncher
+ # local imports
+ import cli_args  # isort: skip
+ 
++
+ # add argparse arguments
+ parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
+ parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
+@@ -100,6 +101,11 @@ import isaaclab_tasks  # noqa: F401
+ from isaaclab_tasks.utils import get_checkpoint_path
+ from isaaclab_tasks.utils.hydra import hydra_task_config
+ 
++#additional soccer task and robot assets
++import robotlib
++import soccerTask
++
++
+ # import logger
+ logger = logging.getLogger(__name__)
+ 

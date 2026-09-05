@@ -1,0 +1,42 @@
+{
+  "created": "2026-09-02",
+  "review_root": "/data2/yangky/test/whole_body_tracking/review_videos/t800_reference",
+  "notes": "Reference motions must be rendered and manually/numerically checked before long BeyondMimic training.",
+  "motions": {
+    "accad_e1_jab_left": {
+      "status": "pass",
+      "video": "accad_combat_batch/accad_e1_jab_left_t800_tracking.mp4",
+      "reason": "Standing reference; root up_z remains 0.967..1.000."
+    },
+    "accad_e2_jab_right": {
+      "status": "pass",
+      "video": "accad_combat_batch/accad_e2_jab_right_t800_tracking.mp4",
+      "reason": "Standing reference; root up_z remains 0.973..0.998."
+    },
+    "accad_e5_hook_left": {
+      "status": "pass",
+      "video": "accad_combat_batch/accad_e5_hook_left_t800_tracking.mp4",
+      "reason": "Standing reference; root up_z remains 0.968..0.999."
+    },
+    "accad_e6_hook_right": {
+      "status": "pass",
+      "video": "accad_combat_batch/accad_e6_hook_right_t800_tracking.mp4",
+      "reason": "Standing reference; root up_z remains 0.983..1.000."
+    },
+    "accad_g3_front_kick": {
+      "status": "fail",
+      "video": "accad_combat_batch/accad_g3_front_kick_t800_tracking.mp4",
+      "reason": "Reference flips/inverts during the kick; root up_z drops to -0.451."
+    },
+    "new_data_zhiquan_quanji": {
+      "status": "fail",
+      "video": "new_data/new_data_zhiquan_quanji_tracking.mp4",
+      "reason": "Reference is already prone/collapsing; root_z drops to 0.128m and body z reaches -0.428m."
+    },
+    "new_data_540huixuantitui": {
+      "status": "fail",
+      "video": "new_data/new_data_540huixuantitui_tracking.mp4",
+      "reason": "Reference is already prone/collapsing; root_z drops to 0.063m and body z reaches -0.572m."
+    }
+  }
+}

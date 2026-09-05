@@ -1,37 +1,59 @@
-# humanoid_robot_combat
+# Humanoid Robot Combat
 
-This repository bundles the two local projects used in the current T800 humanoid combat-motion pipeline:
+Reproducible T800 combat-motion workspace built around EngineAI Native SDK,
+IsaacLab, Whole Body Tracking/BeyondMimic, and GMR. The repository contains the
+working code overlays plus the canonical motions, policies, evaluation reports,
+checkpoints, and rendered review media produced through 2026-09-05.
 
-- `whole_body_tracking`
-  Isaac Lab training, motion conversion, smoke testing, and policy playback.
-- `GMR`
-  General Motion Retargeting scripts and robot retarget configs used to convert source motions into T800-compatible inputs.
+## Qualification Status
+
+Formal policy acceptance uses 64 environments x 5 batches = 320 rollouts and a
+minimum success rate of 0.95. TensorBoard tail metrics and visual playback are
+not treated as policy acceptance.
+
+| Motion | Result | Formal rollouts |
+| --- | --- | ---: |
+| Hook punch | Passed | 320/320 |
+| Front kick | Passed | 320/320 |
+| Straight punch | Passed | 320/320 |
+| Left jab | Passed | 316/320 |
+| Supine recovery | Passed, official EngineAI MNN | 320/320 |
+| Spinning kick | Failed tail gate | No formal rollout |
+| Stand/action/stand joint policy | Blocked | Not started |
+
+The latest spinning-kick run (`r9`) passed timeout, anchor, episode-length, and
+joint-error checks, but its end-effector termination rate was 4.58% against a
+3% maximum. It is archived as a failed experiment and is not in `best/`.
 
 ## Layout
 
 ```text
-humanoid_robot_combat/
-  README.md
-  whole_body_tracking/
-  GMR/
+GMR/                              Retargeting source snapshot and T800 assets
+whole_body_tracking/              IsaacLab tracking, training, evaluation code
+engineai_native_sdk_integration/  SDK overlays and binary-capable patches
+isaaclab_integration/             Local IsaacLab overlay and patch
+manifests/                        Dependency revisions and archive metadata
+results/t800_canonical_v1_20260902/
+  approved_reference/             Canonical NPZ/PKL inputs and reference videos
+  checkpoints/final_rounds/       Last checkpoint from every reported train run
+  policies/                       Accepted PT/ONNX policies and run parameters
+  qualification/                  Tail gates, 320-rollout reports, best manifests
+  recovery_official/              EngineAI supine-to-stance MNN and trajectory
+  media/                          All retained T800 review and policy videos
+  archives/                       Complete compressed logs and experiment outputs
 ```
 
-## What Is Intentionally Excluded
+Large generated files are tracked with Git LFS. Run `git lfs pull` after cloning
+to materialize policies, motions, videos, and compressed archives.
 
-The local working trees contain large generated artifacts that are not copied into this repository snapshot:
+See [the archive notes](docs/ARCHIVE_20260905.md) and
+[the canonical result README](results/t800_canonical_v1_20260902/README.md) for
+provenance and restore commands.
 
-- training logs
-- wandb runs
-- motion artifacts and cached outputs
-- large checkpoints and media
-- temporary caches
+## Deliberately Excluded
 
-Those outputs remain in the original local paths under `/data2/yangky/test/...`.
-
-## Current Focus
-
-The current engineering focus is T800 combat motion conversion and training, including:
-
-- BVH to T800 retargeting for local motions such as `540huixuantitui_001.bvh` and `zhiquan_quanji_001.bvh`
-- legacy local `.npy` combat motions such as `riot_combo.npy`
-- smoke validation and formal PPO training for motions that remain stable
+The archive omits reproducible runtime bulk: Conda environments, Isaac/Omniverse
+caches, build trees, WandB caches, and every 100-iteration checkpoint. It keeps
+the final checkpoint from each reported training round, all formal reports,
+complete compressed canonical logs, and all retained T800 videos. The original
+working directories were not reset or modified while creating this snapshot.

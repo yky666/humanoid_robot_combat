@@ -1,0 +1,45 @@
+{
+  "description": "T800 official mimic candidates manually approved for first joint-policy training on 2026-09-02.",
+  "motions": [
+    {
+      "name": "kick_push_left_g17",
+      "official_target": "front_push_kick",
+      "input_file": "artifacts/official_mimic_T800/gmr_npz_approved/kick_push_left_g17_stageii.npz",
+      "input_format": "gmr_npz",
+      "output_path": "artifacts/official_mimic_T800/tracking_npz_approved/kick_push_left_g17_stageii_tracking.npz",
+      "review_video": "review_videos/t800_reference_audit_20260902/official_mimic_candidates/kick_push_left_g17_stageii.mp4"
+    },
+    {
+      "name": "kick_reverse_spin_cresent_right_g20",
+      "official_target": "spinning_kick",
+      "input_file": "artifacts/official_mimic_T800/gmr_npz_approved/kick_reverse_spin_cresent_right_g20_stageii.npz",
+      "input_format": "gmr_npz",
+      "output_path": "artifacts/official_mimic_T800/tracking_npz_approved/kick_reverse_spin_cresent_right_g20_stageii_tracking.npz",
+      "review_video": "review_videos/t800_reference_audit_20260902/official_mimic_candidates/kick_reverse_spin_cresent_right_g20_stageii.mp4"
+    },
+    {
+      "name": "punch_cross_left_e3",
+      "official_target": "straight_punch",
+      "input_file": "artifacts/official_mimic_T800/gmr_npz_approved/punch_cross_left_e3_stageii.npz",
+      "input_format": "gmr_npz",
+      "output_path": "artifacts/official_mimic_T800/tracking_npz_approved/punch_cross_left_e3_stageii_tracking.npz",
+      "review_video": "review_videos/t800_reference_audit_20260902/official_mimic_candidates/punch_cross_left_e3_stageii.mp4"
+    },
+    {
+      "name": "punch_hook_left_e5",
+      "official_target": "hook_punch",
+      "input_file": "artifacts/official_mimic_T800/gmr_npz_approved/punch_hook_left_e5_stageii.npz",
+      "input_format": "gmr_npz",
+      "output_path": "artifacts/official_mimic_T800/tracking_npz_approved/punch_hook_left_e5_stageii_tracking.npz",
+      "review_video": "review_videos/t800_reference_audit_20260902/official_mimic_candidates/punch_hook_left_e5_stageii.mp4"
+    },
+    {
+      "name": "punch_jab_left_e1",
+      "official_target": "straight_punch_variant",
+      "input_file": "artifacts/official_mimic_T800/gmr_npz_approved/punch_jab_left_e1_stageii.npz",
+      "input_format": "gmr_npz",
+      "output_path": "artifacts/official_mimic_T800/tracking_npz_approved/punch_jab_left_e1_stageii_tracking.npz",
+      "review_video": "review_videos/t800_reference_audit_20260902/official_mimic_candidates/punch_jab_left_e1_stageii.mp4"
+    }
+  ]
+}

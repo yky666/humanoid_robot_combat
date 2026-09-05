@@ -1,0 +1,703 @@
+diff --git a/assets/config/t800/mode.yaml b/assets/config/t800/mode.yaml
+index dd28b8d..fe0646a 100644
+--- a/assets/config/t800/mode.yaml
++++ b/assets/config/t800/mode.yaml
+@@ -16,7 +16,7 @@ mode:
+     - tag: resident_task
+       scope: task_resident/robot
+     - tag: motion_task
+-      scope: task_motion/default
++      scope: task_motion/qualifier_approved
+     - tag: global_options
+       scope: global_options/release
+     - tag: lcm
+@@ -45,14 +45,26 @@ mode:
+       scope: rl_walking_example/default
+     - tag: rl_dance_example
+       scope: rl_dance_example/default
++    - tag: qualifier_front_kick
++      scope: rl_qualifier_approved_20260902/qualifier_front_kick
++    - tag: qualifier_spinning_kick
++      scope: rl_qualifier_approved_20260902/qualifier_spinning_kick
++    - tag: qualifier_straight_punch
++      scope: rl_qualifier_approved_20260902/qualifier_straight_punch
++    - tag: qualifier_hook_punch
++      scope: rl_qualifier_approved_20260902/qualifier_hook_punch
++    - tag: qualifier_jab_left
++      scope: rl_qualifier_approved_20260902/qualifier_jab_left
++    - tag: qualifier_recovery_supine
++      scope: rl_qualifier_approved_20260902/qualifier_recovery_supine
+     - tag: ros2_bridge
+       scope: ros2_bridge/default
+ 
+   sim:
+     - tag: resident_task
+-      scope: task_resident/sim
++      scope: task_resident/sim_no_ros
+     - tag: motion_task
+-      scope: task_motion/default
++      scope: task_motion/qualifier_approved
+     - tag: global_options
+       scope: global_options/release
+     - tag: lcm
+@@ -79,5 +91,15 @@ mode:
+       scope: rl_walking_example/default
+     - tag: rl_dance_example
+       scope: rl_dance_example/default
+-    - tag: ros2_bridge
+-      scope: ros2_bridge/default
++    - tag: qualifier_front_kick
++      scope: rl_qualifier_approved_20260902/qualifier_front_kick
++    - tag: qualifier_spinning_kick
++      scope: rl_qualifier_approved_20260902/qualifier_spinning_kick
++    - tag: qualifier_straight_punch
++      scope: rl_qualifier_approved_20260902/qualifier_straight_punch
++    - tag: qualifier_hook_punch
++      scope: rl_qualifier_approved_20260902/qualifier_hook_punch
++    - tag: qualifier_jab_left
++      scope: rl_qualifier_approved_20260902/qualifier_jab_left
++    - tag: qualifier_recovery_supine
++      scope: rl_qualifier_approved_20260902/qualifier_recovery_supine
+diff --git a/build.sh b/build.sh
+index cea7c68..6908f35 100755
+--- a/build.sh
++++ b/build.sh
+@@ -5,6 +5,7 @@ set -e
+ 
+ # Gets the source directory
+ source_dir=$(cd $(dirname $0) && pwd)
++third_party_dir="${ENGINEAI_ROBOTICS_THIRD_PARTY:-/opt/engineai_robotics_third_party}"
+ 
+ # Builds the project
+ build_dir="$source_dir/build"
+@@ -12,6 +13,7 @@ build_dir="$source_dir/build"
+ build_type="releasewithdebinfo"
+ 
+ build_tests="OFF"
++build_ros2="ON"
+ module_name=""
+ while getopts ":j:t:m:T" opt; do
+   case $opt in
+@@ -51,14 +53,23 @@ fi
+ 
+ shift $((OPTIND - 1))
+ 
++if [ ! -f /opt/ros/humble/setup.sh ] || [ ! -f /opt/ros/humble/setup.bash ]; then
++  build_ros2="OFF"
++fi
++
+ echo "Using $num_cores cores."
+ echo "Build type: $build_type"
++echo "Build ROS2: $build_ros2"
+ 
+-echo "Building ros2 env..."
+-./scripts/build_ros2_env.sh
+-if [ $? -ne 0 ]; then
+-    echo "Failed to build ros2 env."
+-    exit 1
++if [ "$build_ros2" = "ON" ]; then
++  echo "Building ros2 env..."
++  ./scripts/build_ros2_env.sh
++  if [ $? -ne 0 ]; then
++      echo "Failed to build ros2 env."
++      exit 1
++  fi
++else
++  echo "Skipping ros2 env because /opt/ros/humble is not available."
+ fi
+ 
+ echo "Building project..."
+@@ -74,11 +85,23 @@ if [ -n "$module_name" ]; then
+   echo "Using existing cmake configuration for module compilation."
+ else
+   # Runs cmake configuration for full build
+-  source /opt/ros/humble/setup.sh
++  if [ "$build_ros2" = "ON" ]; then
++    source /opt/ros/humble/setup.sh
++  fi
+   cmake -DBUILD_TYPE=$build_type \
+         -DBUILD_TESTS=$build_tests \
+-        -DBUILD_ROS2=ON \
+-        -DBUILD_DCHECK=ON ..
++        -DBUILD_ROS2=$build_ros2 \
++        -DBUILD_DCHECK=ON \
++        -DCMAKE_PREFIX_PATH="$third_party_dir;$third_party_dir/lib/cmake;$third_party_dir/lib/lcm/cmake;$third_party_dir/share/eigen3/cmake" \
++        -DGTest_DIR="$third_party_dir/lib/cmake/GTest" \
++        -Dglog_DIR="$third_party_dir/lib/cmake/glog" \
++        -Dyaml-cpp_DIR="$third_party_dir/lib/cmake/yaml-cpp" \
++        -Dfmt_DIR="$third_party_dir/lib/cmake/fmt" \
++        -DEigen3_DIR="$third_party_dir/share/eigen3/cmake" \
++        -Dlcm_DIR="$third_party_dir/lib/lcm/cmake" \
++        -Dpinocchio_DIR="$third_party_dir/lib/cmake/pinocchio" \
++        -DqpOASES_DIR="$third_party_dir/lib/cmake/qpOASES" \
++        ..
+ fi
+ 
+ if [ -z "$num_cores" ]; then
+diff --git a/cmake/AutoRegisterRunners.cmake b/cmake/AutoRegisterRunners.cmake
+index b23cbad..c2d5db2 100644
+--- a/cmake/AutoRegisterRunners.cmake
++++ b/cmake/AutoRegisterRunners.cmake
+@@ -224,6 +224,10 @@ function(auto_register_runners TARGET_NAME)
+     endif()
+   endif()
+ 
++  if(NOT BUILD_ROS2)
++    list(FILTER runner_sources EXCLUDE REGEX ".*/ros2_bridge/.*")
++  endif()
++
+   set(auto_register_file "${CMAKE_CURRENT_BINARY_DIR}/auto_register_runners.cc")
+   set(local_factory_declarations "")
+   set(local_runner_registrations "")
+diff --git a/scripts/build_mujoco.sh b/scripts/build_mujoco.sh
+index 65296ca..3b5c68e 100755
+--- a/scripts/build_mujoco.sh
++++ b/scripts/build_mujoco.sh
+@@ -8,6 +8,19 @@ root_dir="$(realpath -s $(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/nu
+ mujoco_dir="$root_dir/simulation/mujoco"
+ deps_archive="$mujoco_dir/mujoco_deps_x86.tar.xz"
+ deps_dir="$mujoco_dir/_deps"
++third_party_dir="${ENGINEAI_ROBOTICS_THIRD_PARTY:-/opt/engineai_robotics_third_party}"
++
++if [ -z "${CC:-}" ] && [ -z "${CXX:-}" ]; then
++  cc_major="$(cc -dumpversion | cut -d. -f1)"
++  cxx_major="$(c++ -dumpversion | cut -d. -f1)"
++  if [ -n "$cc_major" ] && [ "$cc_major" != "$cxx_major" ] &&
++     command -v "gcc-$cc_major" >/dev/null 2>&1 &&
++     command -v "g++-$cc_major" >/dev/null 2>&1; then
++    export CC="$(command -v "gcc-$cc_major")"
++    export CXX="$(command -v "g++-$cc_major")"
++    echo "Using matched compilers: CC=$CC CXX=$CXX"
++  fi
++fi
+ 
+ usage() {
+   cat <<'EOF'
+@@ -64,7 +77,17 @@ if ! has_local_mujoco_deps && [ -f "$deps_archive" ]; then
+   tar -xf "$deps_archive" -C "$mujoco_dir"
+ fi
+ 
+-cmake_args=(-DBUILD_RELEASE=ON)
++cmake_args=(
++  -DBUILD_RELEASE=ON
++  -DCMAKE_PREFIX_PATH="$third_party_dir;$third_party_dir/lib/cmake;$third_party_dir/lib/lcm/cmake;$third_party_dir/share/eigen3/cmake"
++  -DGTest_DIR="$third_party_dir/lib/cmake/GTest"
++  -Dglog_DIR="$third_party_dir/lib/cmake/glog"
++  -Dyaml-cpp_DIR="$third_party_dir/lib/cmake/yaml-cpp"
++  -Dfmt_DIR="$third_party_dir/lib/cmake/fmt"
++  -DEigen3_DIR="$third_party_dir/share/eigen3/cmake"
++  -Dlcm_DIR="$third_party_dir/lib/lcm/cmake"
++  -Dmujoco_DIR="$third_party_dir/lib/cmake/mujoco"
++)
+ if has_local_mujoco_deps; then
+   echo "Using local MuJoCo deps from $deps_dir"
+   cmake_args+=(-DMUJOCO_USE_LOCAL_DEPS=ON)
+diff --git a/scripts/run_mujoco.sh b/scripts/run_mujoco.sh
+index f0ad034..4610aa5 100755
+--- a/scripts/run_mujoco.sh
++++ b/scripts/run_mujoco.sh
+@@ -25,6 +25,9 @@ export ENGINEAI_ROBOTICS_HARDWARE="/opt/engineai_robotics_hardware"
+ echo "[INFO] ENGINEAI_ROBOTICS_HARDWARE=$ENGINEAI_ROBOTICS_HARDWARE"
+ 
+ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ENGINEAI_ROBOTICS_THIRD_PARTY/lib:$ENGINEAI_ROBOTICS_HARDWARE/lib:$ENGINEAI_ROBOTICS_DIR/core/lib"
++if [ -d /opt/onnxruntime/lib ]; then
++    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/onnxruntime/lib"
++fi
+ echo "[INFO] LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+ 
+ echo "[INFO] Run the executor:"
+diff --git a/scripts/run_robot.sh b/scripts/run_robot.sh
+index 9a98a1b..18f685b 100755
+--- a/scripts/run_robot.sh
++++ b/scripts/run_robot.sh
+@@ -106,6 +106,9 @@ export ENGINEAI_ROBOTICS_HARDWARE="/opt/engineai_robotics_hardware"
+ echo "[INFO] ENGINEAI_ROBOTICS_HARDWARE=$ENGINEAI_ROBOTICS_HARDWARE"
+ 
+ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ENGINEAI_ROBOTICS_THIRD_PARTY/lib:$ENGINEAI_ROBOTICS_THIRD_PARTY/lib/runtime:$ENGINEAI_ROBOTICS_HARDWARE/lib:$ENGINEAI_ROBOTICS_DIR/_install/lib"
++if [ -d /opt/onnxruntime/lib ]; then
++    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/onnxruntime/lib"
++fi
+ echo "[INFO] LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+ 
+ echo "[INFO] Run the executor:"
+@@ -118,4 +121,4 @@ if [ $# -gt 0 ]; then
+     ./src_executor "$1"
+ else
+     ./src_executor
+-fi
+\ No newline at end of file
++fi
+diff --git a/src/runner/CMakeLists.txt b/src/runner/CMakeLists.txt
+index 0085fee..f79eb4f 100644
+--- a/src/runner/CMakeLists.txt
++++ b/src/runner/CMakeLists.txt
+@@ -33,6 +33,11 @@ if(used_runners_env)
+     foreach(subdir ${all_subdirectories})
+         set(subdir_cmake_file ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt)
+ 
++        if(${subdir} STREQUAL "ros2_bridge" AND NOT BUILD_ROS2)
++            message(STATUS "Skipping ${subdir} because BUILD_ROS2 is OFF.")
++            continue()
++        endif()
++
+         if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir} AND EXISTS ${subdir_cmake_file})
+             # 检查该子目录是否在允许列表中
+             list(FIND allowed_subdirs "${subdir}" subdir_index)
+@@ -53,6 +58,11 @@ else()
+     foreach(subdir ${all_subdirectories})
+         set(subdir_cmake_file ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt)
+ 
++        if(${subdir} STREQUAL "ros2_bridge" AND NOT BUILD_ROS2)
++            message(STATUS "Skipping ${subdir} because BUILD_ROS2 is OFF.")
++            continue()
++        endif()
++
+         if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir} AND EXISTS ${subdir_cmake_file})
+             add_subdirectory(${subdir})
+             list(APPEND added_runner_subdirs "${subdir}")
+@@ -61,4 +71,3 @@ else()
+         endif()
+     endforeach()
+ endif()
+-
+diff --git a/src/runner/rl_dance_example/CMakeLists.txt b/src/runner/rl_dance_example/CMakeLists.txt
+index f759cd7..39eda34 100644
+--- a/src/runner/rl_dance_example/CMakeLists.txt
++++ b/src/runner/rl_dance_example/CMakeLists.txt
+@@ -30,6 +30,11 @@ target_include_directories(${CURRENT_TARGET_NAME}
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/cnpy>
+ )
+ 
++if(EXISTS "/opt/onnxruntime/include/onnxruntime_cxx_api.h" AND EXISTS "/opt/onnxruntime/lib/libonnxruntime.so")
++  target_include_directories(${CURRENT_TARGET_NAME} PUBLIC /opt/onnxruntime/include)
++  target_compile_definitions(${CURRENT_TARGET_NAME} PUBLIC ENGINEAI_USE_ONNXRUNTIME)
++endif()
++
+ add_subdirectory(include/cnpy)
+ 
+ # Set link libraries of target
+@@ -43,6 +48,10 @@ target_link_libraries(${CURRENT_TARGET_NAME}
+     cnpy
+ )
+ 
++if(EXISTS "/opt/onnxruntime/lib/libonnxruntime.so")
++  target_link_libraries(${CURRENT_TARGET_NAME} PUBLIC /opt/onnxruntime/lib/libonnxruntime.so)
++endif()
++
+ if(TARGET src_data_supplement)
+   target_link_libraries(${CURRENT_TARGET_NAME} PUBLIC src_data_supplement)
+ endif()
+diff --git a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h b/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
+index 2d2ce74..f7f2114 100644
+--- a/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
++++ b/src/runner/rl_dance_example/include/rl_dance_example/rl_dance_example_runner.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#include <memory>
++#include <string>
+ #include <vector>
+ 
+ #include "basic/motion_runner.h"
+@@ -7,6 +9,10 @@
+ #include "rl_dance_example/wbt_obs_registry.h"
+ #include "rl_dance_example_param/rl_dance_example_param.h"
+ 
++#ifdef ENGINEAI_USE_ONNXRUNTIME
++#include <onnxruntime_cxx_api.h>
++#endif
++
+ #include "cnpy.h"
+ #include "math/mnn_model.h"
+ #include "parameter/global_config_initializer.h"
+@@ -36,6 +42,8 @@ class RlDanceExampleRunner : public MotionRunner {
+   void initHistoryBuffers();
+   void fillObsContextConstantPart();
+   void updateFirstFrameYawAlignment();
++  bool LoadPolicy(const std::string& policy_path);
++  Eigen::VectorXf RunPolicy(const Eigen::VectorXf& observations);
+ 
+   Eigen::MatrixXd npyFloatToMatrixXd(const cnpy::NpyArray& npy_array, int row_index = 0);
+ 
+@@ -44,6 +52,7 @@ class RlDanceExampleRunner : public MotionRunner {
+ 
+   // --- Parameters and reference trajectory ---
+   std::shared_ptr<data::RlDanceExampleParam> param_;
++  std::shared_ptr<const Eigen::MatrixXd> ref_body_pos_w_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_pos_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_vel_all_;
+   std::shared_ptr<const Eigen::MatrixXd> ref_body_quat_w_all_;
+@@ -51,7 +60,13 @@ class RlDanceExampleRunner : public MotionRunner {
+   int max_policy_step = 0;
+ 
+   // --- Policy and observation ---
++  bool use_onnx_policy_ = false;
+   std::unique_ptr<math::MNNModel> mlp_net_;
++#ifdef ENGINEAI_USE_ONNXRUNTIME
++  std::unique_ptr<Ort::Env> ort_env_;
++  std::unique_ptr<Ort::SessionOptions> ort_session_options_;
++  std::unique_ptr<Ort::Session> ort_session_;
++#endif
+   Eigen::VectorXd mlp_net_observation_vec;
+   std::shared_ptr<Eigen::VectorXd> mlp_net_action_;
+   std::vector<Eigen::MatrixXd> observation_history_buffers_;
+diff --git a/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h b/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
+index 8b21de2..ec38597 100644
+--- a/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
++++ b/src/runner/rl_dance_example/include/rl_dance_example/wbt_obs_registry.h
+@@ -16,6 +16,7 @@ namespace wbt_obs {
+ struct ObsContext {
+   std::shared_ptr<data::DataStore> data_store = nullptr;
+ 
++  std::shared_ptr<const Eigen::MatrixXd> ref_body_pos_w_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_pos_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_joint_vel_all = nullptr;
+   std::shared_ptr<const Eigen::MatrixXd> ref_body_quat_w_all = nullptr;
+diff --git a/src/runner/rl_dance_example/src/rl_dance_example_runner.cc b/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
+index 9f40ca5..0c59362 100644
+--- a/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
++++ b/src/runner/rl_dance_example/src/rl_dance_example_runner.cc
+@@ -30,6 +30,9 @@
+ 
+ #include "rl_dance_example/rl_dance_example_runner.h"
+ 
++#include <algorithm>
++#include <array>
++
+ #include <glog/logging.h>
+ 
+ #include "math/rotation_matrix.h"
+@@ -101,14 +104,16 @@ bool RlDanceExampleRunner::Enter() {
+   // --- Step 3: Load the MLP policy network ---
+   std::string policy_path =
+       common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->policy_file);
+-  mlp_net_ = std::make_unique<math::MNNModel>(policy_path);
+-  if (!mlp_net_) {
++  if (!LoadPolicy(policy_path)) {
+     LOG(ERROR) << "[WbtRunner::Enter] Failed to load policy model";
+     return false;
+   }
+ 
+   // Compute the total observation dimension (sum of all observation components × their history lengths)
+   int total_obs_dim = ComputeTotalObservationDim();
++  if (use_onnx_policy_ && total_obs_dim != 140) {
++    LOG(WARNING) << "[WbtRunner::Enter] ONNX policy expected the exported T800 obs dim 140, got " << total_obs_dim;
++  }
+   mlp_net_observation_vec.setZero(total_obs_dim);
+   mlp_net_action_ = std::make_shared<Eigen::VectorXd>(Eigen::VectorXd::Zero(param_->num_actions));
+ 
+@@ -124,6 +129,9 @@ bool RlDanceExampleRunner::Enter() {
+   std::string traj_path =
+       common::PathJoin(common::GlobalPathManager::GetInstance().GetConfigPath(), param_->trajectory_file_npz);
+   trajectory_npz = cnpy::npz_load(traj_path);
++  if (trajectory_npz.count("body_pos_w") > 0) {
++    ref_body_pos_w_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["body_pos_w"]));
++  }
+   ref_joint_pos_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["joint_pos"]));
+   ref_joint_vel_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["joint_vel"]));
+   ref_body_quat_w_all_ = std::make_shared<const Eigen::MatrixXd>(npyFloatToMatrixXd(trajectory_npz["body_quat_w"]));
+@@ -153,6 +161,7 @@ bool RlDanceExampleRunner::Enter() {
+  */
+ void RlDanceExampleRunner::fillObsContextConstantPart() {
+   obs_ctx_.data_store = data_store_;
++  obs_ctx_.ref_body_pos_w_all = ref_body_pos_w_all_;
+   obs_ctx_.ref_joint_pos_all = ref_joint_pos_all_;
+   obs_ctx_.ref_joint_vel_all = ref_joint_vel_all_;
+   obs_ctx_.ref_body_quat_w_all = ref_body_quat_w_all_;
+@@ -307,7 +316,7 @@ void RlDanceExampleRunner::CalculateMotorCommand() {
+   data_store_->joint_info.GetState(data::JointInfoType::kVelocity, qd_real_);
+ 
+   // Run MLP forward inference (float precision, cast back to double)
+-  *mlp_net_action_ = (mlp_net_->Inference(mlp_net_observation_vec.cast<float>())).cast<double>();
++  *mlp_net_action_ = RunPolicy(mlp_net_observation_vec.cast<float>()).cast<double>();
+ 
+   // Map action to target joint positions:
+   //   q_des = ref_joint_pos + action * action_scale (for policy-controlled joints only)
+@@ -358,6 +367,77 @@ void RlDanceExampleRunner::End() {}
+ // Utility Methods
+ // ============================================================================
+ 
++bool RlDanceExampleRunner::LoadPolicy(const std::string& policy_path) {
++  use_onnx_policy_ = policy_path.size() >= 5 && policy_path.ends_with(".onnx");
++  if (!use_onnx_policy_) {
++    mlp_net_ = std::make_unique<math::MNNModel>(policy_path);
++    return mlp_net_ != nullptr;
++  }
++
++#ifdef ENGINEAI_USE_ONNXRUNTIME
++  try {
++    ort_env_ = std::make_unique<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "t800_wbt_policy");
++    ort_session_options_ = std::make_unique<Ort::SessionOptions>();
++    ort_session_options_->SetIntraOpNumThreads(1);
++    ort_session_options_->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
++    ort_session_ = std::make_unique<Ort::Session>(*ort_env_, policy_path.c_str(), *ort_session_options_);
++    LOG(INFO) << "[WbtRunner::LoadPolicy] Loaded ONNX policy: " << policy_path;
++    return true;
++  } catch (const Ort::Exception& e) {
++    LOG(ERROR) << "[WbtRunner::LoadPolicy] ONNXRuntime failed to load " << policy_path << ": " << e.what();
++    return false;
++  }
++#else
++  LOG(ERROR) << "[WbtRunner::LoadPolicy] ONNX policy requested, but this build lacks ONNXRuntime support";
++  return false;
++#endif
++}
++
++Eigen::VectorXf RlDanceExampleRunner::RunPolicy(const Eigen::VectorXf& observations) {
++  if (!use_onnx_policy_) {
++    return mlp_net_->Inference(observations);
++  }
++
++#ifdef ENGINEAI_USE_ONNXRUNTIME
++  Eigen::VectorXf result = Eigen::VectorXf::Zero(param_->num_actions);
++  if (!ort_session_) return result;
++
++  try {
++    std::vector<float> obs_data(observations.data(), observations.data() + observations.size());
++    std::array<float, 1> time_data{static_cast<float>(policy_step)};
++    std::array<int64_t, 2> obs_shape{1, static_cast<int64_t>(obs_data.size())};
++    std::array<int64_t, 2> time_shape{1, 1};
++
++    Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
++    std::vector<Ort::Value> input_tensors;
++    input_tensors.emplace_back(
++        Ort::Value::CreateTensor<float>(memory_info, obs_data.data(), obs_data.size(), obs_shape.data(), obs_shape.size()));
++    input_tensors.emplace_back(
++        Ort::Value::CreateTensor<float>(memory_info, time_data.data(), time_data.size(), time_shape.data(), time_shape.size()));
++
++    std::array<const char*, 2> input_names{"obs", "time_step"};
++    std::array<const char*, 1> output_names{"actions"};
++    auto output_tensors = ort_session_->Run(Ort::RunOptions{nullptr}, input_names.data(), input_tensors.data(),
++                                            input_tensors.size(), output_names.data(), output_names.size());
++    if (output_tensors.empty() || !output_tensors[0].IsTensor()) {
++      LOG(ERROR) << "[WbtRunner::RunPolicy] ONNX policy returned no action tensor";
++      return result;
++    }
++
++    auto shape_info = output_tensors[0].GetTensorTypeAndShapeInfo();
++    size_t n = std::min(static_cast<size_t>(param_->num_actions), shape_info.GetElementCount());
++    const float* action_data = output_tensors[0].GetTensorData<float>();
++    for (size_t i = 0; i < n; ++i) result(static_cast<int>(i)) = action_data[i];
++    return result;
++  } catch (const Ort::Exception& e) {
++    LOG(ERROR) << "[WbtRunner::RunPolicy] ONNXRuntime inference failed: " << e.what();
++    return result;
++  }
++#else
++  return Eigen::VectorXf::Zero(param_->num_actions);
++#endif
++}
++
+ /**
+  * @brief Initializes the per-observation-component history buffers.
+  *
+diff --git a/src/runner/rl_dance_example/src/wbt_obs_registry.cc b/src/runner/rl_dance_example/src/wbt_obs_registry.cc
+index d202f96..5ee4509 100644
+--- a/src/runner/rl_dance_example/src/wbt_obs_registry.cc
++++ b/src/runner/rl_dance_example/src/wbt_obs_registry.cc
+@@ -94,6 +94,44 @@ std::unordered_map<std::string, ObsEntry>& GetRegistry() {
+         },
+     };
+ 
++    registry["motion_anchor_pos_b"] = {
++        [](int) { return 3; },
++        [](const ObsContext& ctx) {
++          Eigen::VectorXd out = Eigen::VectorXd::Zero(3);
++          if (!ctx.data_store || !ctx.ref_body_pos_w_all || ctx.ref_body_pos_w_all->rows() == 0) {
++            LOG(ERROR) << "[obs:motion_anchor_pos_b] data_store/ref_body_pos_w_all is null or empty";
++            return out;
++          }
++
++          int r = ctx.ref_body_pos_w_all->rows();
++          int step = std::min(ctx.policy_step, r - 1);
++          Eigen::Vector3d ref_anchor_pos_w = ctx.ref_body_pos_w_all->row(step).transpose();
++
++          auto base_state = ctx.data_store->base_state_in_world.Get();
++          Eigen::Vector3d body_anchor_pos_w = base_state->frame.pose.position;
++          Eigen::Matrix3d body_anchor_ori_rot_w = math::RotationMatrixd(base_state->frame.pose.quaternion).matrix();
++
++          out = body_anchor_ori_rot_w.transpose() * (ref_anchor_pos_w - body_anchor_pos_w);
++          return out;
++        },
++    };
++
++    registry["base_lin_vel"] = {
++        [](int) { return 3; },
++        [](const ObsContext& ctx) {
++          Eigen::VectorXd out = Eigen::VectorXd::Zero(3);
++          if (!ctx.data_store) {
++            LOG(ERROR) << "[obs:base_lin_vel] data_store is null";
++            return out;
++          }
++
++          auto base_state = ctx.data_store->base_state_in_world.Get();
++          Eigen::Matrix3d R_body = math::RotationMatrixd(base_state->frame.pose.quaternion).matrix();
++          out = R_body.transpose() * base_state->frame.twist.linear;
++          return out;
++        },
++    };
++
+     registry["base_ang_vel"] = {
+         [](int) { return 3; },
+         [](const ObsContext& ctx) {
+diff --git a/tools/virtual_gamepad/ui/virtual_gamepad_widget.py b/tools/virtual_gamepad/ui/virtual_gamepad_widget.py
+index a66a315..8ee8ced 100644
+--- a/tools/virtual_gamepad/ui/virtual_gamepad_widget.py
++++ b/tools/virtual_gamepad/ui/virtual_gamepad_widget.py
+@@ -1,9 +1,10 @@
+ import time
+ 
+ from lcm_msgs.data import GamepadKeys
+-from PyQt6.QtCore import Qt, QTimer
++from PyQt6.QtCore import QEvent, Qt, QTimer
+ from PyQt6.QtGui import QColor, QKeySequence, QPainter, QShortcut
+ from PyQt6.QtWidgets import (
++    QApplication,
+     QCheckBox,
+     QGridLayout,
+     QGroupBox,
+@@ -90,12 +91,14 @@ class GamepadButton(QPushButton):
+ 
+ class VirtualGamepadWidget(QWidget):
+     STICK_KEYBOARD_STEP = 1
++    LOCOMOTION_KEYBOARD_VALUE = 4
+ 
+     def __init__(self):
+         super().__init__()
+         self.gamepad_keys = GamepadKeys()
+         self.is_sending = False
+         self.should_send_macro_count = 0
++        self.pressed_locomotion_keys = set()
+         # set keyboard shortcuts
+         self.shortcuts = {
+             'A': Qt.Key.Key_J,
+@@ -106,10 +109,12 @@ class VirtualGamepadWidget(QWidget):
+             'RB': Qt.Key.Key_E,
+             'BACK': Qt.Key.Key_F1,
+             'START': Qt.Key.Key_F2,
+-            'CROSS_X_UP': Qt.Key.Key_W,
+-            'CROSS_X_DOWN': Qt.Key.Key_S,
+-            'CROSS_Y_LEFT': Qt.Key.Key_A,
+-            'CROSS_Y_RIGHT': Qt.Key.Key_D
++        }
++        self.locomotion_keys = {
++            Qt.Key.Key_W: "forward",
++            Qt.Key.Key_S: "backward",
++            Qt.Key.Key_A: "left",
++            Qt.Key.Key_D: "right",
+         }
+         self.stick_shortcuts = {
+             "Left": ("Left Stick Y", -self.STICK_KEYBOARD_STEP),
+@@ -128,7 +133,13 @@ class VirtualGamepadWidget(QWidget):
+             "pd_stand: [LB, A]": ("LB", "A"),
+             "passive: [LB, RB]": ("LB", "RB"),
+             "walk: [LB, B]": ("LB", "B"),
+-            "dance: [RB, B]": ("RB", "B")
++            "dance: [RB, B]": ("RB", "B"),
++            "front_kick: [RB, A]": ("RB", "A"),
++            "spinning_kick: [RB, X]": ("RB", "X"),
++            "straight_punch: [RB, Y]": ("RB", "Y"),
++            "hook_punch: [LB, X]": ("LB", "X"),
++            "jab_left: [LB, Y]": ("LB", "Y"),
++            "recovery_supine: [BACK, A]": ("BACK", "A"),
+         }
+ 
+         self.init_ui()
+@@ -161,6 +172,9 @@ class VirtualGamepadWidget(QWidget):
+         self.setup_stick_shortcuts()
+         self.setup_sliders()
+         self.setup_macro_buttons()
++        app = QApplication.instance()
++        if app is not None:
++            app.installEventFilter(self)
+         # create timer
+         self.timer = QTimer()
+         self.timer.timeout.connect(self.send_state)
+@@ -220,10 +234,10 @@ class VirtualGamepadWidget(QWidget):
+ 
+         # D-pad
+         dpad_layout = QGridLayout()
+-        self.up_button = GamepadButton("↑(w)", 8, left_group, self)
+-        self.down_button = GamepadButton("↓(s)", 9, left_group, self)
+-        self.left_button = GamepadButton("←(a)", 10, left_group, self)
+-        self.right_button = GamepadButton("→(d)", 11, left_group, self)
++        self.up_button = GamepadButton("↑", 8, left_group, self)
++        self.down_button = GamepadButton("↓", 9, left_group, self)
++        self.left_button = GamepadButton("←", 10, left_group, self)
++        self.right_button = GamepadButton("→", 11, left_group, self)
+ 
+         dpad_layout.addWidget(self.up_button, 0, 1)
+         dpad_layout.addWidget(self.left_button, 1, 0)
+@@ -251,7 +265,7 @@ class VirtualGamepadWidget(QWidget):
+         stick_layout = QHBoxLayout()
+ 
+         # Left Stick Group
+-        left_stick_group = QGroupBox("L (Arrow)")
++        left_stick_group = QGroupBox("L (WASD / Arrow)")
+         left_stick_layout = QVBoxLayout()
+ 
+         # X axis for Left Stick
+@@ -491,6 +505,7 @@ class VirtualGamepadWidget(QWidget):
+         self.gamepad_keys = GamepadKeys()
+         self.should_send_macro_count = 0
+         self.shortcut_states = {name: False for name in self.shortcuts}
++        self.pressed_locomotion_keys.clear()
+ 
+         for button, _ in self.button_map.values():
+             button.setDown(False)
+@@ -498,7 +513,25 @@ class VirtualGamepadWidget(QWidget):
+         for slider, _, _ in self.analog_map.values():
+             slider.setValue(0)
+ 
++    def eventFilter(self, watched, event):
++        if event.type() in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease) and event.key() in self.locomotion_keys:
++            if not event.isAutoRepeat():
++                if event.type() == QEvent.Type.KeyPress:
++                    self.pressed_locomotion_keys.add(event.key())
++                else:
++                    self.pressed_locomotion_keys.discard(event.key())
++                self.update_locomotion_stick()
++            return True
++        return super().eventFilter(watched, event)
++
+     def keyPressEvent(self, event):
++        if event.key() in self.locomotion_keys:
++            if not event.isAutoRepeat():
++                self.pressed_locomotion_keys.add(event.key())
++                self.update_locomotion_stick()
++            event.accept()
++            return
++
+         reverse_shortcuts = {v: k for k, v in self.shortcuts.items()}
+         if event.key() in reverse_shortcuts:
+             button_name = reverse_shortcuts[event.key()]
+@@ -506,12 +539,29 @@ class VirtualGamepadWidget(QWidget):
+         super().keyPressEvent(event)
+ 
+     def keyReleaseEvent(self, event):
++        if event.key() in self.locomotion_keys:
++            if not event.isAutoRepeat():
++                self.pressed_locomotion_keys.discard(event.key())
++                self.update_locomotion_stick()
++            event.accept()
++            return
++
+         reverse_shortcuts = {v: k for k, v in self.shortcuts.items()}
+         if event.key() in reverse_shortcuts:
+             button_name = reverse_shortcuts[event.key()]
+             self.handle_shortcut_released(button_name)
+         super().keyReleaseEvent(event)
+ 
++    def update_locomotion_stick(self):
++        forward = int(Qt.Key.Key_W in self.pressed_locomotion_keys)
++        backward = int(Qt.Key.Key_S in self.pressed_locomotion_keys)
++        left = int(Qt.Key.Key_A in self.pressed_locomotion_keys)
++        right = int(Qt.Key.Key_D in self.pressed_locomotion_keys)
++
++        # The adapter negates the GUI Y axis, so A uses a negative slider value.
++        self.left_stick_x.setValue(self.LOCOMOTION_KEYBOARD_VALUE * (forward - backward))
++        self.left_stick_y.setValue(self.LOCOMOTION_KEYBOARD_VALUE * (right - left))
++
+     def handle_shortcut_pressed(self, button_name):
+         if not self.shortcut_states.get(button_name, False):
+             self.shortcut_states[button_name] = True

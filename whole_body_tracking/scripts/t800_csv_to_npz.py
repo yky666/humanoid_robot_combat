@@ -5,8 +5,11 @@
     # Legacy CSV input: root_pos(xyz), root_quat(xyzw), dof_pos
     python t800_csv_to_npz.py --input_file /path/to/t800_motion.csv --input_fps 30 --output_name t800_motion --output_fps 50
 
-    # GMR pickle input (even if it uses a .npz suffix)
+    # GMR pickle input
     python t800_csv_to_npz.py --input_file /path/to/gmr_motion.npz --input_format gmr_pickle --output_name t800_motion
+
+    # Portable GMR raw NPZ input: root_pos, root_rot(xyzw), dof_pos, fps
+    python t800_csv_to_npz.py --input_file /path/to/gmr_motion_raw.npz --input_format gmr_npz --output_name t800_motion
 
     # Legacy 40-column numpy input:
     python t800_csv_to_npz.py --input_file /path/to/riot_combo.npy --input_format legacy_npy --output_name riot_combo_tracking
@@ -29,11 +32,11 @@ parser.add_argument("--input_file", type=str, required=True, help="The path to t
 parser.add_argument(
     "--input_format",
     type=str,
-    choices=("auto", "csv", "gmr_pickle", "legacy_npy"),
+    choices=("auto", "csv", "gmr_pickle", "gmr_npz", "legacy_npy"),
     default="auto",
     help=(
-        "Input motion format. Use gmr_pickle for GMR outputs saved via pickle (sometimes with a .npz suffix). "
-        "Use legacy_npy for historic 40-column T800 arrays."
+        "Input motion format. Use gmr_pickle for GMR outputs saved via pickle, gmr_npz for portable raw GMR "
+        "arrays, or legacy_npy for historic 40-column T800 arrays."
     ),
 )
 parser.add_argument(
@@ -91,7 +94,12 @@ from isaaclab.utils.math import axis_angle_from_quat, quat_conjugate, quat_mul, 
 # Pre-defined configs for t800
 ##
 from whole_body_tracking.robots.t800 import T800_CFG
-from whole_body_tracking.tasks.tracking.config.t800.t800_mdp import T800_DFS_JOINT_NAMES
+from whole_body_tracking.robots.t800_joint_order import (
+    T800_JOINT_ORDER_VERSION,
+    T800_POLICY_JOINT_NAMES,
+)
+
+T800_DFS_JOINT_NAMES = T800_POLICY_JOINT_NAMES
 
 
 # Historic local T800 arrays store root pose followed by an interleaved 25-DoF joint block
@@ -173,6 +181,8 @@ class MotionLoader:
             self._load_csv_motion()
         elif input_format == "gmr_pickle":
             self._load_gmr_pickle_motion()
+        elif input_format == "gmr_npz":
+            self._load_gmr_npz_motion()
         elif input_format == "legacy_npy":
             self._load_legacy_npy_motion()
         else:
@@ -196,6 +206,13 @@ class MotionLoader:
             arr = np.load(input_path, allow_pickle=False)
             if arr.ndim == 2 and arr.shape[1] == 40:
                 return "legacy_npy"
+        if input_path.suffix.lower() == ".npz":
+            try:
+                with np.load(input_path, allow_pickle=False) as motion:
+                    if {"root_pos", "root_rot", "dof_pos"}.issubset(motion.files):
+                        return "gmr_npz"
+            except Exception:
+                pass
 
         try:
             with open(input_path, "rb") as f:
@@ -207,7 +224,7 @@ class MotionLoader:
 
         raise ValueError(
             f"Unable to infer input format for {self.motion_file}. Please pass --input_format csv, "
-            "gmr_pickle, or legacy_npy."
+            "gmr_pickle, gmr_npz, or legacy_npy."
         )
 
     def _resolve_input_fps(self, file_fps: int | float | None = None) -> float:
@@ -250,24 +267,23 @@ class MotionLoader:
         self.motion_base_rots_input = self.motion_base_rots_input[:, [3, 0, 1, 2]]  # xyzw -> wxyz
         self.motion_dof_poss_input = motion[:, 7:]
 
-    def _load_gmr_pickle_motion(self):
-        # Older or alternate numpy builds may serialize arrays under private module
-        # paths such as "numpy._core". Map them to the local numpy install so the
-        # GMR pickle can be loaded across environments.
-        if "numpy._core" not in sys.modules:
-            sys.modules["numpy._core"] = np.core
-        if "numpy._core.numeric" not in sys.modules:
-            sys.modules["numpy._core.numeric"] = np.core.numeric
+    def _fps_from_gmr_value(self, value):
+        if value is None:
+            return None
+        value = np.asarray(value)
+        if value.size != 1:
+            raise ValueError(f"GMR fps should be scalar, got shape {value.shape}")
+        return float(value.reshape(-1)[0])
 
-        with open(self.motion_file, "rb") as f:
-            motion = pickle.load(f)
-
+    def _load_gmr_arrays(self, motion):
         required_keys = {"root_pos", "root_rot", "dof_pos"}
-        missing_keys = required_keys.difference(motion.keys())
+        keys = set(motion.keys() if isinstance(motion, dict) else motion.files)
+        missing_keys = required_keys.difference(keys)
         if missing_keys:
-            raise KeyError(f"GMR pickle is missing required keys: {sorted(missing_keys)}")
+            raise KeyError(f"GMR motion is missing required keys: {sorted(missing_keys)}")
 
-        self.input_fps = self._resolve_input_fps(file_fps=motion.get("fps"))
+        file_fps = self._fps_from_gmr_value(motion["fps"]) if "fps" in keys else None
+        self.input_fps = self._resolve_input_fps(file_fps=file_fps)
         self.input_dt = 1.0 / self.input_fps
 
         root_pos = torch.from_numpy(np.asarray(motion["root_pos"], dtype=np.float32)).to(self.device)
@@ -287,6 +303,24 @@ class MotionLoader:
         self.motion_base_poss_input = root_pos
         self.motion_base_rots_input = root_rot_xyzw[:, [3, 0, 1, 2]]  # xyzw -> wxyz
         self.motion_dof_poss_input = dof_pos
+
+    def _load_gmr_pickle_motion(self):
+        # Older or alternate numpy builds may serialize arrays under private module
+        # paths such as "numpy._core". Map them to the local numpy install so the
+        # GMR pickle can be loaded across environments.
+        if "numpy._core" not in sys.modules:
+            sys.modules["numpy._core"] = np.core
+        if "numpy._core.numeric" not in sys.modules:
+            sys.modules["numpy._core.numeric"] = np.core.numeric
+
+        with open(self.motion_file, "rb") as f:
+            motion = pickle.load(f)
+
+        self._load_gmr_arrays(motion)
+
+    def _load_gmr_npz_motion(self):
+        with np.load(self.motion_file, allow_pickle=False) as motion:
+            self._load_gmr_arrays(motion)
 
     def _load_legacy_npy_motion(self):
         motion = torch.from_numpy(np.load(self.motion_file, allow_pickle=False))
@@ -409,6 +443,9 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene, joi
     # ------- data logger -------------------------------------------------------
     log = {
         "fps": [args_cli.output_fps],
+        "joint_names": np.asarray(joint_names),
+        "joint_order_version": np.asarray(T800_JOINT_ORDER_VERSION),
+        "body_names": np.asarray(robot.body_names),
         "joint_pos": [],
         "joint_vel": [],
         "body_pos_w": [],
@@ -455,8 +492,8 @@ def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene, joi
         sim.set_camera_view(pos_lookat + np.array([2.0, 2.0, 0.5]), pos_lookat)
 
         if not file_saved:
-            log["joint_pos"].append(robot.data.joint_pos[0, :].cpu().numpy().copy())
-            log["joint_vel"].append(robot.data.joint_vel[0, :].cpu().numpy().copy())
+            log["joint_pos"].append(robot.data.joint_pos[0, robot_joint_indexes].cpu().numpy().copy())
+            log["joint_vel"].append(robot.data.joint_vel[0, robot_joint_indexes].cpu().numpy().copy())
             log["body_pos_w"].append(robot.data.body_pos_w[0, :].cpu().numpy().copy())
             log["body_quat_w"].append(robot.data.body_quat_w[0, :].cpu().numpy().copy())
             log["body_lin_vel_w"].append(robot.data.body_lin_vel_w[0, :].cpu().numpy().copy())
