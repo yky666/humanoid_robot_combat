@@ -12,9 +12,12 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
 | Custom package | `/home/user/projects/engineai_robotics_qualifier_20260905` |
+| PD-prep candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_pdprep` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
+| Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
+| Last controller state | Both custom executor and vendor service stopped, pending RC02/power inspection |
 
 The package was built on ARM64, checked against the controller's hardware
 libraries, transferred over the robot LAN, and verified with a 2,441-file
@@ -22,6 +25,10 @@ SHA-256 manifest. The vendor package was not modified.
 
 See the [2026-09-05 deployment log](DEPLOYMENT_LOG_20260905.md) for the first
 controlled startup and rollback record.
+
+The `_pdprep` package is statically staged and manifest-verified but has not
+been started. Do not start either controller until the RC02 framing/timeout and
+motor-power warnings in the deployment log have been inspected on the robot.
 
 ## Network Topology
 
@@ -47,13 +54,15 @@ Verify both the listener and the end-to-end SSH path; a successful local
 git clone https://github.com/engineai-robotics/engineai_robotics_native_sdk.git
 cd engineai_robotics_native_sdk
 git checkout 335c60e88772c26c7852d0abd6b3c7439037dd8f
-git apply --binary \
-  /path/to/humanoid_robot_combat/engineai_native_sdk_integration/deploy_20260904/engineai_native_sdk_335c60e_deploy_working_tree.patch
+cp -a \
+  /path/to/humanoid_robot_combat/engineai_native_sdk_integration/deploy_20260904/overlay/. \
+  ./
 ```
 
-The equivalent file overlay is under
-`engineai_native_sdk_integration/deploy_20260904/overlay/`. Use either the patch
-or the overlay, not both.
+The overlay is the authoritative runnable delta because it includes both
+modified upstream files and newly added policies, trajectories, configuration,
+and tools. The adjacent patch is retained for reviewing upstream-tracked source
+changes; it is not a substitute for the new files in the overlay.
 
 Validate the policy bundle before compiling:
 
@@ -178,12 +187,22 @@ that every policy passed the current qualification gate.
 | State | Entry state | Gamepad | Automatic return |
 | --- | --- | --- | --- |
 | `pd_stand` | `passive` | `LB+A` | none |
+| `pd_stand_x` (prone preparation) | `passive` or `pd_stand` | `LB+X` | none |
+| `pd_stand_y` (supine preparation) | `passive` or `pd_stand` | `LB+Y` | none |
 | `qualifier_front_kick` | `pd_stand` | `RB+A` | `pd_stand` |
 | `qualifier_spinning_kick` | `pd_stand` | `RB+X` | `pd_stand` |
 | `qualifier_straight_punch` | `pd_stand` | `RB+Y` | `pd_stand` |
-| `qualifier_hook_punch` | `pd_stand` | `LB+X` | `pd_stand` |
-| `qualifier_jab_left` | `pd_stand` | `LB+Y` | `pd_stand` |
+| `qualifier_hook_punch` | `pd_stand` | `LB+B` | `pd_stand` |
+| `qualifier_jab_left` | `pd_stand` | `RB+B` | `pd_stand` |
 | `qualifier_recovery_supine` | `passive` | `BACK+A` | `passive` |
+
+`pd_stand_x` and `pd_stand_y` are the official competition preparation poses.
+The state graph deliberately does not connect either one directly to the custom
+`qualifier_recovery_supine` policy. In particular, the official supine pose is
+more than the policy's configured `0.60 rad` initial-pose threshold away from
+its reference frame zero. Treat the official PD states and the custom recovery
+as separate workflows until an explicit trajectory-contract test approves a
+connection.
 
 The spinning kick did not pass the final acceptance gate and must not be treated
 as an approved hardware action. Test accepted motions individually, beginning

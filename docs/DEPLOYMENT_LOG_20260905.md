@@ -90,3 +90,29 @@ At the end of the recorded observation window:
 
 Runtime logs remain on the controller and are deliberately excluded from Git and
 the static deployment manifest.
+
+## PD-Prep Integration Follow-Up
+
+EngineAI's official `pd_stand_x` and `pd_stand_y` competition preparation poses
+were integrated from `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50`.
+The updated package was staged independently at:
+
+```text
+/home/user/projects/engineai_robotics_qualifier_20260905_pdprep
+```
+
+The candidate was not started. Its 2,444-file static manifest passed on Nezha,
+the executor and custom runner remained ARM64 binaries, and `ldd` reported zero
+missing libraries. The final manifest-file SHA-256 is
+`29d44a6867ccbdd88c3e19a2fadc1b3068dc17f6a9a23c4ccc639476039278e2`.
+
+During this follow-up, the still-running original executor logged two rejected
+requests from `idle` to `pd_stand` at 11:02:08 and 11:02:09. It then reported a
+power warning and all motors offline. A second 24-byte RC02 framing burst
+occurred at 11:04:58, followed by RC02 receive timeouts at 11:05:31 and
+11:05:34.
+
+The original custom process group was stopped at 11:08:30. Verification showed
+zero `src_executor` processes, while `robotics.service` was deliberately left
+inactive. Inspect RC02 cabling/data integrity, motor power, and emergency-stop
+state before starting either the vendor controller or the staged candidate.

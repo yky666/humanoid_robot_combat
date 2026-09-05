@@ -28,6 +28,20 @@ STANDING_MOTIONS = {
     "qualifier_jab_left",
 }
 RECOVERY = "qualifier_recovery_supine"
+RECOVERY_PREP = {"pd_stand_x", "pd_stand_y"}
+EXPECTED_KEYS = {
+    "idle": ("LB", "START"),
+    "passive": ("LB", "RB"),
+    "pd_stand": ("LB", "A"),
+    "pd_stand_x": ("LB", "X"),
+    "pd_stand_y": ("LB", "Y"),
+    "qualifier_front_kick": ("RB", "A"),
+    "qualifier_spinning_kick": ("RB", "X"),
+    "qualifier_straight_punch": ("RB", "Y"),
+    "qualifier_hook_punch": ("LB", "B"),
+    "qualifier_jab_left": ("RB", "B"),
+    RECOVERY: ("BACK", "A"),
+}
 
 
 def load_yaml(path: Path) -> dict:
@@ -40,17 +54,41 @@ def validate_state_graph() -> None:
     assert mode["active_mode"] == "robot"
     robot_scopes = {entry["tag"]: entry["scope"] for entry in mode["mode"]["robot"]}
     assert robot_scopes["motion_task"] == "task_motion/qualifier_robot"
+    assert robot_scopes["pd_stand_x"] == "pd_stand/pose_x"
+    assert robot_scopes["pd_stand_y"] == "pd_stand/pose_y"
 
     task = load_yaml(CONFIG / "task_motion/qualifier_robot.yaml")
     motions = {entry["motion"]: entry for entry in task["tasks"]}
-    assert set(motions["pd_stand"]["manual_transition"]) == {"passive", *STANDING_MOTIONS}
+    assert set(motions["pd_stand"]["manual_transition"]) == {
+        "passive", *RECOVERY_PREP, *STANDING_MOTIONS
+    }
     assert RECOVERY not in motions["pd_stand"]["manual_transition"]
-    assert RECOVERY in motions["passive"]["manual_transition"]
+    assert {RECOVERY, *RECOVERY_PREP} <= set(motions["passive"]["manual_transition"])
+    for name in RECOVERY_PREP:
+        other = (RECOVERY_PREP - {name}).pop()
+        assert motions[name]["runner"] == [
+            {"name": "pd_stand_runner", "enabled": True, "param_tag": name}
+        ]
+        assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand", other}
+        assert RECOVERY not in motions[name]["manual_transition"]
     for name in STANDING_MOTIONS:
         assert motions[name]["auto_transition"] == "pd_stand"
         assert set(motions[name]["manual_transition"]) == {"passive", "pd_stand"}
     assert motions[RECOVERY]["auto_transition"] == "passive"
     assert set(motions[RECOVERY]["manual_transition"]) == {"passive"}
+
+    actual_keys = {name: tuple(motions[name]["key"]) for name in EXPECTED_KEYS}
+    assert actual_keys == EXPECTED_KEYS
+    assert len(set(actual_keys.values())) == len(actual_keys), "duplicate gamepad binding"
+
+
+def validate_pd_pose(name: str) -> None:
+    config = load_yaml(CONFIG / f"pd_stand/{name}.yaml")
+    for key in ("desired_joint_position", "stiffness", "damping"):
+        values = np.asarray([value for group in config[key] for value in group], dtype=np.float64)
+        assert values.shape == (25,) and np.isfinite(values).all(), (name, key)
+    assert config["duration"] == 3.0
+    assert config["initial_joint_position_bias_threshold"] == 4.0
 
 
 def validate_motion(path: Path) -> None:
@@ -85,6 +123,8 @@ def validate_motion(path: Path) -> None:
 
 def main() -> None:
     validate_state_graph()
+    validate_pd_pose("pose_x")
+    validate_pd_pose("pose_y")
     configs = sorted(BUNDLE.glob("qualifier_*.yaml"))
     assert len(configs) == 6
     for config in configs:

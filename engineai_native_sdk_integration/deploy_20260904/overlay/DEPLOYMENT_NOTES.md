@@ -2,7 +2,7 @@
 
 ## Identity
 
-- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905`
+- Package directory: `/home/user/projects/engineai_robotics_qualifier_20260905_pdprep`
 - SDK upstream commit: `335c60e88772c26c7852d0abd6b3c7439037dd8f`
 - Target: T800 Nezha controller, ARM64, ROS 2 Humble
 - Official package: `/apps/engineai_robotics` (not modified)
@@ -20,6 +20,8 @@ and previous action. The runner rejects invalid dimensions and non-finite data.
 
 ## Motions
 
+- `pd_stand_x` (official prone recovery preparation pose)
+- `pd_stand_y` (official supine recovery preparation pose)
 - `qualifier_front_kick`
 - `qualifier_spinning_kick`
 - `qualifier_straight_punch`
@@ -29,6 +31,16 @@ and previous action. The runner rejects invalid dimensions and non-finite data.
 
 Standing motions can only be entered from `pd_stand` and return to `pd_stand`.
 Recovery can only be entered from `passive` and returns to `passive`.
+
+The two PD poses come from EngineAI's `urkl_exams` branch at commit
+`0d759376cba552b480f267042d5d069ad5d96b50`. They are independent preparation
+states. Neither state transitions directly into `qualifier_recovery_supine`:
+the official supine pose differs from that policy's reference frame zero by
+more than its configured initial-pose threshold and has not been qualified as
+an interchangeable input.
+
+Official bindings reserve `LB+X` and `LB+Y` for the two PD poses. The custom
+hook punch and left jab therefore use `LB+B` and `RB+B`, respectively.
 
 ## Safety Boundary
 

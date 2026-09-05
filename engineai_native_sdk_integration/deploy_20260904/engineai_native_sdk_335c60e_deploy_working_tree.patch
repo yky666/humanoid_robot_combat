@@ -24,7 +24,7 @@ index 54f51b0..411ad43 100644
  add_subdirectory(src)
 -
 diff --git a/assets/config/t800/mode.yaml b/assets/config/t800/mode.yaml
-index cf73523..50e0cba 100644
+index cf73523..0641329 100644
 --- a/assets/config/t800/mode.yaml
 +++ b/assets/config/t800/mode.yaml
 @@ -1,4 +1,4 @@
@@ -42,7 +42,18 @@ index cf73523..50e0cba 100644
      - tag: global_options
        scope: global_options/release
      - tag: lcm
-@@ -51,6 +51,18 @@ mode:
+@@ -41,6 +41,10 @@ mode:
+       scope: passive/default
+     - tag: pd_stand
+       scope: pd_stand/robot
++    - tag: pd_stand_x
++      scope: pd_stand/pose_x
++    - tag: pd_stand_y
++      scope: pd_stand/pose_y
+     - tag: rl_walking_example
+       scope: rl_walking_example/default
+     - tag: ros2_bridge
+@@ -51,6 +55,18 @@ mode:
        scope: rl_stance_to_supine/default
      - tag: rl_dance_example
        scope: rl_dance_example/default
@@ -61,7 +72,18 @@ index cf73523..50e0cba 100644
        
    sim:
      - tag: resident_task
-@@ -88,4 +100,4 @@ mode:
+@@ -79,6 +95,10 @@ mode:
+       scope: passive/default
+     - tag: pd_stand
+       scope: pd_stand/default
++    - tag: pd_stand_x
++      scope: pd_stand/pose_x
++    - tag: pd_stand_y
++      scope: pd_stand/pose_y
+     - tag: rl_walking_example
+       scope: rl_walking_example/default
+     - tag: ros2_bridge
+@@ -88,4 +108,4 @@ mode:
      - tag: rl_stance_to_supine
        scope: rl_stance_to_supine/default
      - tag: rl_dance_example

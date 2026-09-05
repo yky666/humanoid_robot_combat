@@ -18,7 +18,7 @@ tasks:
     runner:
       - name: passive_runner
         enabled: true
-    manual_transition: [idle, pd_stand, qualifier_recovery_supine]
+    manual_transition: [idle, pd_stand, pd_stand_x, pd_stand_y, qualifier_recovery_supine]
     key: [LB, RB]
 
   - motion: pd_stand
@@ -29,12 +29,34 @@ tasks:
         param_tag: pd_stand
     manual_transition:
       - passive
+      - pd_stand_x
+      - pd_stand_y
       - qualifier_front_kick
       - qualifier_spinning_kick
       - qualifier_straight_punch
       - qualifier_hook_punch
       - qualifier_jab_left
     key: [LB, A]
+
+  # Official URKL fall-recovery preparation poses. They remain independent
+  # from the custom recovery policy because their trajectory contracts differ.
+  - motion: pd_stand_x
+    period: 0.002
+    runner:
+      - name: pd_stand_runner
+        enabled: true
+        param_tag: pd_stand_x
+    manual_transition: [passive, pd_stand, pd_stand_y]
+    key: [LB, X]
+
+  - motion: pd_stand_y
+    period: 0.002
+    runner:
+      - name: pd_stand_runner
+        enabled: true
+        param_tag: pd_stand_y
+    manual_transition: [passive, pd_stand, pd_stand_x]
+    key: [LB, Y]
 
   - motion: qualifier_front_kick
     period: 0.02
@@ -62,14 +84,14 @@ tasks:
     runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_hook_punch}]
     manual_transition: [passive, pd_stand]
     auto_transition: pd_stand
-    key: [LB, X]
+    key: [LB, B]
 
   - motion: qualifier_jab_left
     period: 0.02
     runner: [{name: rl_dance_example_runner, enabled: true, param_tag: qualifier_jab_left}]
     manual_transition: [passive, pd_stand]
     auto_transition: pd_stand
-    key: [LB, Y]
+    key: [RB, B]
 
   - motion: qualifier_recovery_supine
     period: 0.02

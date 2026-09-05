@@ -44,6 +44,10 @@ The independent ARM64 package staged on the T800 controller is an integration
 candidate. Successful compilation, model conversion, or executor startup does
 not promote a policy to accepted status.
 
+The latest `_pdprep` candidate is staged but not running. Both controllers were
+left stopped after renewed RC02 framing/timeouts and a motor-power warning; see
+the [deployment log](docs/DEPLOYMENT_LOG_20260905.md) before the next startup.
+
 ## Repository Map
 
 | Path | Purpose | Documentation |
@@ -181,6 +185,18 @@ included.
 - [Canonical results and qualification evidence](results/t800_canonical_v1_20260902/README.md)
 - [Archive scope and restore notes](docs/ARCHIVE_20260905.md)
 - [Pinned repository revisions](manifests/repositories.json)
+
+## Official T800 References
+
+- [T800 操作指南（中文）](https://ucnj18iantas.feishu.cn/drive/folder/FfrBfrAMxlC37QdFjNacYCeznXd)
+- [T800 Operation Guide (English)](https://ucnj18iantas.feishu.cn/drive/folder/RjF5fyXvAI4nwRdyzSvclWEQnZt)
+- [EngineAI developer documentation](https://engineai.com.cn/open/docs)
+- [EngineAI Native SDK](https://github.com/engineai-robotics/engineai_robotics_native_sdk)
+- [`urkl_exams` competition updates](https://github.com/engineai-robotics/engineai_robotics_native_sdk/commits/urkl_exams), integrated reference commit `0d759376cba552b480f267042d5d069ad5d96b50`
+
+EngineAI's competition-only IMU firmware package is confidential. It is not
+included in this repository, its Git LFS objects, patches, overlays, or runtime
+package and must not be redistributed.
 
 ## Safety and Scope
 

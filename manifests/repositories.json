@@ -30,6 +30,8 @@
       "name": "engineai_robotics_native_sdk_deployment",
       "upstream": "https://github.com/engineai-robotics/engineai_robotics_native_sdk.git",
       "commit": "335c60e88772c26c7852d0abd6b3c7439037dd8f",
+      "reference_branch": "urkl_exams",
+      "reference_commit": "0d759376cba552b480f267042d5d069ad5d96b50",
       "local_delta": "engineai_native_sdk_integration/deploy_20260904"
     }
   ]
