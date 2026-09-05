@@ -226,3 +226,50 @@ vendor service was inactive and startup logs contained zero severe entries,
 zero RC02 framing/timeout warnings, and zero power or motor-readiness warnings.
 The live log is
 `runtime_logs/custom_per_motion_params_20260905_123407.log`.
+
+## Correct Package Restart, Walking, And Audio Feedback
+
+After a Nezha reboot, the enabled vendor service started automatically. At
+16:15 the operator stopped it and launched the older
+`engineai_robotics_qualifier_20260905` package. That package remained in
+`idle`; its log confirmed that `pd_stand` and front-kick requests were received
+but rejected because neither transition is valid directly from `idle`. The
+older package also contained the obsolete shared actor and reachable rejected
+motions, so PID 7106 was stopped without executing an action.
+
+The accepted `_per_motion` package was restarted as PID 9985 in `idle`, then
+stopped after the walking/audio extension was built. The extension reuses the
+unchanged official T800 walking policy (SHA-256
+`cbcb90f86dbb2fde39bdc5a25c8d0530d5c79c7a8f84b1f90863d8c9065b6427`)
+under `rl_walking_example_runner` and assigns `RB+X`, which was vacated by the
+rejected spinning kick. Recovery actions remain unreachable.
+
+Nezha has no ALSA sound card. An Orin listener was therefore installed as
+`t800-audio-feedback.service`, using its USB Audio DAC. The controller sends
+non-blocking UDP `KEY` and `STATE` events to `192.168.0.162:45800`; one tone
+acknowledges a recognized key combination and two tones confirm a state change.
+A standalone test packet and the controller's startup `STATE idle` event were
+both received without playback errors.
+
+The ARM64 build completed on Orin. Runtime SHA-256 values were
+`ac84559723287c62e40945223fa15b3d0b1ef0e4a1411ee403d9309a8a897670`
+for `src_executor`,
+`4001f60490a001802345fed9ad3362032e92d0825cf822f9ad25f8dc1f131049`
+for the input-arbiter library, and
+`6fbf7252aa02813c227ab0671079156159c61840284ef223b5915a8ed3672135`
+for the keyboard publisher. The Orin audio unit was enabled and active as PID
+86729.
+
+The extension was staged independently at:
+
+```text
+/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
+```
+
+Its 2,455-file manifest passed with manifest-file SHA-256
+`25c58e58b7cd6151fcfe0c4c992031a7ed0758d12b1619d8ca1077a186a5dcec`.
+At 16:37:23 it started as PID 12233 and remained in `idle`; the vendor service
+was inactive. Its log is `runtime_logs/custom_20260905_163723.log`. After more
+than three minutes of observation, severe, power, motor-offline, motor-bus, and
+RC02 timeout/framing fault counts remained zero. Walking and combat actions
+were not triggered during this deployment check.

@@ -5,6 +5,10 @@ trajectories for the independent T800 deployment dated 2026-09-04. Each active
 motion uses its own actor-only MNN model with contract `obs[1,140] ->
 actions[1,25]`; see `policies/README.md` for model provenance and hashes.
 
+Walking is provided separately by the unchanged official T800
+`rl_walking_example` runner and policy. It is not one of the four qualifier
+actors and is bound to `RB+X` in the restricted graph.
+
 The training exports retain the robot-description identifiers with reserved
 gaps (`J20` for the first right-arm joint and `J27` for the first head joint).
 The Native SDK model table names the same ordered joints contiguously (`J18`

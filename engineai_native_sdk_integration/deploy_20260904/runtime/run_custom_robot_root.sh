@@ -36,6 +36,8 @@ export ENGINEAI_ROBOTICS_ASSETS="$root_dir/assets"
 export ENGINEAI_ROBOTICS_CONFIG="$root_dir/assets/config"
 export ENGINEAI_ROBOTICS_THIRD_PARTY="$root_dir/_install/engineai_robotics_third_party"
 export ENGINEAI_ROBOTICS_HARDWARE=/opt/engineai_robotics_hardware
+export ENGINEAI_AUDIO_FEEDBACK_HOST="${ENGINEAI_AUDIO_FEEDBACK_HOST:-192.168.0.162}"
+export ENGINEAI_AUDIO_FEEDBACK_PORT="${ENGINEAI_AUDIO_FEEDBACK_PORT:-45800}"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:$ENGINEAI_ROBOTICS_THIRD_PARTY/lib:$ENGINEAI_ROBOTICS_THIRD_PARTY/lib/runtime:$ENGINEAI_ROBOTICS_HARDWARE/lib:$root_dir/_install/lib"
 
 cd "$root_dir/_install/bin"

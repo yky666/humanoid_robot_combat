@@ -11,16 +11,16 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Controller | Nezha, ARM64 Ubuntu 22.04, ROS 2 Humble |
 | Build host | Jetson Orin, ARM64 Ubuntu 22.04 |
 | SDK base | `335c60e88772c26c7852d0abd6b3c7439037dd8f` |
-| Corrected candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_per_motion` |
+| Corrected candidate | `/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio` |
 | Vendor package | `/apps/engineai_robotics` |
 | MNN runtime | 2.9.5 |
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Corrected custom PID `6390` running in `idle`; vendor service inactive |
+| Last controller state | Walking/audio custom PID `12233` running in `idle`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
-libraries, transferred over the robot LAN, and verified with a 2,451-file
+libraries, transferred over the robot LAN, and verified with a 2,455-file
 SHA-256 manifest. The vendor package was not modified.
 
 See the [2026-09-05 deployment log](DEPLOYMENT_LOG_20260905.md) for the first
@@ -106,7 +106,7 @@ file build/aarch64/_install/lib/libsrc_runner_rl_dance_example.so
 The independent runtime directory contains:
 
 ```text
-engineai_robotics_qualifier_20260905_per_motion/
+engineai_robotics_qualifier_20260905_walking_audio/
   _install/                         ARM64 binaries and runtime dependencies
   assets/config/t800/               base T800 and custom motion configuration
   assets/resource/                 T800 model XML, meshes, and environment
@@ -114,6 +114,7 @@ engineai_robotics_qualifier_20260905_per_motion/
   DEPLOYMENT_NOTES.md              package identity and safety boundary
   run_robot.sh                     guarded vendor-compatible launcher
   run_custom_robot_root.sh         root launcher with isolated runtime paths
+  tools/audio_feedback/            Orin USB-speaker listener and systemd unit
 ```
 
 Create a manifest from the package root after final assembly:
@@ -138,7 +139,7 @@ Complete every item before stopping the vendor controller:
 Run the static checks on Nezha:
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
+cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
 sha256sum -c DEPLOYMENT_MANIFEST.sha256
 
 source /opt/ros/humble/setup.bash
@@ -158,7 +159,7 @@ Executor startup is intentionally separate from motion triggering. Start the
 custom executor only after the physical preflight is complete.
 
 ```bash
-cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
+cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
 mkdir -p runtime_logs
 
 sudo systemctl stop robotics.service
@@ -193,15 +194,16 @@ The complete compatibility table is in [T800 Control Mapping](T800_CONTROL_MAPPI
 | `pd_stand` | `passive` | `LB+A` | none |
 | `pd_stand_x` (prone preparation) | `passive` or `pd_stand` | `LB+X` | none |
 | `pd_stand_y` (supine preparation) | `passive` or `pd_stand` | `LB+Y` | none |
+| `walk` (official SDK policy) | `pd_stand` | `RB+X` | none |
 | `qualifier_front_kick` | `pd_stand` | `RB+A` | `pd_stand` |
 | `qualifier_straight_punch` | `pd_stand` | `RB+Y` | `pd_stand` |
 | `qualifier_hook_punch` | `pd_stand` | `LB+B` | `pd_stand` |
 | `qualifier_jab_left` | `pd_stand` | `RB+B` | `pd_stand` |
 `pd_stand_x` and `pd_stand_y` are the official competition preparation poses.
 EngineAI's accepted `rl_supine_to_stance` recovery returns to `walk` in its
-qualified graph. Because this restricted graph does not yet carry that return
-state, neither official recovery nor the older shared-policy custom recovery is
-currently reachable.
+qualified graph. Although walking is exposed independently, neither the
+official recovery nor the older shared-policy custom recovery is reachable
+until its complete transition chain is separately validated.
 
 The spinning kick did not pass the final acceptance gate and has no reachable
 state or key. Test accepted motions individually, beginning with the least
@@ -216,7 +218,7 @@ installing LCM or PyQt locally:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 Run without `--arm` first to verify that `task_state` is received. The tool
@@ -228,6 +230,7 @@ map and `q` to exit. Its single-key map is:
 | --- | --- |
 | `p` | `passive` damping |
 | `t` | `pd_stand` |
+| `w` | official `walk` mode |
 | `x` / `y` | official prone / supine PD preparation |
 | `j` / `h` | left jab / hook punch |
 | `c` / `f` | straight punch / front kick |
@@ -237,10 +240,34 @@ The spinning kick has no keyboard shortcut because it failed the qualification
 gate. This keyboard path is an override for controlled debugging, not a bypass
 for motor readiness, emergency stop, or the physical exclusion zone.
 
+## Orin Audio Feedback
+
+Nezha has no ALSA playback device. The Orin at `192.168.0.162` exposes the
+robot USB DAC, so the custom input arbiter sends non-blocking UDP feedback to
+port `45800`. Install the listener on the Orin after synchronizing the source
+tree:
+
+```bash
+cd /home/ubuntu/engineai_robotics_native_sdk_t800_deploy_20260904
+sudo cp tools/audio_feedback/t800-audio-feedback.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now t800-audio-feedback.service
+systemctl status t800-audio-feedback.service --no-pager
+```
+
+A recognized combination produces one tone. A confirmed task-state change
+produces a two-tone response at the corresponding pitch. Thus a command that
+is received but rejected by the state graph produces only the first tone.
+Inspect exact event names with:
+
+```bash
+journalctl -u t800-audio-feedback.service -n 100 --no-pager
+```
+
 ## Monitoring
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905_per_motion
+target=/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -0 "$pid" && echo running
@@ -257,7 +284,7 @@ unexpected movement, repeated state transitions, or emergency-stop request.
 Stop the saved custom process group before restarting the vendor service:
 
 ```bash
-target=/home/user/projects/engineai_robotics_qualifier_20260905_per_motion
+target=/home/user/projects/engineai_robotics_qualifier_20260905_walking_audio
 pid=$(cat "$target/runtime_logs/custom_controller.pid")
 
 sudo kill -- "-$pid"

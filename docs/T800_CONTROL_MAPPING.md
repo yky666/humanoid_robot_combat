@@ -12,6 +12,7 @@ controller before using a combination.
 | IDLE | `idle` | Initial state; no active motion control. The corrected graph remains here until a command is sent. |
 | Damping | `passive` | Passive damping torque. This is not a standing task and is not an alias for stance. |
 | PD stand | `pd_stand` | Stable upright posture maintained by PD control. |
+| Walking | `walk` | Official Native SDK walking policy; stick commands are active. |
 | Prone PD preparation | `pd_stand_x` | Official URKL prone recovery preparation pose. |
 | Supine PD preparation | `pd_stand_y` | Official URKL supine recovery preparation pose. |
 
@@ -32,15 +33,17 @@ the independent custom executor is running.
 | `LB+A` | `pd_stand` | damping or recovery PD poses | stays in PD stand |
 | `LB+X` | `pd_stand_x`, prone preparation | damping, PD stand, supine preparation | stays in pose |
 | `LB+Y` | `pd_stand_y`, supine preparation | damping, PD stand, prone preparation | stays in pose |
+| `RB+X` | official walking mode | PD stand | stays in walking mode |
 | `RB+A` | front kick | PD stand | PD stand |
 | `RB+Y` | straight punch | PD stand | PD stand |
 | `LB+B` | hook punch | PD stand | PD stand |
 | `RB+B` | left jab | PD stand | PD stand |
 
-There is no spinning-kick binding because that policy failed its acceptance
-gate. The earlier custom shared-policy recovery binding is also disabled; the
-official recovery is archived but remains unreachable until its accepted
-`walk` return state is integrated and tested without changing that contract.
+`RB+X` replaces the rejected spinning-kick binding. There is no spinning-kick
+binding because that policy failed its acceptance gate. The earlier custom
+shared-policy recovery binding is also disabled; the
+official recovery is archived but remains unreachable until its complete
+return chain is separately validated on this graph.
 
 ## SSH Keyboard Mapping
 
@@ -48,7 +51,7 @@ Start the guarded ARM64 publisher from Windows:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_walking_audio && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 | Keyboard | Publishes | Result |
@@ -56,6 +59,7 @@ ssh -t user@192.168.0.163 `
 | `i` | `LB+START` | IDLE |
 | `p` | `LB+RB` | passive damping |
 | `t` | `LB+A` | PD stand |
+| `w` | `RB+X` | official walking mode |
 | `x` / `y` | `LB+X` / `LB+Y` | prone / supine PD preparation |
 | `f` | `RB+A` | front kick |
 | `c` | `RB+Y` | straight punch |
@@ -70,9 +74,10 @@ current `task_state`; it cannot send commands.
 
 The upstream Native SDK T800 default graph uses `LB+START` for IDLE, `LB+RB`
 for damping, `LB+A` for PD stand, `LB+B` for walk, `RB+B` for dance, and
-`START+D-pad up/down` for stand-up/lie-down. The qualifier graph intentionally
-reuses `LB+B` and `RB+B` for approved combat actions, so the default SDK table
-must not be used while the qualifier executor is active.
+`START+D-pad up/down` for stand-up/lie-down. The qualifier graph uses `RB+X`
+for walking and intentionally reuses `LB+B` and `RB+B` for approved combat
+actions, so the default SDK table must not be used while the qualifier executor
+is active.
 
 The older `engineai_humanoid` deployment documents another mapping:
 `LB+BACK` motor disable, `LB+START` motor enable, `LB+B` bent-leg stance,
@@ -94,3 +99,19 @@ Authoritative references:
 3. Enter damping with `LB+RB`, then PD stand with `LB+A` only when the robot is in the required pose.
 4. Trigger one accepted action from PD stand and wait for its automatic PD-stand return.
 5. Return to damping or IDLE deliberately; neither state is a substitute for physical power isolation.
+
+## Audio Feedback
+
+The custom executor sends a non-blocking UDP event to the Orin at
+`192.168.0.162:45800` for recognized mode combinations and confirmed state
+changes. The Orin USB DAC plays one tone when a command is received and a
+two-tone confirmation when the requested state is entered. A lone tone means
+the key reached the controller but the transition was rejected or did not
+complete.
+
+The listener runs as `t800-audio-feedback.service` on the Orin. Inspect it with:
+
+```bash
+systemctl status t800-audio-feedback.service --no-pager
+journalctl -u t800-audio-feedback.service -n 100 --no-pager
+```

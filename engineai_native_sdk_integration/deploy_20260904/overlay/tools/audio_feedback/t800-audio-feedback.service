@@ -1,0 +1,19 @@
+[Unit]
+Description=T800 operator audio feedback
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Environment=PYTHONUNBUFFERED=1
+Environment=T800_AUDIO_ALLOWED_SOURCE=192.168.0.163
+Environment=T800_AUDIO_DEVICE=plughw:CARD=DAC,DEV=0
+ExecStart=/usr/bin/python3 /home/ubuntu/engineai_robotics_native_sdk_t800_deploy_20260904/tools/audio_feedback/t800_audio_feedback.py
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

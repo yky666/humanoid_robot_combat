@@ -46,13 +46,16 @@ struct Action {
 const std::map<char, Action> kActions = {
     {'i', {"idle", {kLb, kStart}, {"passive"}}},
     {'p', {"passive", {kLb, kRb}, {"idle", "pd_stand", "pd_stand_x", "pd_stand_y",
+                                      "walk",
                                       "qualifier_front_kick", "qualifier_straight_punch",
                                       "qualifier_hook_punch", "qualifier_jab_left"}}},
     {'t', {"pd_stand", {kLb, kA}, {"passive", "pd_stand_x", "pd_stand_y",
+                                      "walk",
                                       "qualifier_front_kick", "qualifier_straight_punch",
                                       "qualifier_hook_punch", "qualifier_jab_left"}}},
     {'x', {"pd_stand_x", {kLb, kX}, {"passive", "pd_stand", "pd_stand_y"}}},
     {'y', {"pd_stand_y", {kLb, kY}, {"passive", "pd_stand", "pd_stand_x"}}},
+    {'w', {"walk", {kRb, kX}, {"pd_stand"}}},
     {'f', {"qualifier_front_kick", {kRb, kA}, {"pd_stand"}}},
     {'c', {"qualifier_straight_punch", {kRb, kY}, {"pd_stand"}}},
     {'h', {"qualifier_hook_punch", {kLb, kB}, {"pd_stand"}}},
@@ -142,7 +145,7 @@ bool ReadCharacter(char* value, int timeout_ms) {
 }
 
 void PrintHelp() {
-  std::cout << "Keys: i=idle p=passive-damping t=pd_stand x=prone-PD y=supine-PD "
+  std::cout << "Keys: i=idle p=passive-damping t=pd_stand w=walk x=prone-PD y=supine-PD "
                "j=jab h=hook c=straight-punch f=front-kick "
                "?=help q=quit\n"
                "Spinning kick is intentionally unavailable (qualification gate failed).\n";

@@ -66,6 +66,7 @@ EXPECTED_KEYS = {
     "pd_stand": ("LB", "A"),
     "pd_stand_x": ("LB", "X"),
     "pd_stand_y": ("LB", "Y"),
+    "walk": ("RB", "X"),
     "qualifier_front_kick": ("RB", "A"),
     "qualifier_straight_punch": ("RB", "Y"),
     "qualifier_hook_punch": ("LB", "B"),
@@ -85,14 +86,19 @@ def validate_state_graph() -> None:
     assert robot_scopes["motion_task"] == "task_motion/qualifier_robot"
     assert robot_scopes["pd_stand_x"] == "pd_stand/pose_x"
     assert robot_scopes["pd_stand_y"] == "pd_stand/pose_y"
+    assert robot_scopes["rl_walking_example"] == "rl_walking_example/default"
 
     task = load_yaml(CONFIG / "task_motion/qualifier_robot.yaml")
     motions = {entry["motion"]: entry for entry in task["tasks"]}
     assert "auto_transition" not in motions["idle"]
     assert DISABLED_MOTIONS.isdisjoint(motions)
     assert set(motions["pd_stand"]["manual_transition"]) == {
-        "passive", *RECOVERY_PREP, *STANDING_MOTIONS
+        "passive", "walk", *RECOVERY_PREP, *STANDING_MOTIONS
     }
+    assert motions["walk"]["runner"] == [
+        {"name": "rl_walking_example_runner", "enabled": True, "param_tag": "rl_walking_example"}
+    ]
+    assert set(motions["walk"]["manual_transition"]) == {"passive", "pd_stand"}
     assert RECOVERY_PREP <= set(motions["passive"]["manual_transition"])
     for name in RECOVERY_PREP:
         other = (RECOVERY_PREP - {name}).pop()
@@ -107,6 +113,12 @@ def validate_state_graph() -> None:
     actual_keys = {name: tuple(motions[name]["key"]) for name in EXPECTED_KEYS}
     assert actual_keys == EXPECTED_KEYS
     assert len(set(actual_keys.values())) == len(actual_keys), "duplicate gamepad binding"
+
+    walking_policy = CONFIG / "rl_walking_example/policy/t800_260618_165257_30000.mnn"
+    if walking_policy.exists():
+        assert hashlib.sha256(walking_policy.read_bytes()).hexdigest() == (
+            "cbcb90f86dbb2fde39bdc5a25c8d0530d5c79c7a8f84b1f90863d8c9065b6427"
+        )
 
 
 def validate_pd_pose(name: str) -> None:
