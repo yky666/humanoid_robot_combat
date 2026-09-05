@@ -299,3 +299,28 @@ matched the repository overlay. A metadata audit also passed the observation,
 action, gains, scaling, history, and semantic 25-joint mapping for every active
 motion. Full results and the recommended boxing-ready integration route are in
 `docs/T800_BOXING_READY_AND_POLICY_AUDIT.md`.
+
+## Fall-Recovery Audit
+
+The public `urkl_exams` branch was fetched again at `0d75937`. Its `LB+X`
+`pd_stand_x` and `LB+Y` `pd_stand_y` states are static three-second PD
+preparation poses, not recovery actions. The branch publishes a complete
+`supine_to_stance` MNN-plus-reference-trajectory action but no corresponding
+prone action. Its FSM invokes back recovery separately from `passive` with
+`START+D-pad up` and automatically enters `walk` when the trajectory ends.
+
+The archived public supine action passed 320/320 independent fresh-process
+Native SDK MuJoCo trials with bounded velocity perturbations and a median
+recovery-to-walk time of approximately 3.05 seconds. Those trials used
+`stance_to_supine -> passive -> supine_to_stance -> walk`, not the competition
+`pd_stand_y` preparation pose. The latter differs from the selected recovery
+reference start by as much as 2.32 rad on one joint, so the 0.3-second runtime
+blend is not sufficient evidence for a direct hardware trial.
+
+Read-only inspection of the untouched vendor release found private prone,
+supine, and general fall-recovery assets and dedicated recovery runners in the
+packed release. The vendor therefore has both directions, but its private
+runner ABI and protected assets were not copied into the custom deployment or
+the public repository. PID 12233 and the custom graph were left unchanged; no
+recovery or other motion command was sent. The full findings and integration
+gates are in `docs/T800_FALL_RECOVERY_AUDIT.md`.

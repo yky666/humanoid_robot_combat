@@ -114,6 +114,10 @@ For the vendor boxing-ready investigation, formal rollout evidence, and the
 accepted ONNX-to-MNN mapping audit, see
 [T800 Boxing-Ready and Policy Audit](docs/T800_BOXING_READY_AND_POLICY_AUDIT.md).
 
+For the distinction between the two official PD fall-preparation poses, the
+public supine recovery, and the private vendor prone recovery, see
+[T800 Fall-Recovery Audit](docs/T800_FALL_RECOVERY_AUDIT.md).
+
 ## Development Environments
 
 The recorded workspace used two Conda environments:
@@ -198,6 +202,7 @@ included.
 - [EngineAI Native SDK integration](engineai_native_sdk_integration/README.md)
 - [T800 real-robot deployment and rollback](docs/REAL_ROBOT_DEPLOYMENT.md)
 - [T800 gamepad, keyboard, and state mapping](docs/T800_CONTROL_MAPPING.md)
+- [T800 prone/supine fall-recovery audit](docs/T800_FALL_RECOVERY_AUDIT.md)
 - [2026-09-05 deployment log](docs/DEPLOYMENT_LOG_20260905.md)
 - [Canonical results and qualification evidence](results/t800_canonical_v1_20260902/README.md)
 - [Imported model33778 540-roundhouse evaluation](results/urkl_roundhouse_540_model33778/README.md)

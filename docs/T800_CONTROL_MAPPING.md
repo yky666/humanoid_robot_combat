@@ -15,6 +15,7 @@ controller before using a combination.
 | Walking | `walk` | Official Native SDK walking policy; stick commands are active. |
 | Prone PD preparation | `pd_stand_x` | Official URKL prone recovery preparation pose. |
 | Supine PD preparation | `pd_stand_y` | Official URKL supine recovery preparation pose. |
+| Supine recovery | `supine_to_stance` | Public reference trajectory plus MNN residual policy; not reachable in the current custom graph. |
 
 The vendor UI label `stance` belongs to the vendor/legacy controller workflow.
 The open Native SDK describes its corresponding states as `idle`, `passive`,
@@ -45,6 +46,13 @@ shared-policy recovery binding is also disabled; the
 official recovery is archived but remains unreachable until its complete
 return chain is separately validated on this graph.
 
+`LB+X` and `LB+Y` do not execute recovery. In the public `urkl_exams` graph,
+back recovery is a separate `START+D-pad up` command allowed from `passive`,
+then automatically transitions to `walk`. A typical public sequence is
+`pd_stand_y -> passive -> supine_to_stance -> walk`. The public repository has
+no corresponding prone stand-up action; see the
+[fall-recovery audit](T800_FALL_RECOVERY_AUDIT.md).
+
 ## SSH Keyboard Mapping
 
 Start the guarded ARM64 publisher from Windows:
@@ -72,7 +80,7 @@ current `task_state`; it cannot send commands.
 
 ## Official Default And Legacy Differences
 
-The upstream Native SDK T800 default graph uses `LB+START` for IDLE, `LB+RB`
+The upstream Native SDK T800 `urkl_exams` graph uses `LB+START` for IDLE, `LB+RB`
 for damping, `LB+A` for PD stand, `LB+B` for walk, `RB+B` for dance, and
 `START+D-pad up/down` for stand-up/lie-down. The qualifier graph uses `RB+X`
 for walking and intentionally reuses `LB+B` and `RB+B` for approved combat
