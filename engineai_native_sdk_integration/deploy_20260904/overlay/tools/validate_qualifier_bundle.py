@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the static model, trajectory, parameter and state-graph contracts."""
 
+import hashlib
 from pathlib import Path
 
 import numpy as np
@@ -33,6 +34,31 @@ ACTION_POLICIES = {
     "qualifier_hook_punch": "hook_punch_policy.mnn",
     "qualifier_jab_left": "jab_left_policy.mnn",
     "qualifier_straight_punch": "straight_punch_policy.mnn",
+}
+ACTION_POLICY_SHA256 = {
+    "front_kick_policy.mnn": "f025f857f074cd5073b6f7abb4eedf677af126c9e934c6706542aa911ca6d8f3",
+    "hook_punch_policy.mnn": "f486411792b0744922e195b18c4f2fff09c7ff9ef119a7789af86a27a9195e4b",
+    "jab_left_policy.mnn": "a0437216bb8d7d9f339840a804c34ee5c874ab6c193ff1072887aa9a51695697",
+    "straight_punch_policy.mnn": "7a863b258a5700942628a7ced386f67d9adfd9eb236dbe14ed082f7b91a4b1fa",
+}
+EXPECTED_NATIVE_JOINT_NAMES = [
+    "J00_HIP_PITCH_L", "J01_HIP_ROLL_L", "J02_HIP_YAW_L", "J03_KNEE_PITCH_L",
+    "J04_ANKLE_PITCH_L", "J05_ANKLE_ROLL_L", "J06_HIP_PITCH_R", "J07_HIP_ROLL_R",
+    "J08_HIP_YAW_R", "J09_KNEE_PITCH_R", "J10_ANKLE_PITCH_R", "J11_ANKLE_ROLL_R",
+    "J12_TORSO_YAW", "J13_SHOULDER_PITCH_L", "J14_SHOULDER_ROLL_L",
+    "J15_SHOULDER_YAW_L", "J16_ELBOW_PITCH_L", "J17_ELBOW_YAW_L",
+    "J18_SHOULDER_PITCH_R", "J19_SHOULDER_ROLL_R", "J20_SHOULDER_YAW_R",
+    "J21_ELBOW_PITCH_R", "J22_ELBOW_YAW_R", "J23_HEAD_PITCH", "J24_HEAD_YAW",
+]
+EXPECTED_POLICY_PARAMS = {
+    "joint_stiffness": [180, 100, 100, 180, 40, 40, 180, 100, 100, 180, 40, 40, 100,
+                        40, 40, 40, 40, 50, 40, 40, 40, 40, 50, 50, 50],
+    "joint_damping": [5, 3, 3, 5, .3, .3, 5, 3, 3, 5, .3, .3, 3,
+                      .3, .3, .3, .3, .3, .3, .3, .3, .3, .3, .3, .3],
+    "default_joint_pos": [-.06, 0, 0, .12, -.06, 0, -.06, 0, 0, .12, -.06, 0, 0,
+                          0, .15, 0, -.25, 0, 0, -.15, 0, -.25, 0, 0, 0],
+    "action_scale": [.5, .2, .2, .5, .5, .2, .5, .2, .2, .5, .5, .2, .2,
+                     .2, .2, .05, .2, .05, .2, .2, .05, .2, .05, .2, .2],
 }
 EXPECTED_KEYS = {
     "idle": ("LB", "START"),
@@ -108,7 +134,13 @@ def validate_motion(path: Path) -> None:
     expected_policy = ACTION_POLICIES.get(path.stem)
     if expected_policy:
         assert Path(config["policy_file"]).name == expected_policy
-    assert (CONFIG / config["policy_file"]).is_file()
+        assert config["joint_names"] == EXPECTED_NATIVE_JOINT_NAMES
+        for key, expected in EXPECTED_POLICY_PARAMS.items():
+            assert np.allclose(config[key], expected), (path, key)
+    policy_path = CONFIG / config["policy_file"]
+    assert policy_path.is_file()
+    if expected_policy:
+        assert hashlib.sha256(policy_path.read_bytes()).hexdigest() == ACTION_POLICY_SHA256[expected_policy]
     trajectory_path = CONFIG / config["trajectory_file_npz"]
     assert trajectory_path.is_file()
     with np.load(trajectory_path) as trajectory:

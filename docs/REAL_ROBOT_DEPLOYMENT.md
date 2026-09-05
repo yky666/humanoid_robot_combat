@@ -17,7 +17,7 @@ EngineAI Native SDK controller without overwriting the vendor application.
 | Policy contract | `obs[1,140] -> actions[1,25]`, float32 |
 | Official PD reference | `urkl_exams@0d759376cba552b480f267042d5d069ad5d96b50` |
 | IMU firmware | `V01.02.06b`, package `engineai-imu-update 1.0.3` |
-| Last controller state | Corrected custom PID `4840` running in `idle`; vendor service inactive |
+| Last controller state | Corrected custom PID `6390` running in `idle`; vendor service inactive |
 
 The package was built on ARM64, checked against the controller's hardware
 libraries, transferred over the robot LAN, and verified with a 2,451-file

@@ -202,16 +202,27 @@ shared-policy recovery were removed from the reachable task graph. EngineAI's
 accepted `rl_supine_to_stance` artifacts remain archived but are not exposed
 until their qualified `walk` return path is integrated and tested.
 
+The parameter audit also found that eight shoulder/elbow-pitch gains had been
+staged as `Kp=50`, while all four accepted ONNX exports record `Kp=40` for
+those joints. No hardware-tuning evidence justified that difference. The
+corrected YAML restores the exported values; damping, default joint position,
+action scale, observation order, and observation history already matched.
+The ONNX robot description leaves identifier gaps before the right arm and
+head, whereas the Native SDK uses contiguous identifiers. A semantic-name
+audit confirmed that the ordered 25-joint contract is otherwise identical;
+the deployment YAML correctly uses the Native SDK identifiers.
+
 The corrected package was staged independently at:
 
 ```text
 /home/user/projects/engineai_robotics_qualifier_20260905_per_motion
 ```
 
-Its 2,451-file manifest passed with manifest-file SHA-256
-`362fa13bb9efff5cf63c25d25c5ff34d28d0c7b77a263774224aaeea9737619f`.
-At 12:26:20 it started as PID 4840. A dry-run state subscriber confirmed that
-the corrected graph remains in `idle`; no transition or action was sent. At
-12:27:20 the vendor service was inactive and startup logs contained zero severe
-entries, zero RC02 framing/timeout warnings, and zero power or motor-readiness
-warnings.
+Its final 2,451-file manifest passed with manifest-file SHA-256
+`0aa7b4b0ce724d576fc80175ea841395a78de0c1bdd27833384c0403dd24d7c8`.
+At 12:34:07 it started as PID 6390. A dry-run state subscriber confirmed that
+the corrected graph remains in `idle`; no transition or action was sent. The
+vendor service was inactive and startup logs contained zero severe entries,
+zero RC02 framing/timeout warnings, and zero power or motor-readiness warnings.
+The live log is
+`runtime_logs/custom_per_motion_params_20260905_123407.log`.

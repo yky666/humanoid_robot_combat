@@ -36,6 +36,7 @@ the independent custom executor is running.
 | `RB+Y` | straight punch | PD stand | PD stand |
 | `LB+B` | hook punch | PD stand | PD stand |
 | `RB+B` | left jab | PD stand | PD stand |
+
 There is no spinning-kick binding because that policy failed its acceptance
 gate. The earlier custom shared-policy recovery binding is also disabled; the
 official recovery is archived but remains unreachable until its accepted
@@ -47,7 +48,7 @@ Start the guarded ARM64 publisher from Windows:
 
 ```powershell
 ssh -t user@192.168.0.163 `
-  "cd /home/user/projects/engineai_robotics_qualifier_20260905_pdprep && ./tools/virtual_gamepad/t800_keyboard_control --arm"
+  "cd /home/user/projects/engineai_robotics_qualifier_20260905_per_motion && ./tools/virtual_gamepad/t800_keyboard_control --arm"
 ```
 
 | Keyboard | Publishes | Result |
