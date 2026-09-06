@@ -61,6 +61,12 @@ The recorded addresses and port mapping are:
 | Jetson Orin build host | `ubuntu` | `192.168.0.162:22` | `100.122.105.65:22162` |
 | Nezha controller | `user` | `192.168.0.163:22` | `100.122.105.65:22163` |
 
+These are the only recorded T800 SSH listeners. Port `2222` and the local SSH
+alias `kaiyuan-jump` belong to a separate WorldModel workflow and must not be
+used for T800 access. The Windows PC is a TCP forwarder in this topology, not
+an SSH `ProxyJump` host: connect directly to its Tailscale address on port
+`22162` or `22163`.
+
 Run the following commands in an **Administrator PowerShell** on the Windows
 jump host. `100.74.87.113` is the recorded remote workstation's Tailscale IPv4
 address; replace it if the authorized workstation's Tailscale address changes.
@@ -217,6 +223,52 @@ ssh -p 22162 -o StrictHostKeyChecking=accept-new \
 ssh -p 22163 -o StrictHostKeyChecking=accept-new \
   user@100.122.105.65
 ```
+
+For repeated use, add dedicated aliases to `~/.ssh/config` on the remote Linux
+workstation. Keep these entries separate from any unrelated jump-host config:
+
+```sshconfig
+Host t800-orin
+    HostName 100.122.105.65
+    User ubuntu
+    Port 22162
+    PreferredAuthentications password
+    PubkeyAuthentication no
+    StrictHostKeyChecking accept-new
+    ServerAliveInterval 30
+    ConnectTimeout 20
+
+Host t800-nezha
+    HostName 100.122.105.65
+    User user
+    Port 22163
+    PreferredAuthentications password
+    PubkeyAuthentication no
+    StrictHostKeyChecking accept-new
+    ServerAliveInterval 30
+    ConnectTimeout 20
+```
+
+The normal interactive commands are then:
+
+```bash
+ssh t800-orin
+ssh t800-nezha
+```
+
+The complete path was authenticated again on 2026-09-06, not merely checked
+for an open TCP socket:
+
+```text
+t800-orin  -> host ubuntu   -> eth1      192.168.0.162/24
+t800-nezha -> host ENGINEAI -> enP3p49s0 192.168.0.163/24
+```
+
+If `22162` and `22163` return SSH banners but login is denied, the portproxy is
+healthy and only the endpoint credential or authorized-key setup remains. If
+the connection succeeds but no SSH banner arrives, first re-run the Windows
+repair script and verify Windows-to-robot reachability; do not switch to port
+`2222`.
 
 The recorded end-to-end acceptance check from `100.74.87.113` opened both TCP
 ports and reached each SSH server's authentication phase. A `Permission denied
