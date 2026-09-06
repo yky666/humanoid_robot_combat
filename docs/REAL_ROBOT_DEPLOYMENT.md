@@ -68,7 +68,16 @@ address; replace it if the authorized workstation's Tailscale address changes.
 The repository includes an idempotent repair script that performs the complete
 procedure below. It verifies the Tailscale listener address, removes stale
 portproxy entries and duplicate firewall rules, recreates exactly one of each,
-restarts IP Helper, and fails unless both TCP listener sockets appear:
+keeps IP Helper running, and fails unless both TCP listener sockets appear:
+
+```powershell
+cd C:\path\to\humanoid_robot_combat
+.\tools\windows\repair_t800_ssh_portproxy.ps1
+```
+
+The path is relative to the repository checkout; it does not exist under
+`C:\Windows\System32` unless the repository was copied there. If execution
+policy blocks a checked-out script, use the following from the repository root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File `
@@ -141,12 +150,16 @@ New-NetFirewallRule `
   -RemoteAddress 100.74.87.113 -Profile Any
 ```
 
-Force IP Helper to reload the repaired mappings:
+Allow the running IP Helper service to bind the recreated mappings:
 
 ```powershell
-Restart-Service iphlpsvc
 Start-Sleep -Seconds 2
 ```
+
+Do not run `Restart-Service iphlpsvc` blindly over the only remote connection.
+On some Windows installations it has active dependent services and refuses to
+stop without `-Force`; a forced stop can also interrupt Tailscale. Recreating
+the two mappings while `iphlpsvc` is running is the preferred first repair.
 
 Check the configured mapping, actual listener sockets, and firewall rules:
 
@@ -193,11 +206,13 @@ scp -P 22163 ./artifact.tar.gz user@100.122.105.65:/home/user/
 
 If the rules are present but neither port is listening, confirm `iphlpsvc` is
 running, confirm `100.122.105.65` is still assigned to the Tailscale adapter,
-then recreate only these two rules and restart IP Helper. If the robot-LAN
-target tests fail, repair the Windows Ethernet route or robot-side SSH service:
+then recreate only these two rules while IP Helper remains running. If the
+robot-LAN target tests fail, repair the Windows Ethernet route or robot-side SSH
+service:
 
 ```powershell
 Get-Service iphlpsvc
+Get-Service iphlpsvc -DependentServices
 Get-NetIPAddress -AddressFamily IPv4 -IPAddress 100.122.105.65
 
 Test-NetConnection 192.168.0.162 -Port 22

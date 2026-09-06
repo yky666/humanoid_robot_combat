@@ -64,9 +64,10 @@ foreach ($mapping in $mappings) {
         -Profile Any | Out-Null
 }
 
-# Portproxy rules can exist in the registry while no TCP socket is bound. Force
-# IP Helper to reload the repaired rules before checking the actual listeners.
-Restart-Service -Name iphlpsvc
+# Recreating the rules while IP Helper is running normally binds the sockets
+# immediately. Do not force-restart IP Helper here: services such as Tailscale
+# may depend on it, and stopping them can cut the only remote administration
+# path to this host.
 Start-Sleep -Seconds 2
 
 $listeners = @(
@@ -101,7 +102,10 @@ foreach ($mapping in $mappings) {
 }
 
 if ($missingPorts.Count -ne 0) {
-    throw "No TCP listener for port(s): $($missingPorts -join ', '). Inspect iphlpsvc and the Tailscale IPv4 assignment."
+    Write-Host "`nServices depending on IP Helper:"
+    Get-Service -Name iphlpsvc -DependentServices |
+        Format-Table Status, Name, DisplayName
+    throw "No TCP listener for port(s): $($missingPorts -join ', '). Do not force-stop IP Helper remotely; inspect its dependent services first."
 }
 
 Write-Host "`nBoth Windows listeners are active. Test SSH from $AllowedRemoteAddress;"
