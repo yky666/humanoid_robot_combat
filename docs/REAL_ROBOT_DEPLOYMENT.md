@@ -48,8 +48,9 @@ The Windows Ethernet adapter uses a static address in the same subnet. In the
 recorded setup, forwarded TCP ports exposed Orin SSH and Nezha SSH through the
 Windows Tailscale address. Do not commit SSH passwords or private keys.
 
-Verify both the listener and the end-to-end SSH path; a successful local
-`Test-NetConnection` alone only proves that the Windows listener is reachable.
+Verify the configured rule, actual listener socket, robot-LAN target, and
+end-to-end SSH path separately. A rule printed by `netsh` does not prove that
+Windows has bound its TCP listener.
 
 ### Windows Tailscale port forwarding
 
@@ -64,6 +65,25 @@ Run the following commands in an **Administrator PowerShell** on the Windows
 jump host. `100.74.87.113` is the recorded remote workstation's Tailscale IPv4
 address; replace it if the authorized workstation's Tailscale address changes.
 
+The repository includes an idempotent repair script that performs the complete
+procedure below. It verifies the Tailscale listener address, removes stale
+portproxy entries and duplicate firewall rules, recreates exactly one of each,
+restarts IP Helper, and fails unless both TCP listener sockets appear:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File `
+  .\tools\windows\repair_t800_ssh_portproxy.ps1
+```
+
+To use different Tailscale addresses, pass them explicitly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File `
+  .\tools\windows\repair_t800_ssh_portproxy.ps1 `
+  -ListenAddress 100.122.105.65 `
+  -AllowedRemoteAddress 100.74.87.113
+```
+
 First verify that Windows can reach both robot-side SSH servers and that the IP
 Helper service required by `portproxy` is running:
 
@@ -76,7 +96,17 @@ Start-Service iphlpsvc
 Set-Service iphlpsvc -StartupType Automatic
 ```
 
-Create the two TCP forwarding rules:
+For a manual repair, remove the two old mappings first. This is safe for other
+`portproxy` entries because it names only the two T800 listeners:
+
+```powershell
+netsh interface portproxy delete v4tov4 `
+  listenaddress=100.122.105.65 listenport=22162
+netsh interface portproxy delete v4tov4 `
+  listenaddress=100.122.105.65 listenport=22163
+```
+
+Then create the two TCP forwarding rules:
 
 ```powershell
 netsh interface portproxy add v4tov4 `
@@ -88,10 +118,16 @@ netsh interface portproxy add v4tov4 `
   connectaddress=192.168.0.163 connectport=22
 ```
 
-Restrict inbound access to the authorized remote workstation rather than
-opening the forwarded ports to every Tailscale peer:
+Delete any duplicate copies of the two named firewall rules, then recreate
+exactly one rule for each listener. Restrict inbound access to the authorized
+remote workstation rather than opening the ports to every Tailscale peer:
 
 ```powershell
+Get-NetFirewallRule -DisplayName "T800 Orin SSH via Tailscale" `
+  -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+Get-NetFirewallRule -DisplayName "T800 Nezha SSH via Tailscale" `
+  -ErrorAction SilentlyContinue | Remove-NetFirewallRule
+
 New-NetFirewallRule `
   -DisplayName "T800 Orin SSH via Tailscale" `
   -Direction Inbound -Action Allow -Protocol TCP `
@@ -105,8 +141,14 @@ New-NetFirewallRule `
   -RemoteAddress 100.74.87.113 -Profile Any
 ```
 
-Check the configured mapping, listeners, firewall rules, and local forwarding
-path:
+Force IP Helper to reload the repaired mappings:
+
+```powershell
+Restart-Service iphlpsvc
+Start-Sleep -Seconds 2
+```
+
+Check the configured mapping, actual listener sockets, and firewall rules:
 
 ```powershell
 netsh interface portproxy show v4tov4
@@ -118,13 +160,21 @@ Get-NetTCPConnection -State Listen |
 Get-NetFirewallRule -DisplayName "T800 * SSH via Tailscale" |
   Format-Table DisplayName,Enabled,Direction,Action
 
-Test-NetConnection 100.122.105.65 -Port 22162
-Test-NetConnection 100.122.105.65 -Port 22163
 ```
+
+Seeing entries in `netsh interface portproxy show v4tov4` is not sufficient:
+both ports must also appear in `Get-NetTCPConnection -State Listen`. Because the
+firewall rules intentionally accept only source `100.74.87.113`, a
+`Test-NetConnection` from the Windows jump host to its own Tailscale address is
+not the end-to-end acceptance test and may be rejected by the source filter.
 
 From the remote Linux workstation, connect through the forwarded ports:
 
 ```bash
+# Verify the two TCP paths from the authorized Tailscale source first.
+timeout 8 bash -lc '</dev/tcp/100.122.105.65/22162'
+timeout 8 bash -lc '</dev/tcp/100.122.105.65/22163'
+
 # Jetson Orin (.162)
 ssh -p 22162 -o StrictHostKeyChecking=accept-new \
   ubuntu@100.122.105.65
@@ -141,13 +191,18 @@ scp -P 22162 ./artifact.tar.gz ubuntu@100.122.105.65:/home/ubuntu/
 scp -P 22163 ./artifact.tar.gz user@100.122.105.65:/home/user/
 ```
 
-If the rules are present but neither port is listening, restart IP Helper and
-recheck the listeners. If the robot-LAN target tests fail, repair the Windows
-Ethernet route or robot-side SSH service before changing `portproxy`:
+If the rules are present but neither port is listening, confirm `iphlpsvc` is
+running, confirm `100.122.105.65` is still assigned to the Tailscale adapter,
+then recreate only these two rules and restart IP Helper. If the robot-LAN
+target tests fail, repair the Windows Ethernet route or robot-side SSH service:
 
 ```powershell
-Restart-Service iphlpsvc
-netsh interface portproxy show v4tov4
+Get-Service iphlpsvc
+Get-NetIPAddress -AddressFamily IPv4 -IPAddress 100.122.105.65
+
+Test-NetConnection 192.168.0.162 -Port 22
+Test-NetConnection 192.168.0.163 -Port 22
+
 Get-NetTCPConnection -State Listen |
   Where-Object LocalPort -in 22162,22163
 ```
@@ -167,6 +222,8 @@ Get-NetFirewallRule -DisplayName "T800 Nezha SSH via Tailscale" |
 ```
 
 Do not place passwords, private keys, or `sshpass` commands in this repository.
+The command syntax follows Microsoft's
+[`netsh interface portproxy` reference](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/netsh-interface).
 
 ## Reconstruct the SDK Tree
 
