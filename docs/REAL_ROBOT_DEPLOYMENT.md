@@ -51,6 +51,123 @@ Windows Tailscale address. Do not commit SSH passwords or private keys.
 Verify both the listener and the end-to-end SSH path; a successful local
 `Test-NetConnection` alone only proves that the Windows listener is reachable.
 
+### Windows Tailscale port forwarding
+
+The recorded addresses and port mapping are:
+
+| Endpoint | SSH account | Robot-LAN target | Windows Tailscale listener |
+| --- | --- | --- | --- |
+| Jetson Orin build host | `ubuntu` | `192.168.0.162:22` | `100.122.105.65:22162` |
+| Nezha controller | `user` | `192.168.0.163:22` | `100.122.105.65:22163` |
+
+Run the following commands in an **Administrator PowerShell** on the Windows
+jump host. `100.74.87.113` is the recorded remote workstation's Tailscale IPv4
+address; replace it if the authorized workstation's Tailscale address changes.
+
+First verify that Windows can reach both robot-side SSH servers and that the IP
+Helper service required by `portproxy` is running:
+
+```powershell
+Test-NetConnection 192.168.0.162 -Port 22
+Test-NetConnection 192.168.0.163 -Port 22
+
+Get-Service iphlpsvc
+Start-Service iphlpsvc
+Set-Service iphlpsvc -StartupType Automatic
+```
+
+Create the two TCP forwarding rules:
+
+```powershell
+netsh interface portproxy add v4tov4 `
+  listenaddress=100.122.105.65 listenport=22162 `
+  connectaddress=192.168.0.162 connectport=22
+
+netsh interface portproxy add v4tov4 `
+  listenaddress=100.122.105.65 listenport=22163 `
+  connectaddress=192.168.0.163 connectport=22
+```
+
+Restrict inbound access to the authorized remote workstation rather than
+opening the forwarded ports to every Tailscale peer:
+
+```powershell
+New-NetFirewallRule `
+  -DisplayName "T800 Orin SSH via Tailscale" `
+  -Direction Inbound -Action Allow -Protocol TCP `
+  -LocalAddress 100.122.105.65 -LocalPort 22162 `
+  -RemoteAddress 100.74.87.113 -Profile Any
+
+New-NetFirewallRule `
+  -DisplayName "T800 Nezha SSH via Tailscale" `
+  -Direction Inbound -Action Allow -Protocol TCP `
+  -LocalAddress 100.122.105.65 -LocalPort 22163 `
+  -RemoteAddress 100.74.87.113 -Profile Any
+```
+
+Check the configured mapping, listeners, firewall rules, and local forwarding
+path:
+
+```powershell
+netsh interface portproxy show v4tov4
+
+Get-NetTCPConnection -State Listen |
+  Where-Object LocalPort -in 22162,22163 |
+  Format-Table LocalAddress,LocalPort,OwningProcess
+
+Get-NetFirewallRule -DisplayName "T800 * SSH via Tailscale" |
+  Format-Table DisplayName,Enabled,Direction,Action
+
+Test-NetConnection 100.122.105.65 -Port 22162
+Test-NetConnection 100.122.105.65 -Port 22163
+```
+
+From the remote Linux workstation, connect through the forwarded ports:
+
+```bash
+# Jetson Orin (.162)
+ssh -p 22162 -o StrictHostKeyChecking=accept-new \
+  ubuntu@100.122.105.65
+
+# Nezha controller (.163)
+ssh -p 22163 -o StrictHostKeyChecking=accept-new \
+  user@100.122.105.65
+```
+
+Use the same port numbers with `scp` when transferring files:
+
+```bash
+scp -P 22162 ./artifact.tar.gz ubuntu@100.122.105.65:/home/ubuntu/
+scp -P 22163 ./artifact.tar.gz user@100.122.105.65:/home/user/
+```
+
+If the rules are present but neither port is listening, restart IP Helper and
+recheck the listeners. If the robot-LAN target tests fail, repair the Windows
+Ethernet route or robot-side SSH service before changing `portproxy`:
+
+```powershell
+Restart-Service iphlpsvc
+netsh interface portproxy show v4tov4
+Get-NetTCPConnection -State Listen |
+  Where-Object LocalPort -in 22162,22163
+```
+
+To remove this exposure when it is no longer needed, run:
+
+```powershell
+netsh interface portproxy delete v4tov4 `
+  listenaddress=100.122.105.65 listenport=22162
+netsh interface portproxy delete v4tov4 `
+  listenaddress=100.122.105.65 listenport=22163
+
+Get-NetFirewallRule -DisplayName "T800 Orin SSH via Tailscale" |
+  Remove-NetFirewallRule
+Get-NetFirewallRule -DisplayName "T800 Nezha SSH via Tailscale" |
+  Remove-NetFirewallRule
+```
+
+Do not place passwords, private keys, or `sshpass` commands in this repository.
+
 ## Reconstruct the SDK Tree
 
 ```bash
