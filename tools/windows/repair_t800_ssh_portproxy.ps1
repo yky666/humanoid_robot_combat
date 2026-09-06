@@ -40,10 +40,10 @@ foreach ($mapping in $mappings) {
         protocol=tcp | Out-Null
 
     & netsh interface portproxy add v4tov4 `
-        "listenaddress=$ListenAddress" `
         "listenport=$($mapping.ListenPort)" `
         "connectaddress=$($mapping.ConnectAddress)" `
         connectport=22 `
+        "listenaddress=$ListenAddress" `
         protocol=tcp | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create portproxy listener $($mapping.ListenPort)."

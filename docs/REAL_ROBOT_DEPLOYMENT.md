@@ -119,13 +119,24 @@ Then create the two TCP forwarding rules:
 
 ```powershell
 netsh interface portproxy add v4tov4 `
-  listenaddress=100.122.105.65 listenport=22162 `
-  connectaddress=192.168.0.162 connectport=22
+  listenport=22162 `
+  connectaddress=192.168.0.162 `
+  connectport=22 `
+  listenaddress=100.122.105.65 `
+  protocol=tcp
 
 netsh interface portproxy add v4tov4 `
-  listenaddress=100.122.105.65 listenport=22163 `
-  connectaddress=192.168.0.163 connectport=22
+  listenport=22163 `
+  connectaddress=192.168.0.163 `
+  connectport=22 `
+  listenaddress=100.122.105.65 `
+  protocol=tcp
 ```
+
+In PowerShell, the backtick must be the final character on each continued line;
+do not leave a space after it. If a pasted command runs before
+`connectaddress` is entered, PowerShell split the command and no mapping was
+created.
 
 Delete any duplicate copies of the two named firewall rules, then recreate
 exactly one rule for each listener. Restrict inbound access to the authorized
@@ -181,6 +192,16 @@ firewall rules intentionally accept only source `100.74.87.113`, a
 `Test-NetConnection` from the Windows jump host to its own Tailscale address is
 not the end-to-end acceptance test and may be rejected by the source filter.
 
+The repaired configuration was verified on 2026-09-06 with both listener
+sockets owned by the same IP Helper process:
+
+```text
+LocalAddress       LocalPort
+------------       ---------
+100.122.105.65         22163
+100.122.105.65         22162
+```
+
 From the remote Linux workstation, connect through the forwarded ports:
 
 ```bash
@@ -196,6 +217,12 @@ ssh -p 22162 -o StrictHostKeyChecking=accept-new \
 ssh -p 22163 -o StrictHostKeyChecking=accept-new \
   user@100.122.105.65
 ```
+
+The recorded end-to-end acceptance check from `100.74.87.113` opened both TCP
+ports and reached each SSH server's authentication phase. A `Permission denied
+(publickey,password)` result from an intentional `BatchMode=yes` probe proves
+the TCP proxy and SSH handshake worked; it means only that the non-interactive
+probe did not supply an accepted credential.
 
 Use the same port numbers with `scp` when transferring files:
 
