@@ -17,8 +17,19 @@ def _value(mapping: dict[str, Any], key: str, default: Any = None) -> Any:
 def adapt_legacy_ppo_cfg(train_cfg: dict[str, Any]) -> dict[str, Any]:
     """Adapt IsaacLab actor-critic PPO config to rsl_rl>=3 actor/critic config."""
     cfg = copy.deepcopy(train_cfg)
-    if "actor" in cfg and "critic" in cfg:
+    actor_cfg = cfg.get("actor")
+    critic_cfg = cfg.get("critic")
+    has_new_model_cfg = all(
+        isinstance(model_cfg, dict)
+        and bool(model_cfg.get("class_name"))
+        and not _is_missing(model_cfg.get("class_name"))
+        for model_cfg in (actor_cfg, critic_cfg)
+    )
+    if has_new_model_cfg:
         return cfg
+
+    cfg.pop("actor", None)
+    cfg.pop("critic", None)
 
     policy = cfg.pop("policy", None)
     if policy is None:

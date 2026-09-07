@@ -61,7 +61,13 @@ class MyOnPolicyRunner(OnPolicyRunner):
             policy_path = path.split("model")[0]
             filename = policy_path.split("/")[-2] + ".onnx"
             self.export_policy_to_onnx(policy_path, filename=filename)
-            attach_onnx_metadata(self.env.unwrapped, wandb.run.name, path=policy_path, filename=filename)
+            attach_onnx_metadata(
+                self.env.unwrapped,
+                wandb.run.name,
+                path=policy_path,
+                filename=filename,
+                checkpoint_path=path,
+            )
             wandb.save(policy_path + filename, base_path=os.path.dirname(policy_path))
 
 
@@ -99,7 +105,13 @@ class MotionOnPolicyRunner(OnPolicyRunner):
                 path=policy_path,
                 filename=filename,
             )
-            attach_onnx_metadata(self.env.unwrapped, wandb.run.name, path=policy_path, filename=filename)
+            attach_onnx_metadata(
+                self.env.unwrapped,
+                wandb.run.name,
+                path=policy_path,
+                filename=filename,
+                checkpoint_path=path,
+            )
             wandb.save(policy_path + filename, base_path=os.path.dirname(policy_path))
 
             # link the artifact registry to this run

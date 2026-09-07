@@ -10,7 +10,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_BASE.dae" />
+        <mesh filename="meshes/LINK_BASE.dae" />
       </geometry>
     </visual>
     <collision>
@@ -29,7 +29,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_PITCH_L.dae" />
+        <mesh filename="meshes/LINK_HIP_PITCH_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -55,7 +55,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_ROLL_L.dae" />
+        <mesh filename="meshes/LINK_HIP_ROLL_L.dae" />
       </geometry>
     </visual>
   </link>
@@ -75,7 +75,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_YAW_L.dae" />
+        <mesh filename="meshes/LINK_HIP_YAW_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -101,7 +101,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_KNEE_PITCH_L.dae" />
+        <mesh filename="meshes/LINK_KNEE_PITCH_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -133,7 +133,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ANKLE_PITCH_L.dae" />
+        <mesh filename="meshes/LINK_ANKLE_PITCH_L.dae" />
       </geometry>
     </visual>
   </link>
@@ -153,7 +153,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ANKLE_ROLL_L.dae" />
+        <mesh filename="meshes/LINK_ANKLE_ROLL_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -200,7 +200,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_PITCH_R.dae" />
+        <mesh filename="meshes/LINK_HIP_PITCH_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -226,7 +226,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_ROLL_R.dae" />
+        <mesh filename="meshes/LINK_HIP_ROLL_R.dae" />
       </geometry>
     </visual>
   </link>
@@ -246,7 +246,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HIP_YAW_R.dae" />
+        <mesh filename="meshes/LINK_HIP_YAW_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -272,7 +272,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_KNEE_PITCH_R.dae" />
+        <mesh filename="meshes/LINK_KNEE_PITCH_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -304,7 +304,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ANKLE_PITCH_R.dae" />
+        <mesh filename="meshes/LINK_ANKLE_PITCH_R.dae" />
       </geometry>
     </visual>
   </link>
@@ -324,7 +324,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ANKLE_ROLL_R.dae" />
+        <mesh filename="meshes/LINK_ANKLE_ROLL_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -371,7 +371,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_TORSO_YAW.dae" />
+        <mesh filename="meshes/LINK_TORSO_YAW.dae" />
       </geometry>
     </visual>
     <collision>
@@ -403,7 +403,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_PITCH_L.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_PITCH_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -429,7 +429,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_ROLL_L.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_ROLL_L.dae" />
       </geometry>
     </visual>
   </link>
@@ -449,7 +449,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_YAW_L.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_YAW_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -475,7 +475,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ELBOW_PITCH_L.dae" />
+        <mesh filename="meshes/LINK_ELBOW_PITCH_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -501,7 +501,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ELBOW_YAW_L.dae" />
+        <mesh filename="meshes/LINK_ELBOW_YAW_L.dae" />
       </geometry>
     </visual>
     <collision>
@@ -547,7 +547,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_PITCH_R.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_PITCH_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -573,7 +573,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_ROLL_R.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_ROLL_R.dae" />
       </geometry>
     </visual>
   </link>
@@ -593,7 +593,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_SHOULDER_YAW_R.dae" />
+        <mesh filename="meshes/LINK_SHOULDER_YAW_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -619,7 +619,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ELBOW_PITCH_R.dae" />
+        <mesh filename="meshes/LINK_ELBOW_PITCH_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -645,7 +645,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_ELBOW_YAW_R.dae" />
+        <mesh filename="meshes/LINK_ELBOW_YAW_R.dae" />
       </geometry>
     </visual>
     <collision>
@@ -690,7 +690,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HEAD_PITCH.dae" />
+        <mesh filename="meshes/LINK_HEAD_PITCH.dae" />
       </geometry>
     </visual>
   </link>
@@ -711,7 +711,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="../meshes/LINK_HEAD_YAW.dae" />
+        <mesh filename="meshes/LINK_HEAD_YAW.dae" />
       </geometry>
     </visual>
     <collision>

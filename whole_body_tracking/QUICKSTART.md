@@ -314,6 +314,33 @@ The recorded videos land under:
 logs/rsl_rl/t800_flat/<run_name>/videos/play/
 ```
 
+## 9.5 Prone and Supine Recovery
+
+Recovery uses a separate contact-aware task and must start from a reference
+whose first frame matches the official `pd_stand_x` or `pd_stand_y` target:
+
+```bash
+python scripts/t800_validate_recovery_reference.py \
+  artifacts/recovery/prone_pd_x_to_boxing_ready_tracking.npz \
+  --orientation prone \
+  --ready-reference artifacts/recovery/boxing_ready_hold_tracking.npz \
+  --output artifacts/recovery/prone_reference_report.json
+
+CUDA_VISIBLE_DEVICES=0 python scripts/rsl_rl/train_t800.py \
+  --task_variant recovery \
+  --motion_file artifacts/recovery/prone_pd_x_to_boxing_ready_tracking.npz \
+  --num_envs 64 \
+  --max_iterations 1 \
+  --headless \
+  --device cuda:0 \
+  --run_name recovery_prone_smoke \
+  --logger tensorboard
+```
+
+Prone and supine require separate policies. The full reference-building,
+qualification, ONNX-to-MNN, and hardware staging procedure is in
+[T800 RL Recovery Training and Deployment](docs/t800_rl_recovery_training.md).
+
 ## 10. Current Stable T800 Baseline
 
 The current T800 baseline was stabilized around:

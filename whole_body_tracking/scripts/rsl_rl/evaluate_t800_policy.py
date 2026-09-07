@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -56,6 +57,14 @@ def atomic_write_json(path: Path, payload: dict) -> None:
         handle.write("\n")
         temp_path = Path(handle.name)
     os.replace(temp_path, path)
+
+
+def sha256(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 @hydra_task_config(args_cli.task, "rsl_rl_cfg_entry_point")
@@ -139,6 +148,7 @@ def main(
         "status": "passed" if passed else "failed",
         "motion_file": env_cfg.commands.motion.motion_file,
         "checkpoint": checkpoint_path,
+        "checkpoint_sha256": sha256(checkpoint_path),
         "joint_order": command.motion.joint_names,
         "horizon_steps": horizon,
         "episodes": args_cli.episodes,

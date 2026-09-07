@@ -211,7 +211,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         path=export_model_dir,
         filename="policy.onnx",
     )
-    attach_onnx_metadata(env.unwrapped, args_cli.wandb_path if args_cli.wandb_path else "none", export_model_dir)
+    attach_onnx_metadata(
+        env.unwrapped,
+        args_cli.wandb_path if args_cli.wandb_path else "none",
+        export_model_dir,
+        checkpoint_path=resume_path,
+    )
     
     # reset environment
     # 这里好像写错了呢，维度不匹配

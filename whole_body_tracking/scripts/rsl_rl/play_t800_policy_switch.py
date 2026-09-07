@@ -219,7 +219,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         path=export_model_dir,
         filename="policy.onnx",
     )
-    attach_onnx_metadata(raw_env, args_cli.wandb_path if args_cli.wandb_path else "none", export_model_dir)
+    attach_onnx_metadata(
+        raw_env,
+        args_cli.wandb_path if args_cli.wandb_path else "none",
+        export_model_dir,
+        checkpoint_path=resume_path,
+    )
 
     obs, _ = env.reset()
     command = raw_env.command_manager.get_term("motion")

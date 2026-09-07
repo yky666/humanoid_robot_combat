@@ -23,7 +23,7 @@ def main() -> int:
     parser.add_argument("--device", type=str, default="cuda:0", help="Torch device for playback.")
     parser.add_argument(
         "--task_variant",
-        choices=("default", "low_freq", "wo_state_estimation"),
+        choices=("default", "recovery", "low_freq", "wo_state_estimation"),
         default="default",
         help="Which registered T800 task variant to launch.",
     )
@@ -40,6 +40,7 @@ def main() -> int:
 
     task_map = {
         "default": "Tracking-Flat-T800-v0",
+        "recovery": "Tracking-Flat-T800-Recovery-v0",
         "low_freq": "Tracking-Flat-T800-Low-Freq-v0",
         "wo_state_estimation": "Tracking-Flat-T800-Wo-State-Estimation-v0",
     }

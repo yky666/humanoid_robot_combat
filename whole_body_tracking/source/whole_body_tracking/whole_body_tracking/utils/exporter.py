@@ -5,6 +5,7 @@
 
 import os
 import copy
+import hashlib
 import torch
 
 import onnx
@@ -100,7 +101,21 @@ def list_to_csv_str(arr, *, decimals: int = 3, delimiter: str = ",") -> str:
     )
 
 
-def attach_onnx_metadata(env: ManagerBasedRLEnv, run_path: str, path: str, filename="policy.onnx") -> None:
+def _sha256(path: str) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def attach_onnx_metadata(
+    env: ManagerBasedRLEnv,
+    run_path: str,
+    path: str,
+    filename="policy.onnx",
+    checkpoint_path: str | None = None,
+) -> None:
     onnx_path = os.path.join(path, filename)
 
     observation_names = env.observation_manager.active_terms["policy"]
@@ -133,6 +148,10 @@ def attach_onnx_metadata(env: ManagerBasedRLEnv, run_path: str, path: str, filen
         "anchor_body_name": command.cfg.anchor_body_name,
         "body_names": command.cfg.body_names,
     }
+    if checkpoint_path is not None:
+        resolved_checkpoint = os.path.abspath(checkpoint_path)
+        metadata["checkpoint_path"] = resolved_checkpoint
+        metadata["checkpoint_sha256"] = _sha256(resolved_checkpoint)
 
     model = onnx.load(onnx_path)
 

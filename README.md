@@ -118,6 +118,11 @@ For the distinction between the two official PD fall-preparation poses, the
 public supine recovery, and the private vendor prone recovery, see
 [T800 Fall-Recovery Audit](docs/T800_FALL_RECOVERY_AUDIT.md).
 
+For independent prone/supine reference construction, recovery-specific PPO,
+video review, 320-rollout qualification, ONNX-to-MNN conversion, and isolated
+hardware staging, see
+[T800 RL Recovery Training and Deployment](whole_body_tracking/docs/t800_rl_recovery_training.md).
+
 ## Development Environments
 
 The recorded workspace used two Conda environments:
@@ -204,6 +209,7 @@ included.
 - [T800 real-robot deployment and rollback](docs/REAL_ROBOT_DEPLOYMENT.md)
 - [T800 gamepad, keyboard, and state mapping](docs/T800_CONTROL_MAPPING.md)
 - [T800 prone/supine fall-recovery audit](docs/T800_FALL_RECOVERY_AUDIT.md)
+- [T800 RL recovery training and deployment](whole_body_tracking/docs/t800_rl_recovery_training.md)
 - [2026-09-05 deployment log](docs/DEPLOYMENT_LOG_20260905.md)
 - [Canonical results and qualification evidence](results/t800_canonical_v1_20260902/README.md)
 - [Imported model33778 540-roundhouse evaluation](results/urkl_roundhouse_540_model33778/README.md)

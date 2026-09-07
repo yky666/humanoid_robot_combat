@@ -97,6 +97,48 @@ class T800FlatEnvCfg(TrackingEnvCfg):
         self.terminations.anchor_pos.params["threshold"] = 0.35
         self.terminations.ee_body_pos.params["threshold"] = 0.4
 
+
+@configclass
+class T800RecoveryEnvCfg(T800FlatEnvCfg):
+    """Reference-tracking task for contact-rich prone and supine recovery."""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.episode_length_s = 12.0
+        # Keep half of resets at the exact competition preparation pose while
+        # adaptive sampling continues to train difficult intermediate phases.
+        self.commands.motion.motion_start_reset_ratio = 0.5
+        self.commands.motion.pose_range = {
+            "x": (-0.02, 0.02),
+            "y": (-0.02, 0.02),
+            "z": (-0.003, 0.003),
+            "roll": (-0.04, 0.04),
+            "pitch": (-0.04, 0.04),
+            "yaw": (-0.08, 0.08),
+        }
+        self.commands.motion.joint_position_range = (-0.03, 0.03)
+
+        # Recovery initially needs a controlled contact distribution. Broader
+        # material randomization and external pushes belong in a later phase.
+        self.events.physics_material.params["static_friction_range"] = (0.6, 1.2)
+        self.events.physics_material.params["dynamic_friction_range"] = (0.5, 1.0)
+        self.events.physics_material.params["restitution_range"] = (0.0, 0.1)
+        self.events.push_robot = None
+
+        # Back, torso, arm, knee, and foot contact can all be intentional during
+        # a get-up. Head contact remains strongly discouraged.
+        self.rewards.undesired_contacts.params["sensor_cfg"].body_names = [
+            "LINK_HEAD_PITCH",
+            "LINK_HEAD_YAW",
+        ]
+        self.rewards.undesired_contacts.weight = -1.0
+        self.rewards.joint_limit.weight = -5.0
+        self.rewards.action_rate_l2.weight = -1e-2
+        self.terminations.anchor_pos.params["threshold"] = 0.45
+        self.terminations.ee_body_pos.params["threshold"] = 0.55
+
+
 @configclass
 class T800FlatWoStateEstimationEnvCfg(T800FlatEnvCfg):
     def __post_init__(self):

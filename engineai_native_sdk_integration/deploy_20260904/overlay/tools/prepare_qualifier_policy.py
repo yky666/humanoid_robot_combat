@@ -28,6 +28,9 @@ def main() -> None:
     args.destination.parent.mkdir(parents=True, exist_ok=True)
     onnx.utils.extract_model(str(args.source), str(args.destination), ["obs"], ["actions"])
     actor = onnx.load(args.destination)
+    del actor.metadata_props[:]
+    actor.metadata_props.extend(model.metadata_props)
+    onnx.save(actor, args.destination)
     onnx.checker.check_model(actor)
     actor_inputs = {item.name: tensor_shape(item) for item in actor.graph.input}
     actor_outputs = {item.name: tensor_shape(item) for item in actor.graph.output}

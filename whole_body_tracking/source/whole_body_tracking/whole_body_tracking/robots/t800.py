@@ -58,6 +58,7 @@ DAMPING_Q25H = 0.3
 def _resolve_t800_urdf_path() -> str:
     candidates = [
         Path(ASSET_DIR) / "t800" / "urdf" / "serial_t800.urdf",
+        Path(ASSET_DIR) / "t800" / "serial_t800.urdf",
         Path(ASSET_DIR) / "assetslib" / "third_party" / "t800" / "urdf" / "serial_t800.urdf",
     ]
     this_file = Path(__file__).resolve()
