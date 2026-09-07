@@ -14,8 +14,8 @@ import sys
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Train a T800 tracking policy with local motion files.")
-    parser.add_argument("--motion_file", type=str, required=True, help="Path to a tracking-ready T800 motion npz.")
+    parser = argparse.ArgumentParser(description="Train a T800 policy with T800-friendly defaults.")
+    parser.add_argument("--motion_file", type=str, default=None, help="Path to a tracking-ready T800 motion npz.")
     parser.add_argument("--num_envs", type=int, default=1024, help="Number of parallel environments.")
     parser.add_argument("--max_iterations", type=int, default=200, help="Number of PPO iterations.")
     parser.add_argument("--device", type=str, default="cuda:0", help="Torch device for simulation/training.")
@@ -25,7 +25,15 @@ def main() -> int:
     parser.add_argument("--logger", type=str, default="wandb", help="Logger backend, e.g. wandb or tensorboard.")
     parser.add_argument(
         "--task_variant",
-        choices=("default", "recovery", "low_freq", "wo_state_estimation"),
+        choices=(
+            "default",
+            "recovery",
+            "getup_prone",
+            "getup_supine",
+            "getup_mixed",
+            "low_freq",
+            "wo_state_estimation",
+        ),
         default="default",
         help="Which registered T800 task variant to launch.",
     )
@@ -44,9 +52,17 @@ def main() -> int:
     task_map = {
         "default": "Tracking-Flat-T800-v0",
         "recovery": "Tracking-Flat-T800-Recovery-v0",
+        "getup_prone": "Getup-Direct-T800-Prone-v0",
+        "getup_supine": "Getup-Direct-T800-Supine-v0",
+        "getup_mixed": "Getup-Direct-T800-Mixed-v0",
         "low_freq": "Tracking-Flat-T800-Low-Freq-v0",
         "wo_state_estimation": "Tracking-Flat-T800-Wo-State-Estimation-v0",
     }
+    needs_motion_file = args.task_variant in {"default", "recovery", "low_freq", "wo_state_estimation"}
+    if needs_motion_file and args.motion_file is None:
+        parser.error(f"--motion_file is required for task_variant={args.task_variant}")
+    if not needs_motion_file and args.motion_file is not None:
+        parser.error(f"--motion_file is not used for task_variant={args.task_variant}")
 
     repo_root = pathlib.Path(__file__).resolve().parents[2]
     train_script = repo_root / "scripts" / "rsl_rl" / "train.py"
@@ -56,8 +72,6 @@ def main() -> int:
         str(train_script),
         "--task",
         task_map[args.task_variant],
-        "--motion_file",
-        args.motion_file,
         "--num_envs",
         str(args.num_envs),
         "--max_iterations",
@@ -72,6 +86,8 @@ def main() -> int:
         args.log_project_name,
     ]
 
+    if args.motion_file is not None:
+        cmd.extend(["--motion_file", args.motion_file])
     if args.seed is not None:
         cmd.extend(["--seed", str(args.seed)])
     if args.video:

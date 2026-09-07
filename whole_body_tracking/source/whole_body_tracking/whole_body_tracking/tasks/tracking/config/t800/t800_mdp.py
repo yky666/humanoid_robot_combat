@@ -3,8 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import torch
+import isaaclab.utils.math as math_utils
+from isaaclab.assets import Articulation
 from isaaclab.envs.mdp.actions.actions_cfg import JointActionCfg
 from isaaclab.envs.mdp.actions.joint_actions import JointAction
+from isaaclab.managers import SceneEntityCfg
+from isaaclab.sensors import ContactSensor
 from isaaclab.utils import configclass
 
 from whole_body_tracking.robots.t800_joint_order import T800_DFS_JOINT_NAMES
@@ -50,6 +54,267 @@ T800_MOTION_BODY_NAMES = [
     "LINK_HEAD_PITCH",
     "LINK_HEAD_YAW",
 ]
+
+T800_PD_STAND_X = [
+    -1.7,
+    1.13,
+    2.85,
+    0.582,
+    0.267,
+    -0.35,
+    -0.153,
+    0.631,
+    -1.93,
+    0.499,
+    -0.4,
+    -0.175,
+    -0.216,
+    0.821,
+    2.04,
+    -1.74,
+    -0.258,
+    -0.803,
+    2.59,
+    -1.88,
+    -0.944,
+    0.262,
+    0.423,
+    0.0866,
+    1.22,
+]
+
+T800_PD_STAND_Y = [
+    0.392,
+    0.594,
+    -0.891,
+    1.49,
+    0.481,
+    0.175,
+    -1.79,
+    -1.05,
+    0.412,
+    2.36,
+    0.482,
+    0.35,
+    0.363,
+    0.183,
+    0.129,
+    1.2,
+    -0.362,
+    0.207,
+    1.46,
+    -1.36,
+    -0.192,
+    -0.669,
+    -0.2,
+    -0.478,
+    0.179,
+]
+
+# Placeholder target for direct-RL bring-up. Replace this list with measured
+# vendor boxing-idle telemetry before using any direct get-up model on hardware.
+T800_APPROX_BOXING_READY = [
+    -0.28,
+    0.08,
+    0.02,
+    0.58,
+    -0.30,
+    -0.04,
+    -0.28,
+    -0.08,
+    -0.02,
+    0.58,
+    -0.30,
+    0.04,
+    0.0,
+    0.35,
+    0.85,
+    -0.25,
+    -1.05,
+    -0.35,
+    0.35,
+    -0.85,
+    0.25,
+    -1.05,
+    0.35,
+    0.0,
+    0.0,
+]
+
+
+def _as_pose_tensor(values: list[float], device: torch.device) -> torch.Tensor:
+    return torch.tensor(values, dtype=torch.float32, device=device)
+
+
+def _resolve_getup_initial_pose(orientation: str) -> list[float]:
+    if orientation == "prone":
+        return T800_PD_STAND_X
+    if orientation == "supine":
+        return T800_PD_STAND_Y
+    raise ValueError(f"Unsupported T800 get-up orientation: {orientation!r}")
+
+
+def _get_joint_pos(asset: Articulation, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+    return asset.data.joint_pos[:, asset_cfg.joint_ids]
+
+
+def reset_t800_getup_pose(
+    env: "ManagerBasedEnv",
+    env_ids: torch.Tensor,
+    orientation: str,
+    root_height: float,
+    pose_noise: dict[str, tuple[float, float]],
+    joint_position_noise: tuple[float, float],
+    velocity_noise: tuple[float, float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+):
+    """Reset the T800 near the official prone/supine PD preparation pose."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    num_envs = len(env_ids)
+
+    range_list = [pose_noise.get(key, (0.0, 0.0)) for key in ["x", "y", "z", "roll", "pitch", "yaw"]]
+    ranges = torch.tensor(range_list, dtype=torch.float32, device=asset.device)
+    rand = math_utils.sample_uniform(ranges[:, 0], ranges[:, 1], (num_envs, 6), device=asset.device)
+
+    root_pos = env.scene.env_origins[env_ids].clone()
+    root_pos[:, 0:3] += rand[:, 0:3]
+    root_pos[:, 2] += root_height
+
+    if orientation == "prone":
+        base_roll = torch.zeros(num_envs, device=asset.device)
+        base_pitch = torch.full((num_envs,), torch.pi, device=asset.device)
+    elif orientation == "supine":
+        base_roll = torch.full((num_envs,), torch.pi, device=asset.device)
+        base_pitch = torch.zeros(num_envs, device=asset.device)
+    else:
+        half = num_envs // 2
+        base_roll = torch.zeros(num_envs, device=asset.device)
+        base_pitch = torch.full((num_envs,), torch.pi, device=asset.device)
+        base_roll[half:] = torch.pi
+        base_pitch[half:] = 0.0
+
+    base_yaw = torch.zeros(num_envs, device=asset.device)
+    base_quat = math_utils.quat_from_euler_xyz(base_roll, base_pitch, base_yaw)
+    delta_quat = math_utils.quat_from_euler_xyz(rand[:, 3], rand[:, 4], rand[:, 5])
+    root_quat = math_utils.quat_mul(delta_quat, base_quat)
+    root_vel = math_utils.sample_uniform(*velocity_noise, (num_envs, 6), device=asset.device)
+
+    if orientation == "mixed":
+        initial = torch.empty((num_envs, len(T800_PD_STAND_X)), dtype=torch.float32, device=asset.device)
+        initial[:half] = _as_pose_tensor(T800_PD_STAND_X, asset.device)
+        initial[half:] = _as_pose_tensor(T800_PD_STAND_Y, asset.device)
+    else:
+        initial = _as_pose_tensor(_resolve_getup_initial_pose(orientation), asset.device).repeat(num_envs, 1)
+    joint_pos = initial + math_utils.sample_uniform(
+        *joint_position_noise, initial.shape, device=asset.device
+    )
+    joint_limits = asset.data.soft_joint_pos_limits[env_ids][:, asset_cfg.joint_ids]
+    joint_pos = torch.clamp(joint_pos, joint_limits[:, :, 0], joint_limits[:, :, 1])
+    joint_vel = math_utils.sample_uniform(*velocity_noise, joint_pos.shape, device=asset.device)
+
+    asset.write_root_state_to_sim(torch.cat([root_pos, root_quat, root_vel], dim=-1), env_ids=env_ids)
+    asset.write_joint_state_to_sim(joint_pos, joint_vel, joint_ids=asset_cfg.joint_ids, env_ids=env_ids)
+    asset.set_joint_position_target(joint_pos, joint_ids=asset_cfg.joint_ids, env_ids=env_ids)
+
+
+def getup_target_joint_error(
+    env: "ManagerBasedEnv",
+    target_joint_pos: list[float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    target = _as_pose_tensor(target_joint_pos, asset.device)
+    return target.unsqueeze(0) - _get_joint_pos(asset, asset_cfg)
+
+
+def getup_root_height_error(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    return (asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2] - target_height).unsqueeze(-1)
+
+
+def getup_target_joint_pose_exp(
+    env: "ManagerBasedEnv",
+    target_joint_pos: list[float],
+    std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    err = getup_target_joint_error(env, target_joint_pos, asset_cfg)
+    return torch.exp(-torch.mean(torch.square(err), dim=-1) / std**2)
+
+
+def getup_root_height_exp(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    err = getup_root_height_error(env, target_height, asset_cfg).squeeze(-1)
+    return torch.exp(-torch.square(err) / std**2)
+
+
+def getup_upright_exp(
+    env: "ManagerBasedEnv",
+    std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    return torch.exp(-torch.square(tilt) / std**2)
+
+
+def getup_low_root_velocity_exp(
+    env: "ManagerBasedEnv",
+    std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    vel_sq = torch.sum(torch.square(asset.data.root_lin_vel_b), dim=-1)
+    vel_sq += 0.25 * torch.sum(torch.square(asset.data.root_ang_vel_b), dim=-1)
+    return torch.exp(-vel_sq / std**2)
+
+
+def getup_success_bonus(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    target_joint_pos: list[float],
+    max_tilt_rad: float,
+    max_height_error: float,
+    max_joint_error: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    height_error = torch.abs(asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2] - target_height)
+    joint_error = torch.max(torch.abs(getup_target_joint_error(env, target_joint_pos, asset_cfg)), dim=-1).values
+    success = (tilt < max_tilt_rad) & (height_error < max_height_error) & (joint_error < max_joint_error)
+    return success.float()
+
+
+def getup_root_xy_out_of_bounds(
+    env: "ManagerBasedEnv",
+    max_distance: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    xy = asset.data.root_pos_w[:, :2] - env.scene.env_origins[:, :2]
+    return torch.linalg.norm(xy, dim=-1) > max_distance
+
+
+def getup_head_contact(
+    env: "ManagerBasedEnv",
+    threshold: float,
+    sensor_cfg: SceneEntityCfg,
+) -> torch.Tensor:
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    net_contact_forces = contact_sensor.data.net_forces_w_history
+    force = torch.linalg.norm(net_contact_forces[:, :, sensor_cfg.body_ids], dim=-1)
+    return torch.any(torch.max(force, dim=1).values > threshold, dim=1)
 
 
 class ResidualRefJointPositionAction(JointAction):

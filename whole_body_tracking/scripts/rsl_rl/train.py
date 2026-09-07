@@ -100,26 +100,32 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     env_cfg.sim.device = args_cli.device if args_cli.device is not None else env_cfg.sim.device
 
     # load the motion file: prefer local CLI path, then fallback to wandb registry.
+    # Direct get-up tasks do not have a motion command and train from reset/reward only.
     registry_name = args_cli.registry_name
-    if args_cli.motion_file:
-        env_cfg.commands.motion.motion_file = args_cli.motion_file
-        print(f"[INFO] Using local motion file: {env_cfg.commands.motion.motion_file}")
+    motion_term = getattr(getattr(env_cfg, "commands", None), "motion", None)
+    if motion_term is not None:
+        if args_cli.motion_file:
+            env_cfg.commands.motion.motion_file = args_cli.motion_file
+            print(f"[INFO] Using local motion file: {env_cfg.commands.motion.motion_file}")
+        else:
+            if not registry_name:
+                raise ValueError("Either --motion_file or --registry_name must be provided for tracking tasks.")
+            if ":" not in registry_name:  # Check if the registry name includes alias, if not, append ":latest"
+                registry_name += ":latest"
+            import pathlib
+            import wandb
+
+            api = wandb.Api()
+            artifact = api.artifact(registry_name)
+            env_cfg.commands.motion.motion_file = str(pathlib.Path(artifact.download()) / "motion.npz")
+            print(f"[INFO] Downloaded motion file from registry: {env_cfg.commands.motion.motion_file}")
+        # Training does not consume marker renders. Keep environment creation local-only
+        # instead of resolving Isaac Sim's remote frame marker asset.
+        env_cfg.commands.motion.debug_vis = False
+    elif args_cli.motion_file:
+        raise ValueError("--motion_file was provided, but this task does not define a motion command.")
     else:
-        if not registry_name:
-            raise ValueError("Either --motion_file or --registry_name must be provided.")
-        if ":" not in registry_name:  # Check if the registry name includes alias, if not, append ":latest"
-            registry_name += ":latest"
-        import pathlib
-        import wandb
-
-        api = wandb.Api()
-        artifact = api.artifact(registry_name)
-        env_cfg.commands.motion.motion_file = str(pathlib.Path(artifact.download()) / "motion.npz")
-        print(f"[INFO] Downloaded motion file from registry: {env_cfg.commands.motion.motion_file}")
-
-    # Training does not consume marker renders. Keep environment creation local-only
-    # instead of resolving Isaac Sim's remote frame marker asset.
-    env_cfg.commands.motion.debug_vis = False
+        print("[INFO] Training task has no motion command; running reference-free reset/reward task.")
     if hasattr(env_cfg.scene, "contact_forces"):
         env_cfg.scene.contact_forces.debug_vis = False
 

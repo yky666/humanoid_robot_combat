@@ -123,6 +123,10 @@ video review, 320-rollout qualification, ONNX-to-MNN conversion, and isolated
 hardware staging, see
 [T800 RL Recovery Training and Deployment](whole_body_tracking/docs/t800_rl_recovery_training.md).
 
+For the higher-risk reference-free route from `pd_stand_x/y` directly to a
+boxing-ready guard, see
+[T800 Direct RL Get-Up](whole_body_tracking/docs/t800_direct_rl_getup.md).
+
 ## Development Environments
 
 The recorded workspace used two Conda environments:
@@ -210,6 +214,7 @@ included.
 - [T800 gamepad, keyboard, and state mapping](docs/T800_CONTROL_MAPPING.md)
 - [T800 prone/supine fall-recovery audit](docs/T800_FALL_RECOVERY_AUDIT.md)
 - [T800 RL recovery training and deployment](whole_body_tracking/docs/t800_rl_recovery_training.md)
+- [T800 direct RL get-up](whole_body_tracking/docs/t800_direct_rl_getup.md)
 - [2026-09-05 deployment log](docs/DEPLOYMENT_LOG_20260905.md)
 - [Canonical results and qualification evidence](results/t800_canonical_v1_20260902/README.md)
 - [Imported model33778 540-roundhouse evaluation](results/urkl_roundhouse_540_model33778/README.md)
@@ -219,7 +224,7 @@ included.
 ## Official T800 References
 
 - [T800 操作指南（中文）](https://ucnj18iantas.feishu.cn/drive/folder/FfrBfrAMxlC37QdFjNacYCeznXd)
-- [T800 Operation Guide (English)](https://ucnj18iantas.feishu.cn/drive/folder/RjF5fyXvAI4nwRdyzSvclWEQnZt)
+- [T800 Operation Guide (English)](https://ucnj18iantas.feishu.cn/drive/folder/RjF5fyXvAl4nwRdyzSvcIWEQnZt)
 - [EngineAI developer documentation](https://engineai.com.cn/open/docs)
 - [EngineAI Native SDK](https://github.com/engineai-robotics/engineai_robotics_native_sdk)
 - [`urkl_exams` competition updates](https://github.com/engineai-robotics/engineai_robotics_native_sdk/commits/urkl_exams), integrated reference commit `0d759376cba552b480f267042d5d069ad5d96b50`

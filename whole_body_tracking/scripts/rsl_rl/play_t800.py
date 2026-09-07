@@ -10,7 +10,7 @@ import sys
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Play a T800 tracking checkpoint with T800-friendly defaults.")
+    parser = argparse.ArgumentParser(description="Play a T800 checkpoint with T800-friendly defaults.")
     parser.add_argument(
         "--load_run",
         type=str,
@@ -23,7 +23,15 @@ def main() -> int:
     parser.add_argument("--device", type=str, default="cuda:0", help="Torch device for playback.")
     parser.add_argument(
         "--task_variant",
-        choices=("default", "recovery", "low_freq", "wo_state_estimation"),
+        choices=(
+            "default",
+            "recovery",
+            "getup_prone",
+            "getup_supine",
+            "getup_mixed",
+            "low_freq",
+            "wo_state_estimation",
+        ),
         default="default",
         help="Which registered T800 task variant to launch.",
     )
@@ -41,9 +49,15 @@ def main() -> int:
     task_map = {
         "default": "Tracking-Flat-T800-v0",
         "recovery": "Tracking-Flat-T800-Recovery-v0",
+        "getup_prone": "Getup-Direct-T800-Prone-v0",
+        "getup_supine": "Getup-Direct-T800-Supine-v0",
+        "getup_mixed": "Getup-Direct-T800-Mixed-v0",
         "low_freq": "Tracking-Flat-T800-Low-Freq-v0",
         "wo_state_estimation": "Tracking-Flat-T800-Wo-State-Estimation-v0",
     }
+    needs_motion_file = args.task_variant in {"default", "recovery", "low_freq", "wo_state_estimation"}
+    if not needs_motion_file and args.motion_file is not None:
+        parser.error(f"--motion_file is not used for task_variant={args.task_variant}")
 
     repo_root = pathlib.Path(__file__).resolve().parents[2]
     play_script = repo_root / "scripts" / "rsl_rl" / "play.py"

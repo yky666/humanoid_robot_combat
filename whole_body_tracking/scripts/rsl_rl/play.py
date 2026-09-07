@@ -143,14 +143,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         resume_path = f"./logs/rsl_rl/temp/{file}"
 
 
+        motion_term = getattr(getattr(env_cfg, "commands", None), "motion", None)
         # 1. 只有当用户没有在命令行传入 motion_file 时，才去云端下载
-        if args_cli.motion_file is None:
+        if args_cli.motion_file is None and motion_term is not None:
             art = next((a for a in wandb_run.used_artifacts() if a.type == "motions"), None)
             if art is None:
                 print("[WARN] No motion artifact found in the run.")
             else:
                 env_cfg.commands.motion.motion_file = str(pathlib.Path(art.download()) / "motion.npz")
                 print(f"[INFO]: Downloaded motion file from WandB: {env_cfg.commands.motion.motion_file}")
+        elif args_cli.motion_file is None:
+            print("[INFO]: Playback task has no motion command; skipping motion artifact download.")
 
     else:
         # [这是纯本地加载的分支]
@@ -161,9 +164,12 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # ==========================
     # 2. 全局覆盖：无论是WandB模式还是本地模式，只要命令行传了，就用命令行的！
     # ==========================
-    if args_cli.motion_file is not None:
+    motion_term = getattr(getattr(env_cfg, "commands", None), "motion", None)
+    if args_cli.motion_file is not None and motion_term is not None:
         print(f"[INFO]: Using motion file from CLI: {args_cli.motion_file}")
         env_cfg.commands.motion.motion_file = args_cli.motion_file
+    elif args_cli.motion_file is not None:
+        raise ValueError("--motion_file was provided, but this task does not define a motion command.")
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)

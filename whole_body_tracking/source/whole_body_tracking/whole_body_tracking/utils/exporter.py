@@ -47,20 +47,25 @@ class _OnnxMotionPolicyExporter(torch.nn.Module):
             self.normalizer = copy.deepcopy(normalizer) if normalizer else torch.nn.Identity()
             self.input_size = self.actor[0].in_features
 
-        cmd: MotionCommand = env.command_manager.get_term("motion")
+        self.has_motion_outputs = "motion" in env.command_manager.active_terms
+        if self.has_motion_outputs:
+            cmd: MotionCommand = env.command_manager.get_term("motion")
 
-        self.joint_pos = cmd.motion.joint_pos.to("cpu")
-        self.joint_vel = cmd.motion.joint_vel.to("cpu")
-        self.body_pos_w = cmd.motion.body_pos_w.to("cpu")
-        self.body_quat_w = cmd.motion.body_quat_w.to("cpu")
-        self.body_lin_vel_w = cmd.motion.body_lin_vel_w.to("cpu")
-        self.body_ang_vel_w = cmd.motion.body_ang_vel_w.to("cpu")
-        self.time_step_total = self.joint_pos.shape[0]
+            self.joint_pos = cmd.motion.joint_pos.to("cpu")
+            self.joint_vel = cmd.motion.joint_vel.to("cpu")
+            self.body_pos_w = cmd.motion.body_pos_w.to("cpu")
+            self.body_quat_w = cmd.motion.body_quat_w.to("cpu")
+            self.body_lin_vel_w = cmd.motion.body_lin_vel_w.to("cpu")
+            self.body_ang_vel_w = cmd.motion.body_ang_vel_w.to("cpu")
+            self.time_step_total = self.joint_pos.shape[0]
 
     def forward(self, x, time_step):
+        actions = self.actor(self.normalizer(x))
+        if not self.has_motion_outputs:
+            return actions
         time_step_clamped = torch.clamp(time_step.long().squeeze(-1), max=self.time_step_total - 1)
         return (
-            self.actor(self.normalizer(x)),
+            actions,
             self.joint_pos[time_step_clamped],
             self.joint_vel[time_step_clamped],
             self.body_pos_w[time_step_clamped],
@@ -73,6 +78,18 @@ class _OnnxMotionPolicyExporter(torch.nn.Module):
         self.to("cpu")
         obs = torch.zeros(1, self.input_size)
         time_step = torch.zeros(1, 1)
+        output_names = ["actions"]
+        if self.has_motion_outputs:
+            output_names.extend(
+                [
+                    "joint_pos",
+                    "joint_vel",
+                    "body_pos_w",
+                    "body_quat_w",
+                    "body_lin_vel_w",
+                    "body_ang_vel_w",
+                ]
+            )
         torch.onnx.export(
             self,
             (obs, time_step),
@@ -81,15 +98,7 @@ class _OnnxMotionPolicyExporter(torch.nn.Module):
             opset_version=11,
             verbose=self.verbose,
             input_names=["obs", "time_step"],
-            output_names=[
-                "actions",
-                "joint_pos",
-                "joint_vel",
-                "body_pos_w",
-                "body_quat_w",
-                "body_lin_vel_w",
-                "body_ang_vel_w",
-            ],
+            output_names=output_names,
             dynamic_axes={},
         )
 
@@ -132,22 +141,28 @@ def attach_onnx_metadata(
     action_term = env.action_manager.get_term("joint_pos")
     action_joint_ids = action_term._joint_ids
     action_joint_names = list(action_term._joint_names)
-    command = env.command_manager.get_term("motion")
+    robot_data = env.scene["robot"].data
+    default_joint_pos = getattr(robot_data, "default_joint_pos_nominal", robot_data.default_joint_pos[0])
 
     metadata = {
         "run_path": run_path,
         "joint_names": action_joint_names,
-        "trajectory_joint_names": list(command.motion.joint_names),
+        "trajectory_joint_names": [],
         "joint_stiffness": env.scene["robot"].data.joint_stiffness[0, action_joint_ids].cpu().tolist(),
         "joint_damping": env.scene["robot"].data.joint_damping[0, action_joint_ids].cpu().tolist(),
-        "default_joint_pos": env.scene["robot"].data.default_joint_pos_nominal[action_joint_ids].cpu().tolist(),
+        "default_joint_pos": default_joint_pos[action_joint_ids].cpu().tolist(),
         "command_names": env.command_manager.active_terms,
         "observation_names": observation_names,
         "observation_history_lengths": observation_history_lengths,
         "action_scale": action_term._scale[0].cpu().tolist(),
-        "anchor_body_name": command.cfg.anchor_body_name,
-        "body_names": command.cfg.body_names,
+        "anchor_body_name": "",
+        "body_names": [],
     }
+    if "motion" in env.command_manager.active_terms:
+        command = env.command_manager.get_term("motion")
+        metadata["trajectory_joint_names"] = list(command.motion.joint_names)
+        metadata["anchor_body_name"] = command.cfg.anchor_body_name
+        metadata["body_names"] = command.cfg.body_names
     if checkpoint_path is not None:
         resolved_checkpoint = os.path.abspath(checkpoint_path)
         metadata["checkpoint_path"] = resolved_checkpoint

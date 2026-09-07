@@ -341,6 +341,49 @@ Prone and supine require separate policies. The full reference-building,
 qualification, ONNX-to-MNN, and hardware staging procedure is in
 [T800 RL Recovery Training and Deployment](docs/t800_rl_recovery_training.md).
 
+## 9.6 Direct RL Get-Up
+
+Direct RL starts from the official `pd_stand_x/y` preparation pose without a
+reference trajectory. It is useful for research, but it needs a dedicated Native
+SDK runner before hardware deployment because its observation contract differs
+from the 140-element whole-body-tracking runner.
+
+Smoke one orientation first:
+
+```bash
+source /data2/yangky/miniconda3/etc/profile.d/conda.sh
+conda activate env_isaaclab
+cd /data2/yangky/test/whole_body_tracking
+
+CUDA_VISIBLE_DEVICES=0 python scripts/rsl_rl/train_t800.py \
+  --task_variant getup_supine \
+  --num_envs 64 \
+  --max_iterations 1 \
+  --headless \
+  --device cuda:0 \
+  --run_name direct_getup_supine_smoke \
+  --logger tensorboard
+```
+
+Then train prone and supine separately, render videos with
+`play_t800.py --task_variant getup_supine`, and run the direct 320-rollout gate:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python scripts/rsl_rl/evaluate_t800_getup_direct_policy.py \
+  --task Getup-Direct-T800-Supine-v0 \
+  --output artifacts/recovery/direct_supine_rollout_report.json \
+  --num_envs 64 \
+  --episodes 5 \
+  --min_success_rate 0.95 \
+  --headless \
+  --device cuda:0 \
+  --load_run <run-directory> \
+  --checkpoint <model.pt>
+```
+
+The full direct-RL route, limitations, and hardware implications are in
+[T800 Direct RL Get-Up](docs/t800_direct_rl_getup.md).
+
 ## 10. Current Stable T800 Baseline
 
 The current T800 baseline was stabilized around:
