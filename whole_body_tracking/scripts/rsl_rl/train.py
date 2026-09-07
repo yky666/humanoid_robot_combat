@@ -8,6 +8,7 @@
 """Launch Isaac Sim Simulator first."""
 
 import argparse
+import pathlib
 import sys
 
 from isaaclab.app import AppLauncher
@@ -26,12 +27,16 @@ parser.add_argument("--seed", type=int, default=None, help="Seed used for the en
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
 parser.add_argument("--registry_name", type=str, default=None, help="The name of the wand registry.")
 parser.add_argument("--motion_file", type=str, default=None, help="Local motion npz path. Overrides registry_name.")
+parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
 
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 args_cli, hydra_args = parser.parse_known_args()
+
+SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2] / "source" / "whole_body_tracking"
+sys.path.insert(0, str(SOURCE_ROOT))
 
 # always enable cameras to record video
 if args_cli.video:
@@ -75,6 +80,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 
 # Import extensions to set up environment tasks
 import whole_body_tracking.tasks  # noqa: F401
+from t800_getup_target import apply_getup_target_json
 from whole_body_tracking.utils.my_on_policy_runner import MotionOnPolicyRunner as OnPolicyRunner
 from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg
 
@@ -128,6 +134,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         print("[INFO] Training task has no motion command; running reference-free reset/reward task.")
     if hasattr(env_cfg.scene, "contact_forces"):
         env_cfg.scene.contact_forces.debug_vis = False
+
+    if args_cli.getup_target_json:
+        target_source = apply_getup_target_json(env_cfg, args_cli.getup_target_json)
+        print(f"[INFO] Using T800 get-up target from: {target_source}")
 
     # specify directory for logging experiments
     log_root_path = os.path.join("logs", "rsl_rl", agent_cfg.experiment_name)

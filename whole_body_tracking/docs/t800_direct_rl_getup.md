@@ -15,9 +15,12 @@ The local codebase now has simulation support for direct RL get-up exploration:
 | `Getup-Direct-T800-Mixed-v0` | half prone, half supine | approximate boxing-ready |
 
 This is not yet a hardware-ready path. The target named
-`T800_APPROX_BOXING_READY` is only a local engineering placeholder. Before any
-real robot deployment, replace it with a measured and approved T800 boxing-idle
-joint target, then retrain and requalify.
+`T800_APPROX_BOXING_READY` is only a local engineering placeholder. The
+2026-09-07 real-log pipeline converts `pdstand2baoquan.csv` into a measured
+boxing-ready terminal target and passes it with `--getup_target_json`; see
+[`t800_real_baoquan_getup_target.md`](t800_real_baoquan_getup_target.md).
+Before any real robot deployment, retrain and requalify with the same measured
+and approved T800 boxing-idle joint target.
 
 Pure RL is possible in principle, but it is the harder route. The policy must
 discover a long contact-rich sequence from sparse rewards: arm support, leg

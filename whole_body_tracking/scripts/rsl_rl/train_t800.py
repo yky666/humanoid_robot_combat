@@ -23,6 +23,7 @@ def main() -> int:
     parser.add_argument("--log_project_name", type=str, default="t800_boxing", help="W&B project name.")
     parser.add_argument("--seed", type=int, default=None, help="Optional random seed.")
     parser.add_argument("--logger", type=str, default="wandb", help="Logger backend, e.g. wandb or tensorboard.")
+    parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
     parser.add_argument(
         "--task_variant",
         choices=(
@@ -88,6 +89,10 @@ def main() -> int:
 
     if args.motion_file is not None:
         cmd.extend(["--motion_file", args.motion_file])
+    if args.getup_target_json is not None:
+        if needs_motion_file:
+            parser.error("--getup_target_json is only used for direct get-up task variants")
+        cmd.extend(["--getup_target_json", args.getup_target_json])
     if args.seed is not None:
         cmd.extend(["--seed", str(args.seed)])
     if args.video:

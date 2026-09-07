@@ -127,6 +127,11 @@ For the higher-risk reference-free route from `pd_stand_x/y` directly to a
 boxing-ready guard, see
 [T800 Direct RL Get-Up](whole_body_tracking/docs/t800_direct_rl_getup.md).
 
+For the 2026-09-07 real-robot `pdstand2baoquan` log extraction, MuJoCo review
+video, and measured boxing-ready terminal target used by direct get-up training,
+see
+[T800 Real Baoquan Terminal Target](whole_body_tracking/docs/t800_real_baoquan_getup_target.md).
+
 ## Development Environments
 
 The recorded workspace used two Conda environments:

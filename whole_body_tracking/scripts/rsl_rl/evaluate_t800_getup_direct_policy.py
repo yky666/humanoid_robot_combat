@@ -27,9 +27,13 @@ parser.add_argument("--max_tilt_rad", type=float, default=0.35)
 parser.add_argument("--max_height_error", type=float, default=0.16)
 parser.add_argument("--max_joint_error", type=float, default=0.45)
 parser.add_argument("--max_root_speed", type=float, default=0.75)
+parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
 cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
 args_cli, hydra_args = parser.parse_known_args()
+
+SOURCE_ROOT = Path(__file__).resolve().parents[2] / "source" / "whole_body_tracking"
+sys.path.insert(0, str(SOURCE_ROOT))
 
 EVALUATION_PASSED: bool | None = None
 
@@ -48,7 +52,7 @@ from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
 import whole_body_tracking.tasks  # noqa: F401
-from whole_body_tracking.tasks.tracking.config.t800 import t800_mdp
+from t800_getup_target import apply_getup_target_json
 from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg
 
 
@@ -105,6 +109,10 @@ def main(
     env_cfg.sim.device = args_cli.device if args_cli.device is not None else env_cfg.sim.device
     if hasattr(env_cfg.scene, "contact_forces"):
         env_cfg.scene.contact_forces.debug_vis = False
+    target_source = "env_cfg.target_joint_pos"
+    if args_cli.getup_target_json:
+        target_source = apply_getup_target_json(env_cfg, args_cli.getup_target_json)
+        print(f"[INFO] Using T800 get-up target from: {target_source}")
 
     log_root = os.path.abspath(os.path.join("logs", "rsl_rl", agent_cfg.experiment_name))
     checkpoint_path = get_checkpoint_path(log_root, agent_cfg.load_run, agent_cfg.load_checkpoint)
@@ -121,7 +129,7 @@ def main(
     runner = OnPolicyRunner(env, adapt_legacy_ppo_cfg(agent_cfg.to_dict()), log_dir=None, device=agent_cfg.device)
     runner.load(checkpoint_path)
     policy = runner.get_inference_policy(device=raw_env.device)
-    target_joint_pos = torch.tensor(t800_mdp.T800_APPROX_BOXING_READY, dtype=torch.float32, device=raw_env.device)
+    target_joint_pos = torch.tensor(env_cfg.target_joint_pos, dtype=torch.float32, device=raw_env.device)
 
     successes = 0
     total_trials = args_cli.num_envs * args_cli.episodes
@@ -153,7 +161,7 @@ def main(
         "task": args_cli.task,
         "checkpoint": checkpoint_path,
         "checkpoint_sha256": sha256(checkpoint_path),
-        "target_joint_pos_source": "T800_APPROX_BOXING_READY",
+        "target_joint_pos_source": target_source,
         "horizon_steps": horizon,
         "episodes": args_cli.episodes,
         "num_envs": args_cli.num_envs,

@@ -384,6 +384,41 @@ CUDA_VISIBLE_DEVICES=0 python scripts/rsl_rl/evaluate_t800_getup_direct_policy.p
 The full direct-RL route, limitations, and hardware implications are in
 [T800 Direct RL Get-Up](docs/t800_direct_rl_getup.md).
 
+To use the real `pdstand2baoquan` guard pose as the terminal target, first
+extract and render it for review:
+
+```bash
+python whole_body_tracking/scripts/t800_extract_real_baoquan_pose.py \
+  --input /mnt/data/yangky/test/datasets/urkl_locomotion_260901/motion_logs.zip \
+  --member logs/pdstand2baoquan.csv \
+  --tail-seconds 1.0 \
+  --output-json results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json \
+  --output-npz results/t800_real_baoquan_getup_20260907/measured_boxing_ready.npz
+
+python whole_body_tracking/scripts/t800_render_real_joint_log_mujoco.py \
+  --input /mnt/data/yangky/test/datasets/urkl_locomotion_260901/motion_logs.zip \
+  --member logs/pdstand2baoquan.csv \
+  --output results/t800_real_baoquan_getup_20260907/pdstand2baoquan_mujoco_front_right.mp4 \
+  --metadata-json results/t800_real_baoquan_getup_20260907/pdstand2baoquan_mujoco_front_right.json \
+  --views front,right \
+  --floor-align each
+```
+
+Then pass the same target into training, playback, and evaluation:
+
+```bash
+cd whole_body_tracking
+conda run -n env_isaaclab python scripts/rsl_rl/train_t800.py \
+  --task_variant getup_mixed \
+  --getup_target_json /mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json \
+  --num_envs 1024 \
+  --max_iterations 200 \
+  --device cuda:0 \
+  --run_name t800_getup_mixed_measured_baoquan_v1 \
+  --logger tensorboard \
+  --headless
+```
+
 ## 10. Current Stable T800 Baseline
 
 The current T800 baseline was stabilized around:

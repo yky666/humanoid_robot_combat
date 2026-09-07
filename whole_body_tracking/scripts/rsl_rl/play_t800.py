@@ -37,6 +37,7 @@ def main() -> int:
     )
     parser.add_argument("--video", action="store_true", help="Record a playback video.")
     parser.add_argument("--video_length", type=int, default=800, help="Playback video length in env steps.")
+    parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
     parser.add_argument("--headless", action="store_true", help="Run Isaac Sim without UI.")
     parser.add_argument("--disable_fabric", action="store_true", help="Disable Fabric USD acceleration.")
     parser.add_argument(
@@ -81,6 +82,10 @@ def main() -> int:
         cmd.extend(["--checkpoint", args.checkpoint])
     if args.motion_file is not None:
         cmd.extend(["--motion_file", args.motion_file])
+    if args.getup_target_json is not None:
+        if needs_motion_file:
+            parser.error("--getup_target_json is only used for direct get-up task variants")
+        cmd.extend(["--getup_target_json", args.getup_target_json])
     if args.video:
         cmd.extend(["--video", "--video_length", str(args.video_length)])
     if args.headless:

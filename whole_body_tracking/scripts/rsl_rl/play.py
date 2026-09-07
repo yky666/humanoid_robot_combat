@@ -3,6 +3,7 @@
 """Launch Isaac Sim Simulator first."""
 
 import argparse
+import pathlib
 import sys
 
 from isaaclab.app import AppLauncher
@@ -20,11 +21,14 @@ parser.add_argument(
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--motion_file", type=str, default=None, help="Path to the motion file.")
+parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 args_cli, hydra_args = parser.parse_known_args()
+SOURCE_ROOT = pathlib.Path(__file__).resolve().parents[2] / "source" / "whole_body_tracking"
+sys.path.insert(0, str(SOURCE_ROOT))
 # always enable cameras to record video
 if args_cli.video:
     args_cli.enable_cameras = True
@@ -40,7 +44,6 @@ simulation_app = app_launcher.app
 
 import gymnasium as gym
 import os
-import pathlib
 import torch
 
 from rsl_rl.runners import OnPolicyRunner
@@ -59,6 +62,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 
 # Import extensions to set up environment tasks
 import whole_body_tracking.tasks  # noqa: F401
+from t800_getup_target import apply_getup_target_json
 from whole_body_tracking.utils.exporter import attach_onnx_metadata, export_motion_policy_as_onnx
 from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg, get_policy_module
 
@@ -170,6 +174,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         env_cfg.commands.motion.motion_file = args_cli.motion_file
     elif args_cli.motion_file is not None:
         raise ValueError("--motion_file was provided, but this task does not define a motion command.")
+    if args_cli.getup_target_json:
+        target_source = apply_getup_target_json(env_cfg, args_cli.getup_target_json)
+        print(f"[INFO] Using T800 get-up target from: {target_source}")
 
     # create isaac environment
     env = gym.make(args_cli.task, cfg=env_cfg, render_mode="rgb_array" if args_cli.video else None)
