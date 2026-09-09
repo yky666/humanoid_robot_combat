@@ -12,7 +12,7 @@ controller before using a combination.
 | IDLE | `idle` | Initial state; no active motion control. The corrected graph remains here until a command is sent. |
 | Damping | `passive` | Passive damping torque. This is not a standing task and is not an alias for stance. |
 | PD stand | `pd_stand` | Stable upright posture maintained by PD control. |
-| Walking | `walk` | Official Native SDK walking policy; stick commands are active. |
+| Walking | `walk` | Official Native SDK walking policy; debug-only under the no-official-locomotion competition rule. |
 | Prone PD preparation | `pd_stand_x` | Official URKL prone recovery preparation pose. |
 | Supine PD preparation | `pd_stand_y` | Official URKL supine recovery preparation pose. |
 | Supine recovery | `supine_to_stance` | Public reference trajectory plus MNN residual policy; staged in the recovery package. |
@@ -60,7 +60,7 @@ the independent custom executor is running.
 | `LB+X` | `pd_stand_x`, prone preparation | damping, PD stand, supine preparation | stays in pose |
 | `LB+Y` | `pd_stand_y`, supine preparation | damping, PD stand, prone preparation | stays in pose |
 | `START+D-pad up` | retained official supine recovery | quarantined; no allowed entry | zero-command walking if requalified |
-| `RB+X` | official walking mode | PD stand | stays in walking mode |
+| `RB+X` | official walking mode | PD stand | debug-only; do not use for competition scoring |
 | `RB+A` | front kick | PD stand | PD stand |
 | `RB+Y` | straight punch | PD stand | PD stand |
 | `LB+B` | hook punch | PD stand | PD stand |
@@ -95,7 +95,7 @@ ssh -t user@192.168.0.163 `
 | `i` | `LB+START` | IDLE |
 | `p` | `LB+RB` | passive damping |
 | `t` | `LB+A` | PD stand |
-| `w` | `RB+X` | official walking mode |
+| `w` | `RB+X` | official walking mode, debug-only |
 | `x` / `y` | `LB+X` / `LB+Y` | prone / supine PD preparation |
 | `u` | `START+D-pad up` | publisher mapping retained; FSM currently rejects the quarantined transition |
 | `f` | `RB+A` | front kick |
@@ -115,6 +115,12 @@ for damping, `LB+A` for PD stand, `LB+B` for walk, `RB+B` for dance, and
 for walking and intentionally reuses `LB+B` and `RB+B` for approved combat
 actions, so the default SDK table must not be used while the qualifier executor
 is active.
+
+The current `walk` state still uses EngineAI's official
+`rl_walking_example_runner`. It is retained only as a controlled engineering
+reference and should be removed or made unreachable in a competition build until
+a custom baoquan locomotion policy and commandable runner pass simulation and
+hardware gates.
 
 The older `engineai_humanoid` deployment documents another mapping:
 `LB+BACK` motor disable, `LB+START` motor enable, `LB+B` bent-leg stance,

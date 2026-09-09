@@ -25,15 +25,20 @@ procedure in [Real-Robot Deployment](docs/REAL_ROBOT_DEPLOYMENT.md).
 The canonical qualification protocol uses 64 environments x 5 batches = 320
 rollouts and requires a success rate of at least 0.95. TensorBoard tail metrics
 and visual playback are supporting evidence, not acceptance evidence.
+The 2026-09-09 competition-compliance audit adds a stricter filter: official
+locomotion and official mimic references are not acceptable for final
+competition packaging. See
+[T800 Competition Compliance Audit](docs/T800_COMPETITION_COMPLIANCE_AUDIT_20260909.md).
 
 | Motion | Result | Formal rollouts |
 | --- | --- | ---: |
-| Hook punch | Passed | 320/320 |
-| Front kick | Passed | 320/320 |
-| Straight punch | Passed | 320/320 |
-| Left jab | Passed | 316/320 |
-| Supine recovery | Passed, official EngineAI MNN | 320/320 |
-| Spinning kick | r10 continuation running from r9 | r9 failed tail gate |
+| Hook punch | Sim gate passed; not competition-clean if official mimic is disallowed | 320/320 |
+| Front kick | Sim gate passed; not competition-clean if official mimic is disallowed | 320/320 |
+| Straight punch | Sim gate passed; not competition-clean if official mimic is disallowed | 320/320 |
+| Left jab | Sim gate passed; not competition-clean if official mimic is disallowed | 316/320 |
+| Supine recovery | Official EngineAI MNN; debug/reference only under current rule | 320/320 |
+| Custom locomotion | Not trained; official `walk` is debug-only | Not started |
+| Spinning/roundhouse kick | Failed corrected gate; not deployable | 47/320 for imported 540 baseline |
 | Stand/action/stand joint policy | Blocked | Not started |
 
 The latest spinning-kick run (`r9`) passed timeout, anchor, episode-length, and
@@ -48,7 +53,7 @@ baseline, not an accepted policy.
 
 The independent ARM64 package staged on the T800 controller is an integration
 candidate. Successful compilation, model conversion, or executor startup does
-not promote a policy to accepted status.
+not promote a policy to accepted or competition-clean status.
 
 The first `_pdprep` hardware smoke run completed with IMU firmware
 `V01.02.06b`, but a post-run provenance audit found that its left-jab trajectory
@@ -217,6 +222,7 @@ included.
 - [EngineAI Native SDK integration](engineai_native_sdk_integration/README.md)
 - [T800 real-robot deployment and rollback](docs/REAL_ROBOT_DEPLOYMENT.md)
 - [T800 gamepad, keyboard, and state mapping](docs/T800_CONTROL_MAPPING.md)
+- [T800 competition-compliance audit](docs/T800_COMPETITION_COMPLIANCE_AUDIT_20260909.md)
 - [T800 prone/supine fall-recovery audit](docs/T800_FALL_RECOVERY_AUDIT.md)
 - [T800 RL recovery training and deployment](whole_body_tracking/docs/t800_rl_recovery_training.md)
 - [T800 direct RL get-up](whole_body_tracking/docs/t800_direct_rl_getup.md)
