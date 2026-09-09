@@ -166,6 +166,25 @@ conda run -n env_isaaclab python scripts/rsl_rl/train_t800.py \
   --headless
 ```
 
+Launched tmux long training on 2026-09-09 with the v3.1 guard-stability reward:
+
+```text
+tmux session: t800_supine_v31_guard
+run name: t800_getup_supine_staged_baoquan_v31_guard
+device: cuda:0
+log: results/t800_real_baoquan_getup_20260907/training/long_v31_guard/supine_v31_guard_train.log
+
+tmux session: t800_prone_v31_guard
+run name: t800_getup_prone_staged_baoquan_v31_guard
+device: cuda:1
+log: results/t800_real_baoquan_getup_20260907/training/long_v31_guard/prone_v31_guard_train.log
+```
+
+Startup note: launching both IsaacLab jobs at the exact same second caused the
+prone run to fail during temporary URDF/USD conversion. The active long runs
+were relaunched with live `conda run --no-capture-output` logs and staggered
+startup.
+
 ## Artifacts
 
 ```text
