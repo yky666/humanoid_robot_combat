@@ -367,6 +367,76 @@ class T800DirectGetupSupineShapedEnvCfg(T800DirectGetupShapedEnvCfg):
 
 
 @configclass
+class T800DirectGetupStagedEnvCfg(T800DirectGetupShapedEnvCfg):
+    """Direct get-up task with staged height, stability, and actuator-margin shaping."""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        policy_joint_asset_cfg = SceneEntityCfg(
+            "robot", joint_names=T800_POLICY_JOINT_NAMES, preserve_order=True
+        )
+        robot_asset_cfg = SceneEntityCfg("robot")
+
+        self.rewards.getup_height_stages = RewTerm(
+            func=t800_mdp.getup_root_height_stage_reward,
+            weight=4.0,
+            params={
+                "asset_cfg": robot_asset_cfg,
+                "thresholds": [0.32, 0.42, 0.52, 0.62, 0.70],
+                "temperature": 0.035,
+            },
+        )
+        self.rewards.getup_stability = RewTerm(
+            func=t800_mdp.getup_stability_exp,
+            weight=2.0,
+            params={
+                "asset_cfg": robot_asset_cfg,
+                "min_height": 0.50,
+                "velocity_std": 1.0,
+            },
+        )
+        self.rewards.joint_margin = RewTerm(
+            func=t800_mdp.joint_soft_limit_margin_violation,
+            weight=-1.0,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "margin": 0.10,
+            },
+        )
+        self.rewards.joint_velocity_margin = RewTerm(
+            func=t800_mdp.joint_velocity_limit_violation,
+            weight=-0.5,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "max_fraction": 0.80,
+            },
+        )
+        self.rewards.joint_torque_margin = RewTerm(
+            func=t800_mdp.joint_torque_limit_violation,
+            weight=-0.25,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "max_fraction": 0.80,
+            },
+        )
+
+        self.rewards.motion_body_ori.params["max_tilt_rad"] = 0.30
+        self.rewards.motion_body_ori.params["max_height_error"] = 0.12
+        self.rewards.motion_body_ori.params["max_joint_error"] = 0.35
+
+
+@configclass
+class T800DirectGetupProneStagedEnvCfg(T800DirectGetupStagedEnvCfg):
+    orientation: str = "prone"
+
+
+@configclass
+class T800DirectGetupSupineStagedEnvCfg(T800DirectGetupStagedEnvCfg):
+    orientation: str = "supine"
+
+
+@configclass
 class T800FlatWoStateEstimationEnvCfg(T800FlatEnvCfg):
     def __post_init__(self):
         super().__post_init__()

@@ -14,5 +14,8 @@
 - [x] Add shaped direct get-up tasks for cold-start RL from prone/supine poses.
 - [x] Run 500-iteration shaped prone/supine pilots.
 - [x] Export playback videos, ONNX policies, and rollout reports for shaped pilots.
+- [x] Export a side-by-side v2 playback video and keyframe contact sheet for visual review.
+- [x] Add staged direct get-up task variants with height, stability, and actuator-margin shaping.
+- [x] Smoke-test staged prone/supine task construction.
 - [ ] Pass the 320-rollout success gate.
 - [ ] Promote any direct get-up policy to real-robot deployment.

@@ -289,6 +289,78 @@ def getup_root_height_linear(
     return torch.clamp(1.0 - err / max_error, min=0.0, max=1.0)
 
 
+def getup_root_height_stage_reward(
+    env: "ManagerBasedEnv",
+    thresholds: list[float],
+    temperature: float = 0.04,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    levels = torch.tensor(thresholds, dtype=torch.float32, device=root_height.device)
+    rewards = torch.sigmoid((root_height.unsqueeze(-1) - levels.unsqueeze(0)) / temperature)
+    return torch.mean(rewards, dim=-1)
+
+
+def getup_stability_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    velocity_std: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / 0.05)
+    vel_sq = torch.sum(torch.square(asset.data.root_lin_vel_b), dim=-1)
+    vel_sq += 0.25 * torch.sum(torch.square(asset.data.root_ang_vel_b), dim=-1)
+    return height_gate * torch.exp(-vel_sq / velocity_std**2)
+
+
+def joint_soft_limit_margin_violation(
+    env: "ManagerBasedEnv",
+    margin: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    joint_pos = _get_joint_pos(asset, asset_cfg)
+    limits = asset.data.soft_joint_pos_limits[:, asset_cfg.joint_ids]
+    lower = limits[..., 0]
+    upper = limits[..., 1]
+    center = 0.5 * (lower + upper)
+    half_range = 0.5 * (upper - lower)
+    safe_half_range = half_range * (1.0 - margin)
+    normalized = torch.abs(joint_pos - center) / torch.clamp(safe_half_range, min=1.0e-6)
+    return torch.mean(torch.square(torch.relu(normalized - 1.0)), dim=-1)
+
+
+def joint_velocity_limit_violation(
+    env: "ManagerBasedEnv",
+    max_fraction: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    joint_vel = asset.data.joint_vel[:, asset_cfg.joint_ids]
+    limits = asset.data.soft_joint_vel_limits[:, asset_cfg.joint_ids]
+    normalized = torch.abs(joint_vel) / torch.clamp(limits * max_fraction, min=1.0e-6)
+    return torch.mean(torch.square(torch.relu(normalized - 1.0)), dim=-1)
+
+
+def joint_torque_limit_violation(
+    env: "ManagerBasedEnv",
+    max_fraction: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    torque = asset.data.applied_torque[:, asset_cfg.joint_ids]
+    limits = asset.data.joint_effort_limits[:, asset_cfg.joint_ids]
+    normalized = torch.abs(torque) / torch.clamp(limits * max_fraction, min=1.0e-6)
+    return torch.mean(torch.square(torch.relu(normalized - 1.0)), dim=-1)
+
+
 def getup_low_root_velocity_exp(
     env: "ManagerBasedEnv",
     std: float,

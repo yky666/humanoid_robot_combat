@@ -32,6 +32,8 @@ Objective: ingest real T800 joint logs, verify the measured boxing-guard pose in
 - The 2-second tail reference is stored at `results/t800_real_baoquan_getup_20260907/baoquan_tail_reference_2s.npz`.
 - Direct-RL v1 (`getup_prone`, `getup_supine`, 200 iterations) did not learn a full get-up.
 - Direct-RL shaped v2 (`getup_prone_shaped`, `getup_supine_shaped`, 500 iterations) learned a repeatable sit-up / semi-seated behavior, but did not reach the final standing boxing-guard success condition.
+- The v2 playback review bundle is stored at `results/t800_real_baoquan_getup_20260907/training/shaped_v2_side_by_side.mp4` and `results/t800_real_baoquan_getup_20260907/training/shaped_v2_keyframes.jpg`.
+- Direct-RL staged v3 (`getup_prone_staged`, `getup_supine_staged`, `getup_mixed_staged`) adds height-threshold rewards, height-gated stability reward, and joint angle/velocity/torque margin penalties before any longer training.
 - Current direct get-up checkpoints are research artifacts only and must not be deployed to the real T800 until a rollout gate passes.
 
 ## Next Training Route
@@ -43,6 +45,16 @@ The next experiment should add a curriculum instead of only extending v2:
 3. crouched PD stand -> measured boxing guard
 
 The stable real baoquan tail remains the terminal action/reference. A policy can be considered for the robot only after rendered playback looks sane and the 320-rollout gate passes with the deployment observation contract checked.
+
+## Joint Limit Source
+
+Public EngineAI T800 pages expose only high-level platform specifications, so staged v3 uses the local official SDK/robot model as the concrete limit source:
+
+- `GMR/assets/t800/serial_t800.urdf`
+- `engineai_robotics_native_sdk/assets/resource/robot/t800/urdf/serial_t800.urdf`
+- `whole_body_tracking/source/whole_body_tracking/whole_body_tracking/robots/t800.py`
+
+The robot config already applies `soft_joint_pos_limit_factor=0.9`. The staged task adds another policy-level margin by penalizing excursions outside the inner 90% of soft joint ranges and above 80% of configured joint velocity/effort limits.
 
 ## Notes
 

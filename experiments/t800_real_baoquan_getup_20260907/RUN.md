@@ -89,6 +89,78 @@ Corrected 320-rollout gate:
 
 Visual result: both shaped policies learn a sit-up / semi-seated posture, not a full standing get-up.
 
+Review artifacts:
+
+```text
+results/t800_real_baoquan_getup_20260907/training/shaped_v2_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/shaped_v2_keyframes.jpg
+```
+
+## Staged Direct-RL v3
+
+The next direct-RL variant keeps the v2 dense upright/height rewards and adds:
+
+- staged root-height rewards at `0.32`, `0.42`, `0.52`, `0.62`, and `0.70` m
+- height-gated stability reward once the root is above `0.50` m
+- joint-angle margin penalty outside the inner `90%` of the soft joint range
+- joint-velocity and applied-torque penalties above `80%` of configured limits
+
+Limit source:
+
+```text
+GMR/assets/t800/serial_t800.urdf
+engineai_robotics_native_sdk/assets/resource/robot/t800/urdf/serial_t800.urdf
+whole_body_tracking/source/whole_body_tracking/whole_body_tracking/robots/t800.py
+```
+
+The IsaacLab robot config already uses `soft_joint_pos_limit_factor=0.9`; v3 adds the additional policy-level margin above so the learned get-up leaves deployable headroom.
+
+Smoke command:
+
+```bash
+cd whole_body_tracking
+conda run -n env_isaaclab python scripts/rsl_rl/train_t800.py \
+  --task_variant getup_supine_staged \
+  --getup_target_json /mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json \
+  --num_envs 64 \
+  --max_iterations 1 \
+  --device cuda:0 \
+  --run_name t800_getup_supine_staged_smoke \
+  --logger tensorboard \
+  --headless
+```
+
+Smoke result on 2026-09-09: both `getup_supine_staged` and
+`getup_prone_staged` constructed successfully. The actor observation shape is
+`110`, action shape is `25`, and the reward manager exposes all staged terms:
+`getup_height_stages`, `getup_stability`, `joint_margin`,
+`joint_velocity_margin`, and `joint_torque_margin`.
+
+Longer training, after smoke passes:
+
+```bash
+cd whole_body_tracking
+conda run -n env_isaaclab python scripts/rsl_rl/train_t800.py \
+  --task_variant getup_prone_staged \
+  --getup_target_json /mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json \
+  --num_envs 1024 \
+  --max_iterations 800 \
+  --device cuda:1 \
+  --run_name t800_getup_prone_staged_baoquan_v3 \
+  --logger tensorboard \
+  --headless
+
+conda run -n env_isaaclab python scripts/rsl_rl/train_t800.py \
+  --task_variant getup_supine_staged \
+  --getup_target_json /mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json \
+  --num_envs 1024 \
+  --max_iterations 800 \
+  --device cuda:0 \
+  --run_name t800_getup_supine_staged_baoquan_v3 \
+  --logger tensorboard \
+  --headless
+```
+
 ## Artifacts
 
 ```text
@@ -96,6 +168,8 @@ results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_model_499.pt
 results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_policy.onnx
 results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_play.mp4
 results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_eval.json
+results/t800_real_baoquan_getup_20260907/training/shaped_v2_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/shaped_v2_keyframes.jpg
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_model_499.pt
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_policy.onnx
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_play.mp4
