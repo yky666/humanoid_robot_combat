@@ -310,6 +310,63 @@ class T800DirectGetupSupineEnvCfg(T800DirectGetupEnvCfg):
 
 
 @configclass
+class T800DirectGetupShapedEnvCfg(T800DirectGetupEnvCfg):
+    """Direct get-up task with broader dense shaping for cold-start RL."""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.episode_length_s = 10.0
+        self.events.reset_getup_pose.params["pose_noise"] = {
+            "x": (-0.02, 0.02),
+            "y": (-0.02, 0.02),
+            "z": (-0.005, 0.005),
+            "roll": (-0.04, 0.04),
+            "pitch": (-0.04, 0.04),
+            "yaw": (-0.12, 0.12),
+        }
+        self.events.reset_getup_pose.params["joint_position_noise"] = (-0.025, 0.025)
+        self.events.reset_getup_pose.params["velocity_noise"] = (-0.025, 0.025)
+
+        self.rewards.motion_global_anchor_pos.weight = 1.5
+        self.rewards.motion_global_anchor_pos.params["std"] = 0.5
+        self.rewards.motion_global_anchor_ori.weight = 1.5
+        self.rewards.motion_global_anchor_ori.params["std"] = 1.8
+        self.rewards.motion_body_pos.weight = 0.5
+        self.rewards.motion_body_pos.params["std"] = 1.2
+        self.rewards.motion_body_ori.weight = 10.0
+        self.rewards.motion_body_lin_vel.weight = 0.25
+        self.rewards.motion_body_ang_vel.weight = -0.025
+        self.rewards.undesired_contacts.weight = -0.5
+        self.terminations.anchor_ori = None
+
+        self.rewards.getup_upright_progress = RewTerm(
+            func=t800_mdp.getup_upright_linear,
+            weight=3.0,
+            params={"asset_cfg": SceneEntityCfg("robot")},
+        )
+        self.rewards.getup_height_progress = RewTerm(
+            func=t800_mdp.getup_root_height_linear,
+            weight=2.0,
+            params={
+                "asset_cfg": SceneEntityCfg("robot"),
+                "target_height": self.target_height,
+                "max_error": 0.75,
+            },
+        )
+
+
+@configclass
+class T800DirectGetupProneShapedEnvCfg(T800DirectGetupShapedEnvCfg):
+    orientation: str = "prone"
+
+
+@configclass
+class T800DirectGetupSupineShapedEnvCfg(T800DirectGetupShapedEnvCfg):
+    orientation: str = "supine"
+
+
+@configclass
 class T800FlatWoStateEstimationEnvCfg(T800FlatEnvCfg):
     def __post_init__(self):
         super().__post_init__()

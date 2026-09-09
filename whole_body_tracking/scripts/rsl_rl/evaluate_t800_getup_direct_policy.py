@@ -80,7 +80,8 @@ def compute_success(raw_env, target_joint_pos: torch.Tensor) -> tuple[torch.Tens
     joint_error = torch.max(torch.abs(robot.data.joint_pos[:, joint_ids] - target.unsqueeze(0)), dim=-1).values
     gravity_z = torch.clamp(-robot.data.projected_gravity_b[:, 2], -1.0, 1.0)
     tilt = torch.acos(gravity_z)
-    height_error = torch.abs(robot.data.root_pos_w[:, 2] - raw_env.scene.env_origins[:, 2] - args_cli.target_height)
+    env_origins = raw_env.scene.env_origins.to(robot.data.root_pos_w.device)
+    height_error = torch.abs(robot.data.root_pos_w[:, 2] - env_origins[:, 2] - args_cli.target_height)
     root_speed = torch.linalg.norm(robot.data.root_lin_vel_b, dim=-1)
     success = (
         (tilt < args_cli.max_tilt_rad)
@@ -133,7 +134,7 @@ def main(
 
     successes = 0
     total_trials = args_cli.num_envs * args_cli.episodes
-    failure_counts = {"terminated": 0, "final_pose": 0}
+    failure_counts = {"terminated": 0, "time_out": 0, "final_pose": 0}
     metric_sums = {"tilt_rad": 0.0, "height_error_m": 0.0, "joint_error_rad": 0.0, "root_speed_mps": 0.0}
     horizon = int(raw_env.max_episode_length)
 
@@ -144,7 +145,14 @@ def main(
             with torch.no_grad():
                 actions = policy(obs)
             obs, _, dones, _ = env.step(actions)
-            failed |= dones.bool()
+            if hasattr(raw_env, "termination_manager"):
+                terminated = raw_env.termination_manager.terminated.bool()
+                time_outs = raw_env.termination_manager.time_outs.bool()
+            else:
+                terminated = dones.bool()
+                time_outs = torch.zeros_like(terminated)
+            failed |= terminated
+            failure_counts["time_out"] += int(torch.count_nonzero(time_outs).item())
         final_success, metrics = compute_success(raw_env, target_joint_pos)
         final_success &= ~failed
         failure_counts["terminated"] += int(torch.count_nonzero(failed).item())

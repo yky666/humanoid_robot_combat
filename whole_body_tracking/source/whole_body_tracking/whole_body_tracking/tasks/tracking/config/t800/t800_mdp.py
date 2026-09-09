@@ -223,8 +223,9 @@ def getup_target_joint_error(
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    target = _as_pose_tensor(target_joint_pos, asset.device)
-    return target.unsqueeze(0) - _get_joint_pos(asset, asset_cfg)
+    joint_pos = _get_joint_pos(asset, asset_cfg)
+    target = _as_pose_tensor(target_joint_pos, joint_pos.device)
+    return target.unsqueeze(0) - joint_pos
 
 
 def getup_root_height_error(
@@ -233,7 +234,9 @@ def getup_root_height_error(
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    return (asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2] - target_height).unsqueeze(-1)
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    return (root_pos[:, 2] - env_origins[:, 2] - target_height).unsqueeze(-1)
 
 
 def getup_target_joint_pose_exp(
@@ -267,6 +270,25 @@ def getup_upright_exp(
     return torch.exp(-torch.square(tilt) / std**2)
 
 
+def getup_upright_linear(
+    env: "ManagerBasedEnv",
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    return torch.clamp(0.5 * (gravity_z + 1.0), min=0.0, max=1.0)
+
+
+def getup_root_height_linear(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    max_error: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    err = torch.abs(getup_root_height_error(env, target_height, asset_cfg).squeeze(-1))
+    return torch.clamp(1.0 - err / max_error, min=0.0, max=1.0)
+
+
 def getup_low_root_velocity_exp(
     env: "ManagerBasedEnv",
     std: float,
@@ -290,7 +312,9 @@ def getup_success_bonus(
     asset: Articulation = env.scene[asset_cfg.name]
     gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
     tilt = torch.acos(gravity_z)
-    height_error = torch.abs(asset.data.root_pos_w[:, 2] - env.scene.env_origins[:, 2] - target_height)
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    height_error = torch.abs(root_pos[:, 2] - env_origins[:, 2] - target_height)
     joint_error = torch.max(torch.abs(getup_target_joint_error(env, target_joint_pos, asset_cfg)), dim=-1).values
     success = (tilt < max_tilt_rad) & (height_error < max_height_error) & (joint_error < max_joint_error)
     return success.float()
@@ -302,7 +326,9 @@ def getup_root_xy_out_of_bounds(
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
     asset: Articulation = env.scene[asset_cfg.name]
-    xy = asset.data.root_pos_w[:, :2] - env.scene.env_origins[:, :2]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    xy = root_pos[:, :2] - env_origins[:, :2]
     return torch.linalg.norm(xy, dim=-1) > max_distance
 
 

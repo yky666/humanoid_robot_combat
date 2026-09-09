@@ -1,0 +1,25 @@
+{
+  "status": "failed",
+  "task": "Getup-Direct-T800-Supine-Shaped-v0",
+  "checkpoint": "/mnt/data/yangky/test/humanoid_robot_combat/whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-09_07-53-44_t800_getup_supine_shaped_baoquan_v2b/model_499.pt",
+  "checkpoint_sha256": "58c62dd16072bb5641f0894f993d10a02ead4fff71e02ac1d28957a991d9a634",
+  "target_joint_pos_source": "/mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json",
+  "horizon_steps": 500,
+  "episodes": 5,
+  "num_envs": 64,
+  "total_trials": 320,
+  "successes": 0,
+  "success_rate": 0.0,
+  "min_success_rate": 0.95,
+  "failure_counts": {
+    "terminated": 0,
+    "time_out": 320,
+    "final_pose": 320
+  },
+  "mean_metrics": {
+    "tilt_rad": 3.1109500885009767,
+    "height_error_m": 0.469719797372818,
+    "joint_error_rad": 2.6558260917663574,
+    "root_speed_mps": 0.02417013645172119
+  }
+}

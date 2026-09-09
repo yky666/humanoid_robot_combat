@@ -35,6 +35,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tail-seconds", type=float, default=1.0)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-npz", type=Path, default=None)
+    parser.add_argument(
+        "--output-tail-npz",
+        type=Path,
+        default=None,
+        help="Optional tail reference motion NPZ with joint_pos/joint_vel/joint_tau in policy order.",
+    )
     return parser.parse_args()
 
 
@@ -97,6 +103,7 @@ def main() -> int:
     input_path = args.input.expanduser().resolve()
     output_json = args.output_json.expanduser().resolve()
     output_npz = args.output_npz.expanduser().resolve() if args.output_npz else None
+    output_tail_npz = args.output_tail_npz.expanduser().resolve() if args.output_tail_npz else None
 
     time_s, joint_pos, joint_vel, joint_tau, sdk_names = load_joint_log(input_path, args.member)
     fps = sampling_rate(time_s)
@@ -149,9 +156,30 @@ def main() -> int:
             tail_frames=np.asarray(tail_frames, dtype=np.int32),
         )
 
+    if output_tail_npz is not None:
+        tail_slice = slice(len(time_s) - tail_frames, len(time_s))
+        output_tail_npz.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            output_tail_npz,
+            reference_type=np.asarray("real_t800_baoquan_tail_joint_log"),
+            joint_order_version=np.asarray(T800_JOINT_ORDER_VERSION),
+            joint_names=np.asarray(T800_POLICY_JOINT_NAMES),
+            source_joint_names=np.asarray(sdk_names),
+            source=np.asarray(str(input_path)),
+            member=np.asarray(args.member),
+            fps=np.asarray(fps, dtype=np.float32),
+            time_s=(time_s[tail_slice] - time_s[tail_slice][0]).astype(np.float32),
+            joint_pos=joint_pos[tail_slice].astype(np.float32),
+            joint_vel=joint_vel[tail_slice].astype(np.float32),
+            joint_tau=joint_tau[tail_slice].astype(np.float32),
+            target_joint_pos=target_pos.astype(np.float32),
+        )
+
     print(f"[OK] wrote {output_json}")
     if output_npz is not None:
         print(f"[OK] wrote {output_npz}")
+    if output_tail_npz is not None:
+        print(f"[OK] wrote {output_tail_npz}")
     print("[INFO] target_joint_pos =", json.dumps(report["target_joint_pos"]))
     print(f"[INFO] tail std max={report['max_tail_joint_pos_std']:.6f}, mean={report['mean_tail_joint_pos_std']:.6f}")
     return 0

@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-09",
+  "target_joint_pos_source": "results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json",
+  "baoquan_tail_reference": "results/t800_real_baoquan_getup_20260907/baoquan_tail_reference_2s.npz",
+  "rollout_gate": {
+    "episodes": 5,
+    "num_envs": 64,
+    "total_trials": 320,
+    "min_success_rate": 0.95
+  },
+  "runs": {
+    "prone_shaped_v2": {
+      "task": "Getup-Direct-T800-Prone-Shaped-v0",
+      "run_dir": "whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-08_01-11-10_t800_getup_prone_shaped_baoquan_v2",
+      "checkpoint": "results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_model_499.pt",
+      "onnx": "results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_policy.onnx",
+      "video": "results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_play.mp4",
+      "eval": "results/t800_real_baoquan_getup_20260907/training/prone_shaped_v2_eval.json",
+      "train_mean_reward": 50.472103118896484,
+      "train_mean_episode_length": 500.0,
+      "train_upright_progress": 2.8252861499786377,
+      "train_height_progress": 0.4480545222759247,
+      "success_rate": 0.0,
+      "visual_result": "seated_or_semi_seated",
+      "deployment_candidate": false
+    },
+    "supine_shaped_v2b": {
+      "task": "Getup-Direct-T800-Supine-Shaped-v0",
+      "run_dir": "whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-09_07-53-44_t800_getup_supine_shaped_baoquan_v2b",
+      "checkpoint": "results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_model_499.pt",
+      "onnx": "results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_policy.onnx",
+      "video": "results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_play.mp4",
+      "eval": "results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_eval.json",
+      "train_mean_reward": 49.69723892211914,
+      "train_mean_episode_length": 500.0,
+      "train_upright_progress": 2.834866523742676,
+      "train_height_progress": 0.4550654888153076,
+      "success_rate": 0.0,
+      "visual_result": "seated_or_semi_seated",
+      "deployment_candidate": false
+    }
+  },
+  "decision": "do_not_deploy_to_real_robot",
+  "next_training_route": "staged curriculum: prone/supine to seated or kneeling, seated/kneeling to crouched PD stand, crouched PD stand to measured boxing guard"
+}
