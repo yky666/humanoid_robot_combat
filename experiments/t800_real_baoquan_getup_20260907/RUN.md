@@ -100,8 +100,9 @@ results/t800_real_baoquan_getup_20260907/training/shaped_v2_keyframes.jpg
 
 The next direct-RL variant keeps the v2 dense upright/height rewards and adds:
 
-- staged root-height rewards at `0.32`, `0.42`, `0.52`, `0.62`, and `0.70` m
+- staged root-height rewards at `0.35`, `0.45`, `0.55`, `0.65`, and `0.72` m
 - height-gated stability reward once the root is above `0.50` m
+- boxing-guard stability reward gated by target height, upright tilt, and terminal joint-pose error
 - joint-angle margin penalty outside the inner `90%` of the soft joint range
 - joint-velocity and applied-torque penalties above `80%` of configured limits
 
@@ -135,6 +136,10 @@ Smoke result on 2026-09-09: both `getup_supine_staged` and
 `110`, action shape is `25`, and the reward manager exposes all staged terms:
 `getup_height_stages`, `getup_stability`, `joint_margin`,
 `joint_velocity_margin`, and `joint_torque_margin`.
+
+Follow-up smoke on 2026-09-09 added `getup_guard_stability`; the staged task
+constructs successfully with `17` reward terms. This v3.1 setting is the one to
+use for the next long training run.
 
 Longer training, after smoke passes:
 

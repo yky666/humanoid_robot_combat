@@ -380,10 +380,10 @@ class T800DirectGetupStagedEnvCfg(T800DirectGetupShapedEnvCfg):
 
         self.rewards.getup_height_stages = RewTerm(
             func=t800_mdp.getup_root_height_stage_reward,
-            weight=4.0,
+            weight=5.0,
             params={
                 "asset_cfg": robot_asset_cfg,
-                "thresholds": [0.32, 0.42, 0.52, 0.62, 0.70],
+                "thresholds": [0.35, 0.45, 0.55, 0.65, 0.72],
                 "temperature": 0.035,
             },
         )
@@ -394,6 +394,20 @@ class T800DirectGetupStagedEnvCfg(T800DirectGetupShapedEnvCfg):
                 "asset_cfg": robot_asset_cfg,
                 "min_height": 0.50,
                 "velocity_std": 1.0,
+            },
+        )
+        self.rewards.getup_guard_stability = RewTerm(
+            func=t800_mdp.getup_guard_stability_exp,
+            weight=4.0,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "target_height": self.target_height,
+                "target_joint_pos": self.target_joint_pos,
+                "max_tilt_rad": 0.45,
+                "max_height_error": 0.18,
+                "max_joint_error": 0.65,
+                "velocity_std": 0.8,
+                "joint_velocity_std": 2.0,
             },
         )
         self.rewards.joint_margin = RewTerm(

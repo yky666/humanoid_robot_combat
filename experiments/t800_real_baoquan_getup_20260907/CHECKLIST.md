@@ -17,5 +17,7 @@
 - [x] Export a side-by-side v2 playback video and keyframe contact sheet for visual review.
 - [x] Add staged direct get-up task variants with height, stability, and actuator-margin shaping.
 - [x] Smoke-test staged prone/supine task construction.
+- [x] Add and smoke-test terminal boxing-guard stability reward for staged v3.1.
+- [ ] Launch staged v3.1 prone/supine long training in tmux.
 - [ ] Pass the 320-rollout success gate.
 - [ ] Promote any direct get-up policy to real-robot deployment.

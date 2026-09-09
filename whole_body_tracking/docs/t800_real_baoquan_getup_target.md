@@ -262,8 +262,9 @@ aligned with a physical get-up:
 
 New shaping:
 
-- root-height stages at `0.32`, `0.42`, `0.52`, `0.62`, and `0.70` m
+- root-height stages at `0.35`, `0.45`, `0.55`, `0.65`, and `0.72` m
 - height-gated stability reward after the base reaches `0.50` m
+- boxing-guard stability reward gated by target height, upright tilt, and terminal joint-pose error
 - joint-angle margin penalty outside the inner `90%` of soft joint ranges
 - joint-velocity and applied-torque penalties above `80%` of configured limits
 
