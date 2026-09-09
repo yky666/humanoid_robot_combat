@@ -445,6 +445,78 @@ def joint_torque_limit_violation(
     return torch.mean(torch.square(torch.relu(normalized - 1.0)), dim=-1)
 
 
+
+def getup_height_upright_gated_max_joint_progress(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    max_tilt_rad: float,
+    target_joint_pos: list[float],
+    start_error: float,
+    target_error: float,
+    height_temperature: float,
+    tilt_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Dense progress on max joint error once the robot is high and roughly upright."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / tilt_temperature)
+    joint_error = torch.max(torch.abs(getup_target_joint_error(env, target_joint_pos, asset_cfg)), dim=-1).values
+    denom = max(float(start_error - target_error), 1.0e-6)
+    progress = torch.clamp((start_error - joint_error) / denom, min=0.0, max=1.0)
+    return height_gate * tilt_gate * progress
+
+
+def getup_height_upright_gated_root_low_velocity(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    max_tilt_rad: float,
+    velocity_std: float,
+    height_temperature: float,
+    tilt_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Root low-velocity reward gated by height and uprightness (no joint-vel product)."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / tilt_temperature)
+    root_vel_sq = torch.sum(torch.square(asset.data.root_lin_vel_b), dim=-1)
+    root_vel_sq += 0.25 * torch.sum(torch.square(asset.data.root_ang_vel_b), dim=-1)
+    return height_gate * tilt_gate * torch.exp(-root_vel_sq / velocity_std**2)
+
+
+def getup_height_upright_gated_joint_low_velocity(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    max_tilt_rad: float,
+    joint_velocity_std: float,
+    height_temperature: float,
+    tilt_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Joint low-velocity reward gated by height and uprightness."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / tilt_temperature)
+    joint_vel_sq = torch.mean(torch.square(asset.data.joint_vel[:, asset_cfg.joint_ids]), dim=-1)
+    return height_gate * tilt_gate * torch.exp(-joint_vel_sq / joint_velocity_std**2)
+
+
 def getup_low_root_velocity_exp(
     env: "ManagerBasedEnv",
     std: float,
@@ -454,6 +526,35 @@ def getup_low_root_velocity_exp(
     vel_sq = torch.sum(torch.square(asset.data.root_lin_vel_b), dim=-1)
     vel_sq += 0.25 * torch.sum(torch.square(asset.data.root_ang_vel_b), dim=-1)
     return torch.exp(-vel_sq / std**2)
+
+
+
+def getup_stand_stable_exp(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    max_tilt_rad: float,
+    max_height_error: float,
+    root_speed_comfort: float,
+    height_temperature: float = 0.05,
+    tilt_temperature: float = 0.08,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward stable standing without requiring a tight boxing joint match.
+
+    Small root motions for balance are tolerated via root_speed_comfort.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    height_error = torch.abs(root_pos[:, 2] - env_origins[:, 2] - target_height)
+    height_gate = torch.sigmoid((max_height_error - height_error) / height_temperature)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / tilt_temperature)
+    root_speed = torch.linalg.norm(asset.data.root_lin_vel_b, dim=-1)
+    # 1 at zero speed, ~0.6 around comfort speed, decays beyond.
+    speed_term = torch.exp(-torch.square(root_speed) / (root_speed_comfort**2))
+    return height_gate * tilt_gate * speed_term
 
 
 def getup_success_bonus(

@@ -297,6 +297,20 @@ variants keep the same strict 320-rollout gate and add three high-root-height
 continuous rewards: `getup_high_upright`, `getup_high_joint_pose`, and
 `getup_high_low_velocity`.
 
+Important target propagation fix: every direct get-up training/eval/playback
+command that uses the measured target must pass `--getup_target_json`. The
+helper now validates `policy_joint_names` when present and updates every
+observation/reward term that has a `target_joint_pos` parameter. This is
+required because the approximate built-in target and measured real baoquan
+target differ by up to `1.54574 rad`; leaving any dense reward on the
+approximate target can make the policy learn the wrong final guard.
+
+The v3.4 stand-first curriculum adds separate high/upright-gated root-velocity,
+joint-velocity, joint-progress, and stand-stability terms. Treat stand-only
+success as a diagnostic milestone, not as real-robot deployment approval. The
+policy still needs to pass the full measured-baoquan 320-rollout gate before
+conversion/deployment.
+
 Smoke command:
 
 ```bash

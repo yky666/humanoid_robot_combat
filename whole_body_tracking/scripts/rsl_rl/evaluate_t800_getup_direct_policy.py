@@ -27,6 +27,14 @@ parser.add_argument("--max_tilt_rad", type=float, default=0.35)
 parser.add_argument("--max_height_error", type=float, default=0.16)
 parser.add_argument("--max_joint_error", type=float, default=0.45)
 parser.add_argument("--max_root_speed", type=float, default=0.75)
+parser.add_argument(
+    "--stand_gate",
+    action="store_true",
+    help="Also require/report stand-stable success ignoring joint pose match.",
+)
+parser.add_argument("--stand_max_tilt_rad", type=float, default=0.45)
+parser.add_argument("--stand_max_height_error", type=float, default=0.18)
+parser.add_argument("--stand_max_root_speed", type=float, default=0.90)
 parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
 cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
@@ -84,12 +92,23 @@ def compute_success(raw_env, target_joint_pos: torch.Tensor) -> tuple[torch.Tens
     root_height = robot.data.root_pos_w[:, 2] - env_origins[:, 2]
     height_error = torch.abs(root_height - args_cli.target_height)
     root_speed = torch.linalg.norm(robot.data.root_lin_vel_b, dim=-1)
+    stand_success = (
+        (tilt < args_cli.stand_max_tilt_rad)
+        & (height_error < args_cli.stand_max_height_error)
+        & (root_speed < args_cli.stand_max_root_speed)
+    )
     success = (
-        (tilt < args_cli.max_tilt_rad)
+        stand_success
+        & (tilt < args_cli.max_tilt_rad)
         & (height_error < args_cli.max_height_error)
         & (joint_error < args_cli.max_joint_error)
         & (root_speed < args_cli.max_root_speed)
     )
+    # Primary gate can be stand-only when --stand_gate is set.
+    if args_cli.stand_gate:
+        primary = stand_success
+    else:
+        primary = success
     metrics = {
         "tilt_rad": tilt,
         "height_error_m": height_error,
@@ -97,8 +116,10 @@ def compute_success(raw_env, target_joint_pos: torch.Tensor) -> tuple[torch.Tens
         "root_speed_mps": root_speed,
         "root_height_m": root_height,
         "upright_score": gravity_z,
+        "stand_success": stand_success.float(),
+        "full_success": success.float(),
     }
-    return success, metrics
+    return primary, metrics
 
 
 @hydra_task_config(args_cli.task, "rsl_rl_cfg_entry_point")
@@ -136,6 +157,8 @@ def main(
     target_joint_pos = torch.tensor(env_cfg.target_joint_pos, dtype=torch.float32, device=raw_env.device)
 
     successes = 0
+    stand_successes = 0
+    full_successes = 0
     total_trials = args_cli.num_envs * args_cli.episodes
     failure_counts = {"terminated": 0, "time_out": 0, "final_pose": 0}
     metric_sums = {"tilt_rad": 0.0, "height_error_m": 0.0, "joint_error_rad": 0.0, "root_speed_mps": 0.0}
@@ -188,6 +211,8 @@ def main(
         failure_counts["terminated"] += int(torch.count_nonzero(failed).item())
         failure_counts["final_pose"] += int(torch.count_nonzero(~final_success & ~failed).item())
         successes += int(torch.count_nonzero(final_success).item())
+        stand_successes += int(torch.count_nonzero((metrics["stand_success"] > 0.5) & ~failed).item())
+        full_successes += int(torch.count_nonzero((metrics["full_success"] > 0.5) & ~failed).item())
         any_successes += int(torch.count_nonzero(any_success).item())
         any_successes_before_failure += int(torch.count_nonzero(any_success_before_failure).item())
         for name, value in metrics.items():
@@ -220,6 +245,21 @@ def main(
         "total_trials": total_trials,
         "successes": successes,
         "success_rate": success_rate,
+        "stand_successes": stand_successes,
+        "stand_success_rate": stand_successes / max(total_trials, 1),
+        "full_successes": full_successes,
+        "full_success_rate": full_successes / max(total_trials, 1),
+        "stand_gate": bool(args_cli.stand_gate),
+        "thresholds": {
+            "target_height": args_cli.target_height,
+            "max_tilt_rad": args_cli.max_tilt_rad,
+            "max_height_error": args_cli.max_height_error,
+            "max_joint_error": args_cli.max_joint_error,
+            "max_root_speed": args_cli.max_root_speed,
+            "stand_max_tilt_rad": args_cli.stand_max_tilt_rad,
+            "stand_max_height_error": args_cli.stand_max_height_error,
+            "stand_max_root_speed": args_cli.stand_max_root_speed,
+        },
         "any_successes": any_successes,
         "any_success_rate": any_successes / max(total_trials, 1),
         "any_successes_before_failure": any_successes_before_failure,

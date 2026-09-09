@@ -23,7 +23,11 @@
 - [x] Re-run the 320-rollout gate with trajectory diagnostics for v3.1.
 - [x] Add and smoke-test v3.2 high-pose curriculum reward variants.
 - [x] Launch v3.2 prone/supine curriculum long training in tmux.
-- [ ] Render v3.2 long-training playback videos.
-- [ ] Re-run the 320-rollout gate for v3.2.
+- [x] Render v3.2 long-training playback videos.
+- [x] Diagnose v3.2-cont/v3.3 guard-focus runs as still failing the full 320-rollout gate.
+- [x] Fix measured baoquan target propagation for all target-aware observation/reward terms.
+- [x] Add v3.4 stand-first rewards and launch supine stand-first continuation.
+- [ ] Render v3.4 playback videos.
+- [ ] Re-run the full measured-baoquan 320-rollout gate for v3.4.
 - [ ] Pass the 320-rollout success gate.
 - [ ] Promote any direct get-up policy to real-robot deployment.

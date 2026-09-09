@@ -1,0 +1,14 @@
+{
+  "round": 1,
+  "supine_run": "2026-09-09_16-08-06_t800_getup_supine_curriculum_baoquan_v33_r1",
+  "supine_ckpt": "model_4397.pt",
+  "supine_success_rate": 0.0,
+  "supine_any": 0.0,
+  "supine_min_joint": 1.0761279582977294,
+  "prone_run": "2026-09-09_16-08-52_t800_getup_prone_curriculum_baoquan_v33_r1",
+  "prone_ckpt": "model_4397.pt",
+  "prone_success_rate": 0.0,
+  "prone_any": 0.0,
+  "prone_min_joint": 1.1769057273864747,
+  "passed": false
+}

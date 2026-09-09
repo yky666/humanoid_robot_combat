@@ -264,6 +264,56 @@ The current live session is `t800_tensorboard`; stop it with:
 tmux kill-session -t t800_tensorboard
 ```
 
+v3.2 visual artifacts:
+
+```text
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/supine_v32_curriculum_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/prone_v32_curriculum_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/curriculum_v32_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/curriculum_v32_keyframes.jpg
+```
+
+v3.2 continuation and v3.3 guard-focus evaluations both remained at `0/320`
+for the full measured baoquan gate. However, the trajectory diagnostics changed
+the failure diagnosis: these runs do briefly reach the right height and an
+upright base. The remaining blocker is holding that state while reducing the
+measured baoquan max-joint error below the final threshold.
+
+## Stand-First Curriculum v3.4
+
+The v3.4 branch fixes a target propagation bug found during the v3.3 analysis:
+`apply_getup_target_json` previously updated the direct get-up target stored on
+the env config and the original `motion_body_pos/motion_body_ori` rewards, but
+new dense reward terms with their own `target_joint_pos` params could still use
+`T800_APPROX_BOXING_READY`. The measured and approximate targets differ by up
+to `1.54574 rad` per joint, so this could keep the policy near the wrong guard
+pose even while `--getup_target_json` was supplied.
+
+The fix updates every observation/reward term containing `target_joint_pos` and
+logs the updated term list at startup. v3.4 also adds a stand-first reward
+stack:
+
+- `getup_stand_stable`: target height, uprightness, and comfortable root speed
+- `getup_near_success`: wide joint-band near-baoquan bonus
+- `getup_joint_progress`: max-joint-error progress once high and roughly upright
+- `getup_high_root_low_velocity` and `getup_high_joint_low_velocity`: separate
+  high/upright-gated hold terms so the product is not always zero
+
+Current live run:
+
+```text
+tmux session: t800_v34_loop
+active training: t800_supine_v34
+run name: t800_getup_supine_curriculum_baoquan_v34_r1
+resume source: 2026-09-09_19-15-31_t800_getup_supine_curriculum_baoquan_v33_r5/model_11500.pt
+log: results/t800_real_baoquan_getup_20260907/training/long_v34_stand_first/supine_r1_train.log
+```
+
+Early v3.4 signal is healthier than v3.2/v3.3 for supine: `anchor_pos=0`,
+`getup_stand_stable` is nonzero, and the separate root/joint hold rewards are
+nonzero. It still needs the orchestrator's 320-rollout gate before any
+deployment discussion.
+
 ## Artifacts
 
 ```text
@@ -283,12 +333,17 @@ results/t800_real_baoquan_getup_20260907/training/long_v31_guard/supine_v31_guar
 results/t800_real_baoquan_getup_20260907/training/long_v31_guard/prone_v31_guard_play.mp4
 results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_side_by_side.mp4
 results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_keyframes.jpg
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/supine_v32_curriculum_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/prone_v32_curriculum_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/curriculum_v32_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/curriculum_v32_keyframes.jpg
+results/t800_real_baoquan_getup_20260907/training/long_v34_stand_first/alignment_check.json
 ```
 
 ## Deployment Decision
 
 Do not deploy these direct get-up policies to the real T800. They have not passed the 320-rollout gate and their ONNX observation contract is the 110-element direct get-up policy input, not the current Native SDK whole-body tracking runtime contract.
 
-Next step: let v3.2 finish, render playback, and re-run the corrected
-320-rollout gate. Promote a get-up policy only if the rendered motion is
-physically sane and the gate passes.
+Next step: let v3.4 finish, render playback, and run the corrected 320-rollout
+gate. Promote a get-up policy only if the rendered motion is physically sane,
+the measured target propagation log is correct, and the full gate passes.

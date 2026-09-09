@@ -1,0 +1,11 @@
+{
+  "sdk_to_policy_mapping": "index-aligned rename (J18..->J20.., J23/24 head -> J27/28); semantically correct",
+  "measured_source": "/mnt/data/yangky/test/datasets/urkl_locomotion_260901/motion_logs.zip",
+  "measured_member": "logs/pdstand2baoquan.csv",
+  "tail_seconds": 1.0,
+  "max_tail_joint_pos_std": 0.00036867592578849714,
+  "bug_found": "apply_getup_target_json previously only updated motion_body_pos/ori; dense getup_* rewards still used T800_APPROX_BOXING_READY",
+  "approx_vs_measured_max_abs_diff": 1.54574,
+  "approx_vs_measured_mean_abs_diff": 0.34602624,
+  "fix": "all reward terms with target_joint_pos now updated; stand-first rewards; eval --stand_gate ignores joint for primary gate"
+}

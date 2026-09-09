@@ -452,7 +452,11 @@ class T800DirectGetupSupineStagedEnvCfg(T800DirectGetupStagedEnvCfg):
 
 @configclass
 class T800DirectGetupCurriculumEnvCfg(T800DirectGetupStagedEnvCfg):
-    """Staged get-up task with reachable high-pose shaping before the strict gate."""
+    """Stand-first curriculum: stabilize upright, then soft boxing pose (v34).
+
+    Joint matching is intentionally loose so the policy can micro-adjust for balance.
+    Measured baoquan target must be applied via --getup_target_json to ALL reward terms.
+    """
 
     def __post_init__(self):
         super().__post_init__()
@@ -462,51 +466,131 @@ class T800DirectGetupCurriculumEnvCfg(T800DirectGetupStagedEnvCfg):
         )
         robot_asset_cfg = SceneEntityCfg("robot")
 
-        self.rewards.motion_global_anchor_ori.weight = 2.0
-        self.rewards.motion_body_pos.weight = 0.8
-        self.rewards.motion_body_pos.params["std"] = 1.1
-        self.rewards.motion_body_ori.weight = 12.0
-        self.rewards.motion_body_lin_vel.weight = 0.4
-        self.rewards.action_rate_l2.weight = -0.015
-        self.rewards.getup_stability.weight = 3.0
-        self.rewards.getup_stability.params["min_height"] = 0.55
-        self.rewards.getup_guard_stability.weight = 2.0
-        self.rewards.getup_guard_stability.params["max_tilt_rad"] = 0.80
-        self.rewards.getup_guard_stability.params["max_height_error"] = 0.25
-        self.rewards.getup_guard_stability.params["max_joint_error"] = 1.20
+        self.episode_length_s = 12.0
+
+        # Keep get-up progress.
+        self.rewards.motion_global_anchor_ori.weight = 2.5
+        self.rewards.motion_body_pos.weight = 1.2
+        self.rewards.motion_body_pos.params["std"] = 1.0
+        self.rewards.motion_body_lin_vel.weight = 0.8
+        self.rewards.motion_body_lin_vel.params["std"] = 1.4
+        self.rewards.action_rate_l2.weight = -0.012
+        self.rewards.getup_stability.weight = 5.0
+        self.rewards.getup_stability.params["min_height"] = 0.58
+        self.rewards.getup_stability.params["velocity_std"] = 1.1
+
+        # Primary objective for this stage: stand tall, upright, softly settled.
+        self.rewards.getup_stand_stable = RewTerm(
+            func=t800_mdp.getup_stand_stable_exp,
+            weight=12.0,
+            params={
+                "asset_cfg": robot_asset_cfg,
+                "target_height": self.target_height,
+                "max_tilt_rad": 0.45,
+                "max_height_error": 0.18,
+                "root_speed_comfort": 0.55,
+                "height_temperature": 0.05,
+                "tilt_temperature": 0.08,
+            },
+        )
+
+        # Soft near-baoquan (wide joint band). Not a hard lock.
+        self.rewards.getup_near_success = RewTerm(
+            func=t800_mdp.getup_success_bonus,
+            weight=6.0,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "target_height": self.target_height,
+                "target_joint_pos": self.target_joint_pos,
+                "max_tilt_rad": 0.50,
+                "max_height_error": 0.20,
+                "max_joint_error": 1.20,
+            },
+        )
+        # Stricter success kept but weaker until stand is reliable.
+        self.rewards.motion_body_ori.weight = 8.0
+        self.rewards.motion_body_ori.params["max_tilt_rad"] = 0.40
+        self.rewards.motion_body_ori.params["max_height_error"] = 0.18
+        self.rewards.motion_body_ori.params["max_joint_error"] = 0.90
+
+        # Guard stability: prioritize stand gates; joint band wide; allow micro-adjust.
+        self.rewards.getup_guard_stability.weight = 4.0
+        self.rewards.getup_guard_stability.params["max_tilt_rad"] = 0.50
+        self.rewards.getup_guard_stability.params["max_height_error"] = 0.20
+        self.rewards.getup_guard_stability.params["max_joint_error"] = 1.30
         self.rewards.getup_guard_stability.params["velocity_std"] = 1.0
         self.rewards.getup_guard_stability.params["joint_velocity_std"] = 3.0
 
         self.rewards.getup_high_upright = RewTerm(
             func=t800_mdp.getup_height_gated_upright_exp,
+            weight=6.0,
+            params={
+                "asset_cfg": robot_asset_cfg,
+                "min_height": 0.55,
+                "std": 0.70,
+                "height_temperature": 0.05,
+            },
+        )
+        # Soft pose attraction toward measured baoquan (not a hard lock).
+        self.rewards.getup_high_joint_pose = RewTerm(
+            func=t800_mdp.getup_height_gated_joint_pose_exp,
+            weight=3.0,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "min_height": 0.55,
+                "target_joint_pos": self.target_joint_pos,
+                "std": 1.10,
+                "height_temperature": 0.05,
+            },
+        )
+        self.rewards.getup_joint_progress = RewTerm(
+            func=t800_mdp.getup_height_upright_gated_max_joint_progress,
+            weight=3.0,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "min_height": 0.55,
+                "max_tilt_rad": 0.90,
+                "target_joint_pos": self.target_joint_pos,
+                "start_error": 2.2,
+                "target_error": 0.80,
+                "height_temperature": 0.05,
+                "tilt_temperature": 0.10,
+            },
+        )
+        # Allow small balance adjustments: comfort band, not zero-velocity lock.
+        self.rewards.getup_high_root_low_velocity = RewTerm(
+            func=t800_mdp.getup_height_upright_gated_root_low_velocity,
             weight=4.0,
             params={
                 "asset_cfg": robot_asset_cfg,
-                "min_height": 0.58,
-                "std": 1.1,
-                "height_temperature": 0.06,
+                "min_height": 0.55,
+                "max_tilt_rad": 0.90,
+                "velocity_std": 0.90,
+                "height_temperature": 0.05,
+                "tilt_temperature": 0.10,
             },
         )
-        self.rewards.getup_high_joint_pose = RewTerm(
-            func=t800_mdp.getup_height_gated_joint_pose_exp,
-            weight=2.5,
+        self.rewards.getup_high_joint_low_velocity = RewTerm(
+            func=t800_mdp.getup_height_upright_gated_joint_low_velocity,
+            weight=2.0,
             params={
                 "asset_cfg": policy_joint_asset_cfg,
-                "min_height": 0.58,
-                "target_joint_pos": self.target_joint_pos,
-                "std": 1.4,
-                "height_temperature": 0.06,
+                "min_height": 0.55,
+                "max_tilt_rad": 0.90,
+                "joint_velocity_std": 3.5,
+                "height_temperature": 0.05,
+                "tilt_temperature": 0.10,
             },
         )
         self.rewards.getup_high_low_velocity = RewTerm(
             func=t800_mdp.getup_height_gated_low_velocity_exp,
-            weight=2.5,
+            weight=0.5,
             params={
                 "asset_cfg": policy_joint_asset_cfg,
-                "min_height": 0.58,
-                "velocity_std": 1.2,
-                "joint_velocity_std": 3.0,
-                "height_temperature": 0.06,
+                "min_height": 0.55,
+                "velocity_std": 1.0,
+                "joint_velocity_std": 3.5,
+                "height_temperature": 0.05,
             },
         )
 
