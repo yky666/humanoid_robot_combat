@@ -282,6 +282,21 @@ The robot config already sets `soft_joint_pos_limit_factor=0.9`; the staged
 task adds the extra policy-level margins above to avoid training right on the
 mechanical boundaries.
 
+v3.1 long-training result:
+
+- `supine v3.1 guard`: `0/320` final success and `0/320` any-step success. The
+  policy reached average max root height `1.0780 m`, but best tilt was still
+  `1.2418 rad` and best max-joint error was `1.0368 rad`.
+- `prone v3.1 guard`: `0/320` final success and `0/320` any-step success. The
+  policy reached average max root height `0.8298 m`, but best tilt was still
+  `1.4315 rad` and best max-joint error was `1.4508 rad`.
+
+This means v3.1 can exploit height reward, but the high-pose upright/baoquan
+hold is still not reachable enough. The follow-up `getup_*_curriculum` v3.2
+variants keep the same strict 320-rollout gate and add three high-root-height
+continuous rewards: `getup_high_upright`, `getup_high_joint_pose`, and
+`getup_high_low_velocity`.
+
 Smoke command:
 
 ```bash

@@ -451,6 +451,77 @@ class T800DirectGetupSupineStagedEnvCfg(T800DirectGetupStagedEnvCfg):
 
 
 @configclass
+class T800DirectGetupCurriculumEnvCfg(T800DirectGetupStagedEnvCfg):
+    """Staged get-up task with reachable high-pose shaping before the strict gate."""
+
+    def __post_init__(self):
+        super().__post_init__()
+
+        policy_joint_asset_cfg = SceneEntityCfg(
+            "robot", joint_names=T800_POLICY_JOINT_NAMES, preserve_order=True
+        )
+        robot_asset_cfg = SceneEntityCfg("robot")
+
+        self.rewards.motion_global_anchor_ori.weight = 2.0
+        self.rewards.motion_body_pos.weight = 0.8
+        self.rewards.motion_body_pos.params["std"] = 1.1
+        self.rewards.motion_body_ori.weight = 12.0
+        self.rewards.motion_body_lin_vel.weight = 0.4
+        self.rewards.action_rate_l2.weight = -0.015
+        self.rewards.getup_stability.weight = 3.0
+        self.rewards.getup_stability.params["min_height"] = 0.55
+        self.rewards.getup_guard_stability.weight = 2.0
+        self.rewards.getup_guard_stability.params["max_tilt_rad"] = 0.80
+        self.rewards.getup_guard_stability.params["max_height_error"] = 0.25
+        self.rewards.getup_guard_stability.params["max_joint_error"] = 1.20
+        self.rewards.getup_guard_stability.params["velocity_std"] = 1.0
+        self.rewards.getup_guard_stability.params["joint_velocity_std"] = 3.0
+
+        self.rewards.getup_high_upright = RewTerm(
+            func=t800_mdp.getup_height_gated_upright_exp,
+            weight=4.0,
+            params={
+                "asset_cfg": robot_asset_cfg,
+                "min_height": 0.58,
+                "std": 1.1,
+                "height_temperature": 0.06,
+            },
+        )
+        self.rewards.getup_high_joint_pose = RewTerm(
+            func=t800_mdp.getup_height_gated_joint_pose_exp,
+            weight=2.5,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "min_height": 0.58,
+                "target_joint_pos": self.target_joint_pos,
+                "std": 1.4,
+                "height_temperature": 0.06,
+            },
+        )
+        self.rewards.getup_high_low_velocity = RewTerm(
+            func=t800_mdp.getup_height_gated_low_velocity_exp,
+            weight=2.5,
+            params={
+                "asset_cfg": policy_joint_asset_cfg,
+                "min_height": 0.58,
+                "velocity_std": 1.2,
+                "joint_velocity_std": 3.0,
+                "height_temperature": 0.06,
+            },
+        )
+
+
+@configclass
+class T800DirectGetupProneCurriculumEnvCfg(T800DirectGetupCurriculumEnvCfg):
+    orientation: str = "prone"
+
+
+@configclass
+class T800DirectGetupSupineCurriculumEnvCfg(T800DirectGetupCurriculumEnvCfg):
+    orientation: str = "supine"
+
+
+@configclass
 class T800FlatWoStateEstimationEnvCfg(T800FlatEnvCfg):
     def __post_init__(self):
         super().__post_init__()

@@ -81,7 +81,8 @@ def compute_success(raw_env, target_joint_pos: torch.Tensor) -> tuple[torch.Tens
     gravity_z = torch.clamp(-robot.data.projected_gravity_b[:, 2], -1.0, 1.0)
     tilt = torch.acos(gravity_z)
     env_origins = raw_env.scene.env_origins.to(robot.data.root_pos_w.device)
-    height_error = torch.abs(robot.data.root_pos_w[:, 2] - env_origins[:, 2] - args_cli.target_height)
+    root_height = robot.data.root_pos_w[:, 2] - env_origins[:, 2]
+    height_error = torch.abs(root_height - args_cli.target_height)
     root_speed = torch.linalg.norm(robot.data.root_lin_vel_b, dim=-1)
     success = (
         (tilt < args_cli.max_tilt_rad)
@@ -94,6 +95,8 @@ def compute_success(raw_env, target_joint_pos: torch.Tensor) -> tuple[torch.Tens
         "height_error_m": height_error,
         "joint_error_rad": joint_error,
         "root_speed_mps": root_speed,
+        "root_height_m": root_height,
+        "upright_score": gravity_z,
     }
     return success, metrics
 
@@ -136,15 +139,42 @@ def main(
     total_trials = args_cli.num_envs * args_cli.episodes
     failure_counts = {"terminated": 0, "time_out": 0, "final_pose": 0}
     metric_sums = {"tilt_rad": 0.0, "height_error_m": 0.0, "joint_error_rad": 0.0, "root_speed_mps": 0.0}
+    trajectory_metric_sums = {
+        "max_root_height_m": 0.0,
+        "max_upright_score": 0.0,
+        "min_tilt_rad": 0.0,
+        "min_height_error_m": 0.0,
+        "min_joint_error_rad": 0.0,
+        "min_root_speed_mps": 0.0,
+    }
+    any_successes = 0
+    any_successes_before_failure = 0
     horizon = int(raw_env.max_episode_length)
 
     for episode in range(args_cli.episodes):
         obs, _ = env.reset()
         failed = torch.zeros(args_cli.num_envs, dtype=torch.bool, device=raw_env.device)
+        any_success = torch.zeros(args_cli.num_envs, dtype=torch.bool, device=raw_env.device)
+        any_success_before_failure = torch.zeros(args_cli.num_envs, dtype=torch.bool, device=raw_env.device)
+        max_root_height = torch.full((args_cli.num_envs,), -float("inf"), dtype=torch.float32, device=raw_env.device)
+        max_upright_score = torch.full((args_cli.num_envs,), -float("inf"), dtype=torch.float32, device=raw_env.device)
+        min_tilt = torch.full((args_cli.num_envs,), float("inf"), dtype=torch.float32, device=raw_env.device)
+        min_height_error = torch.full((args_cli.num_envs,), float("inf"), dtype=torch.float32, device=raw_env.device)
+        min_joint_error = torch.full((args_cli.num_envs,), float("inf"), dtype=torch.float32, device=raw_env.device)
+        min_root_speed = torch.full((args_cli.num_envs,), float("inf"), dtype=torch.float32, device=raw_env.device)
         for _ in range(horizon):
             with torch.no_grad():
                 actions = policy(obs)
             obs, _, dones, _ = env.step(actions)
+            step_success, step_metrics = compute_success(raw_env, target_joint_pos)
+            any_success |= step_success
+            any_success_before_failure |= step_success & ~failed
+            max_root_height = torch.maximum(max_root_height, step_metrics["root_height_m"])
+            max_upright_score = torch.maximum(max_upright_score, step_metrics["upright_score"])
+            min_tilt = torch.minimum(min_tilt, step_metrics["tilt_rad"])
+            min_height_error = torch.minimum(min_height_error, step_metrics["height_error_m"])
+            min_joint_error = torch.minimum(min_joint_error, step_metrics["joint_error_rad"])
+            min_root_speed = torch.minimum(min_root_speed, step_metrics["root_speed_mps"])
             if hasattr(raw_env, "termination_manager"):
                 terminated = raw_env.termination_manager.terminated.bool()
                 time_outs = raw_env.termination_manager.time_outs.bool()
@@ -158,9 +188,23 @@ def main(
         failure_counts["terminated"] += int(torch.count_nonzero(failed).item())
         failure_counts["final_pose"] += int(torch.count_nonzero(~final_success & ~failed).item())
         successes += int(torch.count_nonzero(final_success).item())
+        any_successes += int(torch.count_nonzero(any_success).item())
+        any_successes_before_failure += int(torch.count_nonzero(any_success_before_failure).item())
         for name, value in metrics.items():
-            metric_sums[name] += float(value.mean().item())
-        print(f"[EVAL] batch={episode + 1}/{args_cli.episodes} success={int(torch.count_nonzero(final_success).item())}/{args_cli.num_envs}")
+            if name in metric_sums:
+                metric_sums[name] += float(value.mean().item())
+        trajectory_metric_sums["max_root_height_m"] += float(max_root_height.mean().item())
+        trajectory_metric_sums["max_upright_score"] += float(max_upright_score.mean().item())
+        trajectory_metric_sums["min_tilt_rad"] += float(min_tilt.mean().item())
+        trajectory_metric_sums["min_height_error_m"] += float(min_height_error.mean().item())
+        trajectory_metric_sums["min_joint_error_rad"] += float(min_joint_error.mean().item())
+        trajectory_metric_sums["min_root_speed_mps"] += float(min_root_speed.mean().item())
+        print(
+            f"[EVAL] batch={episode + 1}/{args_cli.episodes} "
+            f"final_success={int(torch.count_nonzero(final_success).item())}/{args_cli.num_envs} "
+            f"any_success={int(torch.count_nonzero(any_success).item())}/{args_cli.num_envs} "
+            f"mean_max_height={float(max_root_height.mean().item()):.3f}"
+        )
 
     success_rate = successes / max(total_trials, 1)
     passed = success_rate >= args_cli.min_success_rate
@@ -176,9 +220,16 @@ def main(
         "total_trials": total_trials,
         "successes": successes,
         "success_rate": success_rate,
+        "any_successes": any_successes,
+        "any_success_rate": any_successes / max(total_trials, 1),
+        "any_successes_before_failure": any_successes_before_failure,
+        "any_success_before_failure_rate": any_successes_before_failure / max(total_trials, 1),
         "min_success_rate": args_cli.min_success_rate,
         "failure_counts": failure_counts,
         "mean_metrics": {name: value / max(args_cli.episodes, 1) for name, value in metric_sums.items()},
+        "trajectory_mean_metrics": {
+            name: value / max(args_cli.episodes, 1) for name, value in trajectory_metric_sums.items()
+        },
     }
     atomic_write_json(args_cli.output.expanduser().resolve(), report)
     print(json.dumps(report, indent=2, ensure_ascii=False))

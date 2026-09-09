@@ -1,0 +1,37 @@
+{
+  "status": "failed",
+  "task": "Getup-Direct-T800-Supine-Staged-v0",
+  "checkpoint": "/mnt/data/yangky/test/humanoid_robot_combat/whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-09_08-33-27_t800_getup_supine_staged_baoquan_v31_guard/model_799.pt",
+  "checkpoint_sha256": "cca7b98fa172ce544fb163eef050770fdf29b2471167f7dc72d77fd7f9a1c7e5",
+  "target_joint_pos_source": "/mnt/data/yangky/test/humanoid_robot_combat/results/t800_real_baoquan_getup_20260907/measured_boxing_ready.json",
+  "horizon_steps": 500,
+  "episodes": 5,
+  "num_envs": 64,
+  "total_trials": 320,
+  "successes": 0,
+  "success_rate": 0.0,
+  "any_successes": 0,
+  "any_success_rate": 0.0,
+  "any_successes_before_failure": 0,
+  "any_success_before_failure_rate": 0.0,
+  "min_success_rate": 0.95,
+  "failure_counts": {
+    "terminated": 0,
+    "time_out": 320,
+    "final_pose": 320
+  },
+  "mean_metrics": {
+    "tilt_rad": 3.109449577331543,
+    "height_error_m": 0.4699395179748535,
+    "joint_error_rad": 2.654724359512329,
+    "root_speed_mps": 0.024639715999364854
+  },
+  "trajectory_mean_metrics": {
+    "max_root_height_m": 1.0780168771743774,
+    "max_upright_score": 0.23477096259593963,
+    "min_tilt_rad": 1.241762137413025,
+    "min_height_error_m": 0.009144063480198384,
+    "min_joint_error_rad": 1.0368180990219116,
+    "min_root_speed_mps": 0.02252340018749237
+  }
+}

@@ -113,6 +113,36 @@ gym.register(
 )
 
 gym.register(
+    id="Getup-Direct-T800-Prone-Curriculum-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800DirectGetupProneCurriculumEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Getup-Direct-T800-Supine-Curriculum-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800DirectGetupSupineCurriculumEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Getup-Direct-T800-Mixed-Curriculum-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800DirectGetupCurriculumEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+
+gym.register(
     id="Tracking-Flat-T800-Wo-State-Estimation-v0",
     entry_point="isaaclab.envs:ManagerBasedRLEnv",
     disable_env_checker=True,

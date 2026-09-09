@@ -349,6 +349,61 @@ def getup_guard_stability_exp(
     return height_gate * tilt_gate * joint_gate * stability
 
 
+def getup_height_gated_upright_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    return height_gate * torch.exp(-torch.square(tilt) / std**2)
+
+
+def getup_height_gated_joint_pose_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    target_joint_pos: list[float],
+    std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    err = getup_target_joint_error(env, target_joint_pos, asset_cfg)
+    return height_gate * torch.exp(-torch.mean(torch.square(err), dim=-1) / std**2)
+
+
+def getup_height_gated_low_velocity_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    velocity_std: float,
+    joint_velocity_std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    root_vel_sq = torch.sum(torch.square(asset.data.root_lin_vel_b), dim=-1)
+    root_vel_sq += 0.25 * torch.sum(torch.square(asset.data.root_ang_vel_b), dim=-1)
+    joint_vel_sq = torch.mean(torch.square(asset.data.joint_vel[:, asset_cfg.joint_ids]), dim=-1)
+    return height_gate * torch.exp(-root_vel_sq / velocity_std**2) * torch.exp(
+        -joint_vel_sq / joint_velocity_std**2
+    )
+
+
 def joint_soft_limit_margin_violation(
     env: "ManagerBasedEnv",
     margin: float,

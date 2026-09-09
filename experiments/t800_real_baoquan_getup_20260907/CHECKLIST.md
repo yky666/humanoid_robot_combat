@@ -19,5 +19,11 @@
 - [x] Smoke-test staged prone/supine task construction.
 - [x] Add and smoke-test terminal boxing-guard stability reward for staged v3.1.
 - [x] Launch staged v3.1 prone/supine long training in tmux.
+- [x] Render v3.1 long-training playback videos and keyframe sheet.
+- [x] Re-run the 320-rollout gate with trajectory diagnostics for v3.1.
+- [x] Add and smoke-test v3.2 high-pose curriculum reward variants.
+- [x] Launch v3.2 prone/supine curriculum long training in tmux.
+- [ ] Render v3.2 long-training playback videos.
+- [ ] Re-run the 320-rollout gate for v3.2.
 - [ ] Pass the 320-rollout success gate.
 - [ ] Promote any direct get-up policy to real-robot deployment.

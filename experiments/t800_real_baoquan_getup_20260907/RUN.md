@@ -185,6 +185,85 @@ prone run to fail during temporary URDF/USD conversion. The active long runs
 were relaunched with live `conda run --no-capture-output` logs and staggered
 startup.
 
+Completed v3.1 checkpoints:
+
+```text
+supine: whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-09_08-33-27_t800_getup_supine_staged_baoquan_v31_guard/model_799.pt
+prone: whole_body_tracking/logs/rsl_rl/t800_flat/2026-09-09_08-34-24_t800_getup_prone_staged_baoquan_v31_guard/model_799.pt
+```
+
+Visual review artifacts:
+
+```text
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/supine_v31_guard_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/prone_v31_guard_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_keyframes.jpg
+```
+
+Corrected 320-rollout gate with trajectory diagnostics:
+
+| run | rollouts | final success | any success | max height | min tilt | min height err | min joint err |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| supine v3.1 guard | 320 | 0.0 | 0.0 | 1.0780 m | 1.2418 rad | 0.0091 m | 1.0368 rad |
+| prone v3.1 guard | 320 | 0.0 | 0.0 | 0.8298 m | 1.4315 rad | 0.0003 m | 1.4508 rad |
+
+Interpretation: v3.1 learned to reach useful root height, but it did not align
+the base upright or converge to the measured boxing-guard joint target. The
+`getup_guard_stability` term stayed effectively zero in TensorBoard, so it was
+too strict to act as dense shaping and mostly behaved like an unreachable final
+gate.
+
+## Curriculum Direct-RL v3.2
+
+The v3.2 curriculum variants keep the strict final success gate but add
+reachable high-pose shaping once the root is above `0.58` m:
+
+- `getup_prone_curriculum` -> `Getup-Direct-T800-Prone-Curriculum-v0`
+- `getup_supine_curriculum` -> `Getup-Direct-T800-Supine-Curriculum-v0`
+- `getup_mixed_curriculum` -> `Getup-Direct-T800-Mixed-Curriculum-v0`
+
+New high-pose terms:
+
+- `getup_high_upright`: high-root-height-gated upright reward
+- `getup_high_joint_pose`: high-root-height-gated measured baoquan pose reward
+- `getup_high_low_velocity`: high-root-height-gated root and joint velocity hold reward
+
+Smoke result on 2026-09-09: both `getup_supine_curriculum` and
+`getup_prone_curriculum` constructed and trained for one iteration. The reward
+manager exposes `20` terms, including all three high-pose curriculum terms.
+
+Launched tmux long training on 2026-09-09:
+
+```text
+tmux session: t800_supine_v32_curriculum
+run name: t800_getup_supine_curriculum_baoquan_v32
+device: cuda:0
+iterations: 1200
+log: results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/supine_v32_curriculum_train.log
+
+tmux session: t800_prone_v32_curriculum
+run name: t800_getup_prone_curriculum_baoquan_v32
+device: cuda:1
+iterations: 1200
+log: results/t800_real_baoquan_getup_20260907/training/long_v32_curriculum/prone_v32_curriculum_train.log
+```
+
+TensorBoard is available from this machine with:
+
+```bash
+conda run --no-capture-output -n env_isaaclab tensorboard \
+  --logdir /mnt/data/yangky/test/humanoid_robot_combat/whole_body_tracking/logs/rsl_rl/t800_flat \
+  --host 0.0.0.0 \
+  --port 6006
+```
+
+The current live session is `t800_tensorboard`; stop it with:
+
+```bash
+tmux kill-session -t t800_tensorboard
+```
+
 ## Artifacts
 
 ```text
@@ -198,10 +277,18 @@ results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_model_499.pt
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_policy.onnx
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_play.mp4
 results/t800_real_baoquan_getup_20260907/training/supine_shaped_v2b_eval.json
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/supine_v31_guard_eval.json
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/prone_v31_guard_eval.json
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/supine_v31_guard_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/prone_v31_guard_play.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_side_by_side.mp4
+results/t800_real_baoquan_getup_20260907/training/long_v31_guard/staged_v31_guard_keyframes.jpg
 ```
 
 ## Deployment Decision
 
 Do not deploy these direct get-up policies to the real T800. They have not passed the 320-rollout gate and their ONNX observation contract is the 110-element direct get-up policy input, not the current Native SDK whole-body tracking runtime contract.
 
-Next step: train a staged curriculum with an intermediate seated/kneeling posture, then crouched PD stand, then the measured boxing guard.
+Next step: let v3.2 finish, render playback, and re-run the corrected
+320-rollout gate. Promote a get-up policy only if the rendered motion is
+physically sane and the gate passes.
