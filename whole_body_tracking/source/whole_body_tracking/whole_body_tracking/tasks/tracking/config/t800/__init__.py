@@ -1,6 +1,30 @@
 import gymnasium as gym
 
-from . import agents, flat_env_cfg
+from . import agents, baoquan_locomotion_env_cfg, flat_env_cfg
+
+gym.register(
+    id="Locomotion-Flat-T800-Baoquan-Walk-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": baoquan_locomotion_env_cfg.T800BaoquanFlatWalkEnvCfg,
+            "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800BaoquanPPORunnerCfg"},
+)
+
+gym.register(
+    id="Locomotion-Flat-T800-Baoquan-Full-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": baoquan_locomotion_env_cfg.T800BaoquanFlatFullEnvCfg,
+            "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800BaoquanPPORunnerCfg"},
+)
+
+gym.register(
+    id="Locomotion-LightTerrain-T800-Baoquan-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": baoquan_locomotion_env_cfg.T800BaoquanLightTerrainEnvCfg,
+            "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800BaoquanPPORunnerCfg"},
+)
 
 gym.register(
     id="Tracking-Flat-T800-v0",
@@ -161,3 +185,35 @@ gym.register(
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatLowFreqPPORunnerCfg",
     },
 )
+
+
+gym.register(
+    id="Bridge-Supine-Entry-T800-Mixed-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800SupineBridgeEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Bridge-Supine-Entry-T800-PoseX-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800SupineBridgePoseXEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+
+gym.register(
+    id="Bridge-Supine-Entry-T800-PoseY-v0",
+    entry_point="isaaclab.envs:ManagerBasedRLEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": flat_env_cfg.T800SupineBridgePoseYEnvCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:T800FlatPPORunnerCfg",
+    },
+)
+

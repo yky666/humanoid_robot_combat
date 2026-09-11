@@ -22,6 +22,12 @@ procedure in [Real-Robot Deployment](docs/REAL_ROBOT_DEPLOYMENT.md).
 
 ## Current Status
 
+Active locomotion work (2026-09-11): **FG72 baoquan + walk-prior + speed-bump**
+on sys01. Methods, failed approaches, older motion experiments, and deploy
+status: [T800 Training Playbook](docs/T800_TRAINING_PLAYBOOK_20260911.md).
+TensorBoard for this run is port **6007** (`t800_fixed_guard_velocity_72d`);
+port 6006 is the older get-up logdir.
+
 The canonical qualification protocol uses 64 environments x 5 batches = 320
 rollouts and requires a success rate of at least 0.95. TensorBoard tail metrics
 and visual playback are supporting evidence, not acceptance evidence.
@@ -37,7 +43,7 @@ competition packaging. See
 | Straight punch | Sim gate passed; not competition-clean if official mimic is disallowed | 320/320 |
 | Left jab | Sim gate passed; not competition-clean if official mimic is disallowed | 316/320 |
 | Supine recovery | Official EngineAI MNN; debug/reference only under current rule | 320/320 |
-| Custom locomotion | Not trained; official `walk` is debug-only | Not started |
+| Custom locomotion (FG72 baoquan gait) | Training with official walk as teacher prior (72-D/22-A, speed bumps); not competition-exported yet | in progress |
 | Spinning/roundhouse kick | Failed corrected gate; not deployable | 47/320 for imported 540 baseline |
 | Stand/action/stand joint policy | Blocked | Not started |
 

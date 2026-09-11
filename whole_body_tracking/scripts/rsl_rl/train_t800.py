@@ -24,6 +24,7 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=None, help="Optional random seed.")
     parser.add_argument("--logger", type=str, default="wandb", help="Logger backend, e.g. wandb or tensorboard.")
     parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
+    parser.add_argument("--bridge_target_json", type=str, default=None, help="Full-state frame90 JSON for bridge tasks.")
     parser.add_argument(
         "--task_variant",
         choices=(
@@ -43,6 +44,13 @@ def main() -> int:
             "getup_mixed_curriculum",
             "low_freq",
             "wo_state_estimation",
+            "baoquan_walk",
+            "baoquan_full",
+            "baoquan_light_terrain",
+            "fixed_guard_72",
+            "bridge_mixed",
+            "bridge_pose_x",
+            "bridge_pose_y",
         ),
         default="default",
         help="Which registered T800 task variant to launch.",
@@ -76,6 +84,20 @@ def main() -> int:
         "getup_mixed_curriculum": "Getup-Direct-T800-Mixed-Curriculum-v0",
         "low_freq": "Tracking-Flat-T800-Low-Freq-v0",
         "wo_state_estimation": "Tracking-Flat-T800-Wo-State-Estimation-v0",
+        "baoquan_walk": "Locomotion-Flat-T800-Baoquan-Walk-v0",
+        "baoquan_full": "Locomotion-Flat-T800-Baoquan-Full-v0",
+        "baoquan_light_terrain": "Locomotion-LightTerrain-T800-Baoquan-v0",
+        "fixed_guard_72": "Tracking-Flat-T800-Fixed-Guard-72-v0",
+        "bridge_mixed": "Bridge-Supine-Entry-T800-Mixed-v0",
+        "bridge_pose_x": "Bridge-Supine-Entry-T800-PoseX-v0",
+        "bridge_pose_y": "Bridge-Supine-Entry-T800-PoseY-v0",
+    }
+    bridge_variants = {"bridge_mixed", "bridge_pose_x", "bridge_pose_y"}
+    getup_variants = {
+        "getup_prone", "getup_supine", "getup_mixed",
+        "getup_prone_shaped", "getup_supine_shaped", "getup_mixed_shaped",
+        "getup_prone_staged", "getup_supine_staged", "getup_mixed_staged",
+        "getup_prone_curriculum", "getup_supine_curriculum", "getup_mixed_curriculum",
     }
     needs_motion_file = args.task_variant in {"default", "recovery", "low_freq", "wo_state_estimation"}
     if needs_motion_file and args.motion_file is None:
@@ -108,9 +130,21 @@ def main() -> int:
     if args.motion_file is not None:
         cmd.extend(["--motion_file", args.motion_file])
     if args.getup_target_json is not None:
-        if needs_motion_file:
+        if needs_motion_file or args.task_variant in bridge_variants:
             parser.error("--getup_target_json is only used for direct get-up task variants")
         cmd.extend(["--getup_target_json", args.getup_target_json])
+    if args.bridge_target_json is not None:
+        if args.task_variant not in bridge_variants:
+            parser.error("--bridge_target_json is only used for bridge_* task variants")
+        cmd.extend(["--bridge_target_json", args.bridge_target_json])
+    elif args.task_variant in bridge_variants:
+        # Default packaged frame90 full-state target
+        default_bridge = (
+            pathlib.Path(__file__).resolve().parents[2]
+            / "source/whole_body_tracking/whole_body_tracking/tasks/tracking/config/t800/assets/supine_bridge_frame90_target.json"
+        )
+        if default_bridge.is_file():
+            cmd.extend(["--bridge_target_json", str(default_bridge)])
     if args.seed is not None:
         cmd.extend(["--seed", str(args.seed)])
     if args.video:

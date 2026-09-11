@@ -142,6 +142,14 @@ T800_APPROX_BOXING_READY = [
 ]
 
 
+# Official supine_to_stance entry (traj frame 90). Bridge goal is this FULL state.
+T800_FRAME90_JOINTS = [-0.281982421875, -0.0084686279296875, -0.062164306640625, 0.06683349609375, 0.10638427734375, -0.0013532638549804688, -0.26708984375, 0.01029205322265625, 0.05535888671875, 0.039642333984375, 0.11444091796875, 0.0010042190551757812, -0.0020351409912109375, 0.484375, 0.018707275390625, 0.0159149169921875, -0.787109375, 0.00238037109375, 0.480712890625, -0.0216522216796875, -0.007144927978515625, -0.78271484375, -0.0154876708984375, -0.18701171875, 0.0005230903625488281]
+T800_FRAME90_BASE_POS = [-0.00026416778564453125, 0.0548095703125, 0.14013671875]
+T800_FRAME90_BASE_QUAT_WXYZ = [0.55078125, -0.4443359375, -0.44287109375, -0.55029296875]
+T800_FRAME90_TARGET_HEIGHT = T800_FRAME90_BASE_POS[2]
+
+
+
 def _as_pose_tensor(values: list[float], device: torch.device) -> torch.Tensor:
     return torch.tensor(values, dtype=torch.float32, device=device)
 
@@ -557,6 +565,254 @@ def getup_stand_stable_exp(
     return height_gate * tilt_gate * speed_term
 
 
+
+def getup_named_subset_joint_pose_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    target_joint_pos: list[float],
+    joint_names: list[str],
+    std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Height-gated pose match on a named joint subset (e.g. legs+torso only)."""
+    from whole_body_tracking.robots.t800_joint_order import T800_POLICY_JOINT_NAMES
+
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+
+    name_to_idx = {name: i for i, name in enumerate(T800_POLICY_JOINT_NAMES)}
+    missing = [n for n in joint_names if n not in name_to_idx]
+    if missing:
+        raise ValueError(f"Unknown joint names for subset pose reward: {missing}")
+    target_idx = [name_to_idx[n] for n in joint_names]
+    # Resolve articulation joint ids in the requested name order.
+    joint_ids, _ = asset.find_joints(joint_names, preserve_order=True)
+    joint_pos = asset.data.joint_pos[:, joint_ids]
+    target = _as_pose_tensor(target_joint_pos, joint_pos.device)[target_idx]
+    err = target.unsqueeze(0) - joint_pos
+    return height_gate * torch.exp(-torch.mean(torch.square(err), dim=-1) / std**2)
+
+
+def getup_stance_width_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    target_width: float,
+    std: float,
+    height_temperature: float,
+    max_width: float = 1.15,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg(
+        "robot", body_names=["LINK_ANKLE_ROLL_L", "LINK_ANKLE_ROLL_R"], preserve_order=True
+    ),
+) -> torch.Tensor:
+    """Keep feet near boxing-stance width; soft progress from wide splits + Gaussian near target."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    body_pos = asset.data.body_pos_w[:, asset_cfg.body_ids, :2]
+    width = torch.linalg.norm(body_pos[:, 0] - body_pos[:, 1], dim=-1)
+    # Progress: 0 at max_width, 1 at/below target_width (gives gradient while still split).
+    progress = torch.clamp((max_width - width) / max(1.0e-6, max_width - target_width), min=0.0, max=1.0)
+    # Prefer not being wider than target; mild penalty if too narrow.
+    overshoot = torch.relu(width - target_width)
+    undershoot = torch.relu(target_width - width)
+    near = torch.exp(-torch.square(overshoot + 0.35 * undershoot) / std**2)
+    return height_gate * (0.55 * progress + 0.45 * near)
+
+
+def getup_episode_late_scale(
+    env: "ManagerBasedEnv",
+    start_frac: float = 0.45,
+) -> torch.Tensor:
+    """0 early, 1 in the last portion of the episode ??used to emphasize terminal hold."""
+    progress = env.episode_length_buf.float() / float(env.max_episode_length)
+    return torch.clamp((progress - start_frac) / max(1.0e-6, 1.0 - start_frac), min=0.0, max=1.0)
+
+
+def getup_stand_baoquan_hold_exp(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    target_joint_pos: list[float],
+    leg_joint_names: list[str],
+    max_tilt_rad: float,
+    max_height_error: float,
+    leg_std: float,
+    root_speed_comfort: float,
+    start_frac: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Late-episode hold: upright + height + leg/torso baoquan stance + soft root speed."""
+    from whole_body_tracking.robots.t800_joint_order import T800_POLICY_JOINT_NAMES
+
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    height_error = torch.abs(root_pos[:, 2] - env_origins[:, 2] - target_height)
+    height_gate = torch.sigmoid((0.18 - height_error) / 0.05)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / 0.08)
+    root_speed = torch.linalg.norm(asset.data.root_lin_vel_b, dim=-1)
+    speed_term = torch.exp(-torch.square(root_speed) / (root_speed_comfort**2))
+
+    name_to_idx = {name: i for i, name in enumerate(T800_POLICY_JOINT_NAMES)}
+    target_idx = [name_to_idx[n] for n in leg_joint_names]
+    joint_ids, _ = asset.find_joints(leg_joint_names, preserve_order=True)
+    joint_pos = asset.data.joint_pos[:, joint_ids]
+    target = _as_pose_tensor(target_joint_pos, joint_pos.device)[target_idx]
+    err = target.unsqueeze(0) - joint_pos
+    leg_term = torch.exp(-torch.mean(torch.square(err), dim=-1) / leg_std**2)
+    late = getup_episode_late_scale(env, start_frac=start_frac)
+    return late * height_gate * tilt_gate * speed_term * leg_term
+
+
+
+def getup_stance_geometry_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    target_lat: float,
+    lat_std: float,
+    min_lat: float,
+    target_stagger: float,
+    stagger_std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg(
+        "robot", body_names=["LINK_ANKLE_ROLL_L", "LINK_ANKLE_ROLL_R"], preserve_order=True
+    ),
+) -> torch.Tensor:
+    """Body-frame foot geometry for boxing stance: uncrossed lateral base + forward stagger.
+
+    Uses root yaw frame: +x forward, +y left. Requires left ankle to the left of right ankle
+    (lat = y_L - y_R > min_lat) to kill crossed-leg terminals.
+    """
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    root_quat = asset.data.root_quat_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+
+    body_pos = asset.data.body_pos_w[:, asset_cfg.body_ids, :]
+    left = body_pos[:, 0] - root_pos
+    right = body_pos[:, 1] - root_pos
+    left_b = math_utils.quat_rotate_inverse(root_quat, left)
+    right_b = math_utils.quat_rotate_inverse(root_quat, right)
+
+    lat = left_b[:, 1] - right_b[:, 1]  # +y left: positive => uncrossed
+    stagger = torch.abs(left_b[:, 0] - right_b[:, 0])
+
+    uncrossed = torch.sigmoid((lat - min_lat) / 0.04)
+    lat_term = torch.exp(-torch.square(lat - target_lat) / lat_std**2)
+    stagger_term = torch.exp(-torch.square(stagger - target_stagger) / stagger_std**2)
+    return height_gate * uncrossed * lat_term * stagger_term
+
+
+def getup_hip_knee_baoquan_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    target_joint_pos: list[float],
+    std: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Tight match on hip roll/yaw + knees ??the joints that define uncrossed crouched guard."""
+    joint_names = [
+        "J01_HIP_ROLL_L",
+        "J02_HIP_YAW_L",
+        "J03_KNEE_PITCH_L",
+        "J07_HIP_ROLL_R",
+        "J08_HIP_YAW_R",
+        "J09_KNEE_PITCH_R",
+    ]
+    return getup_named_subset_joint_pose_exp(
+        env,
+        min_height=min_height,
+        target_joint_pos=target_joint_pos,
+        joint_names=joint_names,
+        std=std,
+        height_temperature=height_temperature,
+        asset_cfg=asset_cfg,
+    )
+
+
+def getup_knee_flex_floor_exp(
+    env: "ManagerBasedEnv",
+    min_height: float,
+    min_knee_rad: float,
+    height_temperature: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Keep knees bent like a guard crouch (avoid locked-straight legs)."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    root_pos = asset.data.root_pos_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    root_height = root_pos[:, 2] - env_origins[:, 2]
+    height_gate = torch.sigmoid((root_height - min_height) / height_temperature)
+    joint_ids, _ = asset.find_joints(["J03_KNEE_PITCH_L", "J09_KNEE_PITCH_R"], preserve_order=True)
+    knees = asset.data.joint_pos[:, joint_ids]
+    # Measured baoquan knees are ~+0.76/+0.82; require both above min_knee_rad.
+    left_ok = torch.sigmoid((knees[:, 0] - min_knee_rad) / 0.08)
+    right_ok = torch.sigmoid((knees[:, 1] - min_knee_rad) / 0.08)
+    return height_gate * left_ok * right_ok
+
+
+def getup_terminal_baoquan_hold_exp(
+    env: "ManagerBasedEnv",
+    target_height: float,
+    target_joint_pos: list[float],
+    leg_joint_names: list[str],
+    max_tilt_rad: float,
+    max_height_error: float,
+    leg_std: float,
+    root_speed_comfort: float,
+    min_lat: float,
+    target_lat: float,
+    start_frac: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    foot_cfg: SceneEntityCfg = SceneEntityCfg(
+        "robot", body_names=["LINK_ANKLE_ROLL_L", "LINK_ANKLE_ROLL_R"], preserve_order=True
+    ),
+) -> torch.Tensor:
+    """Late-episode hold: upright + height + leg pose + uncrossed stance width."""
+    from whole_body_tracking.robots.t800_joint_order import T800_POLICY_JOINT_NAMES
+
+    asset: Articulation = env.scene[asset_cfg.name]
+    gravity_z = torch.clamp(-asset.data.projected_gravity_b[:, 2], -1.0, 1.0)
+    tilt = torch.acos(gravity_z)
+    root_pos = asset.data.root_pos_w
+    root_quat = asset.data.root_quat_w
+    env_origins = env.scene.env_origins.to(root_pos.device)
+    height_error = torch.abs(root_pos[:, 2] - env_origins[:, 2] - target_height)
+    height_gate = torch.sigmoid((0.18 - height_error) / 0.05)
+    tilt_gate = torch.sigmoid((max_tilt_rad - tilt) / 0.08)
+    root_speed = torch.linalg.norm(asset.data.root_lin_vel_b, dim=-1)
+    speed_term = torch.exp(-torch.square(root_speed) / (root_speed_comfort**2))
+
+    name_to_idx = {name: i for i, name in enumerate(T800_POLICY_JOINT_NAMES)}
+    target_idx = [name_to_idx[n] for n in leg_joint_names]
+    joint_ids, _ = asset.find_joints(leg_joint_names, preserve_order=True)
+    joint_pos = asset.data.joint_pos[:, joint_ids]
+    target = _as_pose_tensor(target_joint_pos, joint_pos.device)[target_idx]
+    err = target.unsqueeze(0) - joint_pos
+    leg_term = torch.exp(-torch.mean(torch.square(err), dim=-1) / leg_std**2)
+
+    body_pos = asset.data.body_pos_w[:, foot_cfg.body_ids, :]
+    left_b = math_utils.quat_rotate_inverse(root_quat, body_pos[:, 0] - root_pos)
+    right_b = math_utils.quat_rotate_inverse(root_quat, body_pos[:, 1] - root_pos)
+    lat = left_b[:, 1] - right_b[:, 1]
+    stance_term = torch.sigmoid((lat - min_lat) / 0.04) * torch.exp(
+        -torch.square(lat - target_lat) / (0.12**2)
+    )
+
+    late = getup_episode_late_scale(env, start_frac=start_frac)
+    return late * height_gate * tilt_gate * speed_term * leg_term * stance_term
+
+
 def getup_success_bonus(
     env: "ManagerBasedEnv",
     target_height: float,
@@ -630,3 +886,110 @@ class ResidualRefJointPositionAction(JointAction):
 class ResidualRefJointPositionActionCfg(JointActionCfg):
     class_type: type = ResidualRefJointPositionAction
     command_name: str = "motion"
+
+
+def reset_t800_bridge_pose(
+    env: "ManagerBasedEnv",
+    env_ids: torch.Tensor,
+    start_pose: str,
+    root_height: float,
+    pose_noise: dict[str, tuple[float, float]],
+    joint_position_noise: tuple[float, float],
+    velocity_noise: tuple[float, float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+):
+    """Reset near pd_stand_x / pd_stand_y floor poses for supine-entry bridging.
+
+    start_pose:
+      - "pose_x" / "prone": competition X prep joints + prone-like base
+      - "pose_y" / "supine": competition Y prep joints + supine-like base
+      - "mixed": half X, half Y
+    """
+    orientation = {
+        "pose_x": "prone",
+        "pose_y": "supine",
+        "prone": "prone",
+        "supine": "supine",
+        "mixed": "mixed",
+    }.get(start_pose, start_pose)
+    return reset_t800_getup_pose(
+        env,
+        env_ids,
+        orientation=orientation,
+        root_height=root_height,
+        pose_noise=pose_noise,
+        joint_position_noise=joint_position_noise,
+        velocity_noise=velocity_noise,
+        asset_cfg=asset_cfg,
+    )
+
+
+def bridge_root_pos_error(
+    env: "ManagerBasedEnv",
+    target_base_pos: list[float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """World-frame root position error vs frame90 base_pos (env-local)."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    target = _as_pose_tensor(target_base_pos, asset.device).view(1, 3)
+    root_pos = asset.data.root_pos_w - env.scene.env_origins
+    return root_pos - target
+
+
+def bridge_quat_dot(
+    env: "ManagerBasedEnv",
+    target_base_quat_wxyz: list[float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    asset: Articulation = env.scene[asset_cfg.name]
+    target = _as_pose_tensor(target_base_quat_wxyz, asset.device).view(1, 4)
+    root_quat = asset.data.root_quat_w
+    return torch.abs(torch.sum(root_quat * target, dim=-1))
+
+
+def bridge_quat_error_obs(
+    env: "ManagerBasedEnv",
+    target_base_quat_wxyz: list[float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Observation: 1 - |q?q_tgt| as a 1-D feature (plus reused with height)."""
+    return (1.0 - bridge_quat_dot(env, target_base_quat_wxyz, asset_cfg)).unsqueeze(-1)
+
+
+def bridge_ori_exp(
+    env: "ManagerBasedEnv",
+    target_base_quat_wxyz: list[float],
+    std: float = 0.25,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    err = 1.0 - bridge_quat_dot(env, target_base_quat_wxyz, asset_cfg)
+    return torch.exp(-err / (std * std))
+
+
+def bridge_base_pos_exp(
+    env: "ManagerBasedEnv",
+    target_base_pos: list[float],
+    std: float = 0.12,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    err = torch.linalg.norm(bridge_root_pos_error(env, target_base_pos, asset_cfg), dim=-1)
+    return torch.exp(-err / (std * std))
+
+
+def bridge_success_bonus(
+    env: "ManagerBasedEnv",
+    target_joint_pos: list[float],
+    target_base_pos: list[float],
+    target_base_quat_wxyz: list[float],
+    max_joint_error: float = 0.15,
+    max_pos_error: float = 0.08,
+    min_quat_dot: float = 0.95,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    joint_err = torch.max(torch.abs(getup_target_joint_error(env, target_joint_pos, asset_cfg)), dim=-1).values
+    pos_err = torch.linalg.norm(bridge_root_pos_error(env, target_base_pos, asset_cfg), dim=-1)
+    quat_dot = bridge_quat_dot(env, target_base_quat_wxyz, asset_cfg)
+    ok = (joint_err < max_joint_error) & (pos_err < max_pos_error) & (quat_dot > min_quat_dot)
+    return ok.to(dtype=torch.float32)
+
+

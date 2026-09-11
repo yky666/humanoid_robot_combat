@@ -57,6 +57,12 @@ from isaaclab.envs import (
 )
 from isaaclab.utils.dict import print_dict
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
+from whole_body_tracking.utils.sdk_observation import (
+    Sdk72CommandTailWrapper,
+    SdkRslRlVecEnvWrapper,
+    TransitionSafeWrapper,
+)
+from whole_body_tracking.utils.official_walk_prior import maybe_wrap_official_walk_prior
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
@@ -204,7 +210,21 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         env = multi_agent_to_single_agent(env)
 
     # wrap around environment for rsl-rl
-    env = RslRlVecEnvWrapper(env)
+    _SDK72_TASKS = {
+        "Tracking-Flat-T800-Fixed-Guard-72-v0",
+        "Tracking-Flat-T800-Fixed-Guard-72-Play-v0",
+        "Tracking-Flat-T800-Fixed-Guard-72-Transition-Safe-v0",
+        "Tracking-Rough-T800-Fixed-Guard-72-v0",
+        "Tracking-Rough-T800-Fixed-Guard-72-Play-v0",
+        "Tracking-Bump-T800-Fixed-Guard-72-v0",
+        "Tracking-Bump-T800-Fixed-Guard-72-Play-v0",
+    }
+    if args_cli.task in _SDK72_TASKS:
+        env = Sdk72CommandTailWrapper(env)
+        env = maybe_wrap_official_walk_prior(env)
+        env = SdkRslRlVecEnvWrapper(env)
+    else:
+        env = RslRlVecEnvWrapper(env)
 
     # load previously trained model
     ppo_runner = OnPolicyRunner(env, adapt_legacy_ppo_cfg(agent_cfg.to_dict()), log_dir=None, device=agent_cfg.device)

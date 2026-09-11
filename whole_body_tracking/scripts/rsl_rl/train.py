@@ -28,6 +28,10 @@ parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy 
 parser.add_argument("--registry_name", type=str, default=None, help="The name of the wand registry.")
 parser.add_argument("--motion_file", type=str, default=None, help="Local motion npz path. Overrides registry_name.")
 parser.add_argument("--getup_target_json", type=str, default=None, help="Measured target_joint_pos JSON for direct get-up tasks.")
+parser.add_argument("--bridge_target_json", type=str, default=None, help="Full-state JSON (joints+base_pos+quat) for supine-bridge tasks.")
+parser.add_argument(
+    "--distributed", action="store_true", default=False, help="Run training with multiple GPUs or nodes."
+)
 
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
@@ -75,12 +79,19 @@ def dump_pickle(filepath, data):
 
 
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
+from whole_body_tracking.utils.sdk_observation import (
+    Sdk72CommandTailWrapper,
+    SdkRslRlVecEnvWrapper,
+    TransitionSafeWrapper,
+)
+from whole_body_tracking.utils.official_walk_prior import maybe_wrap_official_walk_prior
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
 # Import extensions to set up environment tasks
 import whole_body_tracking.tasks  # noqa: F401
 from t800_getup_target import apply_getup_target_json
+from t800_bridge_target import apply_bridge_target_json
 from whole_body_tracking.utils.my_on_policy_runner import MotionOnPolicyRunner as OnPolicyRunner
 from whole_body_tracking.utils.rsl_rl_compat import adapt_legacy_ppo_cfg
 
@@ -104,6 +115,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # note: certain randomizations occur in the environment initialization so we set the seed here
     env_cfg.seed = agent_cfg.seed
     env_cfg.sim.device = args_cli.device if args_cli.device is not None else env_cfg.sim.device
+    if getattr(args_cli, "distributed", False):
+        env_cfg.sim.device = f"cuda:{app_launcher.local_rank}"
+        agent_cfg.device = f"cuda:{app_launcher.local_rank}"
+        seed = int(agent_cfg.seed or 0) + int(app_launcher.local_rank)
+        env_cfg.seed = seed
+        agent_cfg.seed = seed
+        print(f"[INFO] Distributed rank={app_launcher.local_rank} device={env_cfg.sim.device} seed={seed}")
 
     # load the motion file: prefer local CLI path, then fallback to wandb registry.
     # Direct get-up tasks do not have a motion command and train from reset/reward only.
@@ -137,6 +155,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     if args_cli.getup_target_json:
         target_source = apply_getup_target_json(env_cfg, args_cli.getup_target_json)
+    if args_cli.bridge_target_json:
+        target_source = apply_bridge_target_json(env_cfg, args_cli.bridge_target_json)
         print(f"[INFO] Using T800 get-up target from: {target_source}")
 
     # specify directory for logging experiments
@@ -168,7 +188,32 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         env = multi_agent_to_single_agent(env)
 
     # wrap around environment for rsl-rl
-    env = RslRlVecEnvWrapper(env)
+    # SDK-compatible 72-D history + command-tail contract for Fixed-Guard72.
+    _SDK72_TASKS = {
+        "Tracking-Flat-T800-Fixed-Guard-72-v0",
+        "Tracking-Flat-T800-Fixed-Guard-72-Transition-Safe-v0",
+        "Tracking-Rough-T800-Fixed-Guard-72-v0",
+        "Tracking-Rough-T800-Fixed-Guard-72-Play-v0",
+        "Tracking-Bump-T800-Fixed-Guard-72-v0",
+        "Tracking-Bump-T800-Fixed-Guard-72-Play-v0",
+    }
+    if args_cli.task in _SDK72_TASKS:
+        if args_cli.task.endswith("Transition-Safe-v0"):
+            transition_cfg = env_cfg.transition_safe
+            env = TransitionSafeWrapper(
+                env,
+                duration_s=transition_cfg.duration_s,
+                max_target_delta=transition_cfg.max_target_delta,
+                command_ramp_rate=transition_cfg.command_ramp_rate,
+                max_delay_steps=transition_cfg.action_delay_steps[1],
+                activation_time_s=transition_cfg.activation_time_s,
+                seed=args_cli.seed or 42,
+            )
+        env = Sdk72CommandTailWrapper(env)
+        env = maybe_wrap_official_walk_prior(env)
+        env = SdkRslRlVecEnvWrapper(env)
+    else:
+        env = RslRlVecEnvWrapper(env)
 
     # create runner from rsl-rl
     runner = OnPolicyRunner(

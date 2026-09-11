@@ -24,6 +24,8 @@ can be retargeted onto T800 and trained with PPO in Isaac Lab.
   - `PM01`
 - **Utility scripts**
   - `scripts/t800_csv_to_npz.py`
+  - `scripts/record_t800_motion.sh`
+  - `scripts/export_t800_rosbag.py`
   - `scripts/check_npz.py`
   - `scripts/batch_prepare_t800_motions.py`
   - `scripts/batch_train_t800.py`
@@ -63,6 +65,9 @@ We currently use two conda environments:
   Used for Isaac Lab, motion replay, training, smoke tests, and play-video recording.
 
 See [QUICKSTART.md](QUICKSTART.md) for the end-to-end workflow.
+See [T800 real-motion recording](docs/t800_real_motion_recording.md) for
+official-controller telemetry capture, ROS bag replay limits, bag-to-NPZ export,
+and the real-robot deployment data contract.
 
 ## Motion Pipeline
 
@@ -89,6 +94,16 @@ For legacy local T800 arrays, we also support:
 
 ```text
 .npy (40 columns) -> tracking-ready T800 NPZ
+```
+
+For official T800 motions recorded from the robot controller:
+
+```text
+ROS 2 bag (.db3 + metadata.yaml)
+  -> aligned real-capture NPZ
+  -> tracking-ready T800 NPZ
+  -> IsaacLab training/validation
+  -> exported policy + reference NPZ for EngineAI deployment
 ```
 
 ## Typical Commands
@@ -300,3 +315,18 @@ We recommend the following motion-selection funnel:
 ## License
 
 This repository is released under the MIT license. See [LICENSE](LICENSE).
+
+
+## Fixed-Guard 72-D locomotion (current)
+
+SDK-aligned observation contract: 72-D frame x 15 history + 3 command values.
+Upper body holds measured baoquan; legs follow a virtual stick. Training uses
+the official walk MNN as a *teacher prior* (`FG72_WALK_PRIOR=1`), not as the
+final competition controller.
+
+- `Tracking-Flat-T800-Fixed-Guard-72-v0`
+- `Tracking-Rough-T800-Fixed-Guard-72-v0`
+- `Tracking-Bump-T800-Fixed-Guard-72-v0` (trapezoid speed bumps 350/100/70 mm)
+- matching `*-Play-v0` tasks, stick via `FG_PLAY_VX/VY/WZ`
+
+See [docs/T800_TRAINING_PLAYBOOK_20260911.md](../docs/T800_TRAINING_PLAYBOOK_20260911.md).

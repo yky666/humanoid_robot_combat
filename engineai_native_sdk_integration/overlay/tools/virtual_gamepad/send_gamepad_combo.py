@@ -38,6 +38,12 @@ COMBOS = {
     "recovery_supine": ("BACK", "A"),
     "passive": ("LB", "RB"),
     "idle": ("LB", "START"),
+    "pd_stand_x": ("LB", "X"),
+    "pd_stand_y": ("LB", "Y"),
+    "supine_to_stance": ("START", "CROSS_X_UP"),
+    "stance_to_supine": ("START", "CROSS_X_DOWN"),
+    "pd_bridge_to_supine_entry": ("START", "CROSS_Y_RIGHT"),
+    "bridge": ("START", "CROSS_Y_RIGHT"),
 }
 
 

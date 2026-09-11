@@ -33,6 +33,11 @@ used an older six-motion actor. That executor was stopped. The corrected
 `_per_motion` package binds each active motion to its accepted actor and was
 started only to persistent `idle`; no corrected action has run on hardware yet.
 
+For official-controller motion capture, ROS bag replay limits, bag-to-NPZ
+conversion, and the tracking NPZ data contract used before real-robot policy
+deployment, see
+[`whole_body_tracking/docs/t800_real_motion_recording.md`](../whole_body_tracking/docs/t800_real_motion_recording.md).
+
 ## Network Topology
 
 ```text
